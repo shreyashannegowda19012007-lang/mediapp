@@ -1,0 +1,152 @@
+[
+  {
+    "pair": [
+      "Warfarin",
+      "Aspirin"
+    ],
+    "severity": "CONTRAINDICATED",
+    "title": "Severe Bleeding & Hemorrhage Risk",
+    "description": "Concomitant use of Warfarin with Aspirin substantially amplifies hypoprothrombinemic response and platelet inhibition, drastically elevating the risk of major gastrointestinal and intracerebral hemorrhage.",
+    "management": "Avoid combination unless strictly specified by a cardiologist with continuous INR and bleeding monitoring."
+  },
+  {
+    "pair": [
+      "Warfarin",
+      "Ibuprofen"
+    ],
+    "severity": "MAJOR",
+    "title": "Severe Gastrointestinal Bleeding & Ulceration",
+    "description": "NSAIDs competitively displace warfarin from plasma proteins and irritate gastric mucosa, multiplying GI bleed risk 3- to 6-fold.",
+    "management": "Use Paracetamol as an alternative analgesic. Monitor prothrombin time/INR if co-administration is unavoidable."
+  },
+  {
+    "pair": [
+      "Warfarin",
+      "Diclofenac"
+    ],
+    "severity": "MAJOR",
+    "title": "Major Bleeding Risk",
+    "description": "Diclofenac impairs primary platelet hemostasis and causes gastric erosion while Warfarin inhibits clotting factors.",
+    "management": "Avoid co-administration. Select non-NSAID analgesics."
+  },
+  {
+    "pair": [
+      "Sildenafil",
+      "Isosorbide Dinitrate"
+    ],
+    "severity": "CONTRAINDICATED",
+    "title": "Potentially Fatal Hypotension",
+    "description": "Co-administration of PDE5 inhibitors (Sildenafil/Tadalafil) with organic nitrates (Nitroglycerin, Sorbitrate) causes excessive accumulation of cGMP, leading to catastrophic refractory hypotension and cardiovascular collapse.",
+    "management": "STRICTLY CONTRAINDICATED. Never take Sildenafil or Tadalafil within 24-48 hours of nitrate medication."
+  },
+  {
+    "pair": [
+      "Tadalafil",
+      "Isosorbide Dinitrate"
+    ],
+    "severity": "CONTRAINDICATED",
+    "title": "Life-Threatening Hypotension",
+    "description": "Potentiates hypotensive effect of organic nitrates via systemic cGMP-mediated vasodilation.",
+    "management": "Absolute contraindication."
+  },
+  {
+    "pair": [
+      "Metformin",
+      "Contrast Media"
+    ],
+    "severity": "MAJOR",
+    "title": "Lactic Acidosis Risk in Renal Impairment",
+    "description": "Iodinated radiocontrast agents can induce acute renal failure, precipitating toxic accumulation of Metformin and fatal lactic acidosis.",
+    "management": "Withhold Metformin 48 hours before and 48 hours following iodinated radiological procedures."
+  },
+  {
+    "pair": [
+      "Fluoxetine",
+      "Tramadol"
+    ],
+    "severity": "MAJOR",
+    "title": "Serotonin Syndrome & Seizure Threshold Reduction",
+    "description": "Fluoxetine inhibits CYP2D6 and increases tramadol-induced central serotonergic neurotransmission, triggering potentially fatal Serotonin Syndrome and lowering seizure threshold.",
+    "management": "Avoid combination. Monitor for hyperthermia, clonus, tremor, and mental state alterations."
+  },
+  {
+    "pair": [
+      "Atorvastatin",
+      "Clarithromycin"
+    ],
+    "severity": "MAJOR",
+    "title": "Severe Rhabdomyolysis & Acute Renal Failure",
+    "description": "Clarithromycin is a potent inhibitor of CYP3A4, causing 4- to 10-fold elevations in plasma Atorvastatin levels, precipitating severe skeletal myopathy and acute rhabdomyolysis.",
+    "management": "Temporarily suspend Atorvastatin during the antibiotic course or switch to Azithromycin."
+  },
+  {
+    "pair": [
+      "Simvastatin",
+      "Clarithromycin"
+    ],
+    "severity": "CONTRAINDICATED",
+    "title": "Severe Rhabdomyolysis & Myopathy",
+    "description": "Potent CYP3A4 inhibition dramatically increases simvastatin exposure and toxicity.",
+    "management": "Strictly contraindicated."
+  },
+  {
+    "pair": [
+      "Telmisartan",
+      "Potassium"
+    ],
+    "severity": "MODERATE",
+    "title": "Risk of Hyperkalemia",
+    "description": "ARBs reduce aldosterone secretion, decreasing renal potassium excretion. Potassium supplements can cause dangerous elevations in serum potassium.",
+    "management": "Monitor serum electrolytes and renal function regularly."
+  },
+  {
+    "pair": [
+      "Levothyroxine",
+      "Calcium Carbonate"
+    ],
+    "severity": "MODERATE",
+    "title": "Impaired Levothyroxine Absorption",
+    "description": "Calcium carbonate chelates levothyroxine in the acidic gastric environment, reducing thyroid hormone bioavailability by up to 30%.",
+    "management": "Separate administration by at least 4 hours."
+  },
+  {
+    "pair": [
+      "Levothyroxine",
+      "Ferrous Ascorbate"
+    ],
+    "severity": "MODERATE",
+    "title": "Impaired Thyroid Hormone Bioavailability",
+    "description": "Oral iron formulations form insoluble chelates with levothyroxine, significantly reducing absorption.",
+    "management": "Separate administration times by minimum 4 hours."
+  },
+  {
+    "pair": [
+      "Ciprofloxacin",
+      "Calcium Carbonate"
+    ],
+    "severity": "MODERATE",
+    "title": "Reduced Fluoroquinolone Bioavailability",
+    "description": "Divalent and trivalent cations form insoluble chelation complexes with Ciprofloxacin, reducing antibiotic efficacy by over 50%.",
+    "management": "Administer Ciprofloxacin 2 hours before or 6 hours after dairy or calcium/antacid ingestion."
+  },
+  {
+    "pair": [
+      "Amlodipine",
+      "Simvastatin"
+    ],
+    "severity": "MODERATE",
+    "title": "Elevated Statin Serum Concentrations",
+    "description": "Amlodipine inhibits CYP3A4-mediated clearance of simvastatin, increasing myopathy risk.",
+    "management": "Limit simvastatin dose to maximum 20mg daily when taken with amlodipine."
+  },
+  {
+    "pair": [
+      "Omeprazole",
+      "Clopidogrel"
+    ],
+    "severity": "MODERATE",
+    "title": "Reduced Antiplatelet Activation",
+    "description": "Omeprazole competitive inhibition of CYP2C19 impairs conversion of clopidogrel to its active antiplatelet metabolite.",
+    "management": "Use Pantoprazole instead of Omeprazole, which shows significantly less CYP2C19 inhibition."
+  }
+]
