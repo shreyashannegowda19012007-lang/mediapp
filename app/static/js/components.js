@@ -4,7 +4,7 @@
  */
 
 const Components = {
-  // Toast notifications
+  // Toast notifications with clean SVG icons
   toast(message, type = "info", duration = 3500) {
     const container = document.getElementById("toast-container");
     if (!container) return;
@@ -12,12 +12,16 @@ const Components = {
     const el = document.createElement("div");
     el.className = `toast toast-${type}`;
     
-    let icon = "ℹ️";
-    if (type === "success") icon = "✅";
-    if (type === "error") icon = "❌";
-    if (type === "warning") icon = "⚠️";
+    let iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
+    if (type === "success") {
+      iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+    } else if (type === "error") {
+      iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
+    } else if (type === "warning") {
+      iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+    }
 
-    el.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+    el.innerHTML = `<span>${iconSvg}</span> <span>${message}</span>`;
     container.appendChild(el);
 
     setTimeout(() => {
@@ -71,18 +75,18 @@ const Components = {
   renderStatusBadge(status) {
     const s = (status || "").toUpperCase();
     const config = {
-      "PLACED": { label: "Order Placed", cls: "badge-pulse" },
-      "AWAITING_PRESCRIPTION": { label: "Rx Review Needed", cls: "badge-rx" },
-      "PRESCRIPTION_VERIFIED": { label: "Rx Verified", cls: "badge-otc" },
-      "ACCEPTED": { label: "Pharmacy Accepted", cls: "badge-pulse" },
+      "PLACED": { label: "Order Placed", cls: "badge-category" },
+      "AWAITING_PRESCRIPTION": { label: "Prescription Needed", cls: "badge-rx" },
+      "PRESCRIPTION_VERIFIED": { label: "Pharmacist Verified", cls: "badge-otc" },
+      "ACCEPTED": { label: "Accepted by Pharmacy", cls: "badge-category" },
       "PREPARING": { label: "Packaging Medicines", cls: "badge-category" },
       "READY_FOR_PICKUP": { label: "Ready for Pickup", cls: "badge-otc" },
-      "DELIVERY_ASSIGNED": { label: "Rider Assigned", cls: "badge-category" },
-      "PICKED_UP": { label: "Picked Up from Pharmacy", cls: "badge-pulse" },
-      "IN_TRANSIT": { label: "Out for Delivery", cls: "badge-pulse" },
+      "DELIVERY_ASSIGNED": { label: "Delivery Partner Assigned", cls: "badge-category" },
+      "PICKED_UP": { label: "Picked Up by Courier", cls: "badge-category" },
+      "IN_TRANSIT": { label: "Out for Delivery", cls: "badge-otc" },
       "DELIVERED": { label: "Delivered", cls: "badge-otc" },
       "CANCELLED": { label: "Cancelled", cls: "badge-rx" },
-      "DELIVERY_FAILED": { label: "Delivery Attempt Failed", cls: "badge-rx" }
+      "DELIVERY_FAILED": { label: "Delivery Unsuccessful", cls: "badge-rx" }
     };
 
     const c = config[s] || { label: status, cls: "badge-category" };
@@ -98,7 +102,7 @@ const Components = {
     } else if (s === "failed") {
       return `<span class="badge badge-rx">Payment Failed</span>`;
     }
-    return `<span class="badge badge-pulse">Payment Pending</span>`;
+    return `<span class="badge badge-category">Payment Pending</span>`;
   },
 
   // Accessible Non-blocking Prompt Modal Dialog
@@ -121,8 +125,8 @@ const Components = {
               <p id="prompt-modal-message" style="margin-bottom:12px; color:var(--text-secondary);"></p>
               <input type="text" id="prompt-modal-input" class="input-main-search" style="width:100%; margin-bottom:16px;" />
               <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button type="button" class="btn-secondary" id="btn-prompt-cancel" style="padding:8px 16px;">Cancel</button>
-                <button type="button" class="btn-primary" id="btn-prompt-submit" style="padding:8px 16px;">Confirm</button>
+                <button type="button" class="btn-alt-pill" id="btn-prompt-cancel" style="padding:8px 16px;">Cancel</button>
+                <button type="button" class="btn-add-cart" id="btn-prompt-submit" style="padding:8px 16px;">Confirm</button>
               </div>
             </div>
           </div>

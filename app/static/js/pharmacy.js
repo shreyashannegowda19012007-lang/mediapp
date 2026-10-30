@@ -104,13 +104,13 @@ const PharmacyPortal = {
           <div class="tracking-header">
             <div>
               <div style="font-size:0.75rem; color:var(--text-muted);">Order ID</div>
-              <div style="font-size: 1.25rem; font-weight:800; color:#fff;">${ord.id}</div>
+              <div style="font-size: 1.25rem; font-weight:800; color:var(--text-primary);">${ord.id}</div>
               <div style="font-size:0.85rem; color:var(--text-secondary); margin-top:2px;">
                 Customer: <strong>${ord.customer_name}</strong> (${ord.customer_phone}) • ${Components.formatDate(ord.created_at)}
               </div>
             </div>
             <div style="text-align:right;">
-              <div style="font-size: 1.3rem; font-weight:800; color:#fff;">${Components.formatCurrency(ord.total_amount)}</div>
+              <div style="font-size: 1.3rem; font-weight:800; color:var(--text-primary);">${Components.formatCurrency(ord.total_amount)}</div>
               <div>${Components.renderStatusBadge(ord.order_status)}</div>
             </div>
           </div>

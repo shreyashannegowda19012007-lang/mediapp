@@ -1,14 +1,17 @@
 /**
  * MediApp Main Application Coordinator.
- * SPA routing, portal navigation management, demo switcher, cart drawer,
- * and AI Ailment Assistant chat widget initialization.
+ * SPA routing, portal navigation management, theme toggle, demo switcher, cart drawer,
+ * and Clinical Health Assistant chat widget initialization.
  */
 
 const App = {
   async init() {
-    console.log("MediApp Initializing Full-Stack Client...");
+    console.log("MediApp Initializing Commercial Healthcare Client...");
 
-    // 1. Fetch current session and capabilities
+    // 1. Initialize Theme (Light Mode Default with Dark Mode Option)
+    this.initTheme();
+
+    // 2. Fetch current session and capabilities
     try {
       const meRes = await API.auth.getMe();
       if (meRes.authenticated && meRes.user) {
@@ -16,44 +19,63 @@ const App = {
         State.set("activeRole", meRes.user.role);
       }
       State.set("capabilities", meRes.capabilities || {});
-      this.updateBannerCapabilities(meRes.capabilities);
     } catch (err) {
       console.warn("Could not retrieve session:", err);
     }
 
-    // 2. Wire Global Header & Navigation Listeners
+    // 3. Wire Global Header, Location & Navigation Listeners
     this.bindHeaderEvents();
 
-    // 3. Wire Demo Role Switcher
+    // 4. Wire Demo Role Switcher
     this.bindDemoSwitcher();
 
-    // 4. Wire Slide-over Cart & Modals
+    // 5. Wire Slide-over Cart & Modals
     this.bindCartAndModals();
 
-    // 5. Wire AI Ailment Assistant Widget
+    // 6. Wire Clinical Ailment Assistant Widget
     this.bindAIAssistant();
 
-    // 6. Initial render of Portal
+    // 7. Wire Footer Navigation Links
+    this.bindFooterEvents();
+
+    // 8. Initial render of Portal
     const initialRole = State.get("activeRole") || "customer";
     this.switchPortal(initialRole);
 
-    // 7. Refresh cart count
+    // 9. Refresh cart count
     await CustomerPortal.refreshCart();
   },
 
-  updateBannerCapabilities(caps) {
-    const modeBadge = document.getElementById("banner-mode-badge");
-    const bannerMsg = document.getElementById("banner-message");
-    if (caps && caps.is_demo) {
-      if (modeBadge) modeBadge.textContent = "DEMO MODE";
-      if (bannerMsg) bannerMsg.textContent = "Simulated Gateway & Local Verified OCR Active • Real-time Order State Engine Running";
-    } else if (caps && !caps.is_demo) {
-      if (modeBadge) {
-        modeBadge.textContent = "REAL MODE";
-        modeBadge.style.color = "var(--emerald)";
-        modeBadge.style.borderColor = "var(--emerald)";
-      }
-      if (bannerMsg) bannerMsg.textContent = "Live Razorpay & Gemini Integrations Configured";
+  initTheme() {
+    const savedTheme = localStorage.getItem("mediapp_theme") || "light";
+    this.applyTheme(savedTheme);
+
+    const toggleBtn = document.getElementById("btn-theme-toggle");
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", () => {
+        const isDark = document.body.classList.contains("theme-dark");
+        const nextTheme = isDark ? "light" : "dark";
+        this.applyTheme(nextTheme);
+        localStorage.setItem("mediapp_theme", nextTheme);
+        Components.toast(`Switched to ${nextTheme === 'dark' ? 'Dark' : 'Light'} theme`, "info", 2000);
+      });
+    }
+  },
+
+  applyTheme(theme) {
+    const sunIcon = document.getElementById("theme-icon-sun");
+    const moonIcon = document.getElementById("theme-icon-moon");
+
+    if (theme === "dark") {
+      document.body.classList.remove("theme-light");
+      document.body.classList.add("theme-dark");
+      if (sunIcon) sunIcon.style.display = "block";
+      if (moonIcon) moonIcon.style.display = "none";
+    } else {
+      document.body.classList.remove("theme-dark");
+      document.body.classList.add("theme-light");
+      if (sunIcon) sunIcon.style.display = "none";
+      if (moonIcon) moonIcon.style.display = "block";
     }
   },
 
@@ -65,6 +87,35 @@ const App = {
       const defaultTab = role === "customer" ? "catalogue" : (role === "pharmacy" ? "dashboard" : (role === "delivery" ? "active" : "analytics"));
       State.set("activeTab", defaultTab);
       this.renderCurrentPortalTab();
+    });
+
+    // Quick Rx Upload Header Button
+    document.getElementById("btn-header-upload-rx")?.addEventListener("click", () => {
+      CustomerPortal.openPrescriptionUploadModal();
+    });
+
+    // Delivery Location Picker
+    document.getElementById("header-location-picker")?.addEventListener("click", async () => {
+      const pin = await Components.promptDialog("Change Delivery Location", "Enter delivery pincode or area (e.g. 560038, Indiranagar):", "Bengaluru 560038");
+      if (pin && pin.trim()) {
+        const valEl = document.querySelector("#header-location-picker .location-val");
+        if (valEl) valEl.textContent = `${pin.trim()} ▾`;
+        Components.toast(`Delivery address updated to ${pin.trim()}`, "success");
+      }
+    });
+  },
+
+  bindFooterEvents() {
+    document.querySelectorAll(".footer-link-action").forEach(link => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const cat = link.dataset.cat;
+        State.set("activeRole", "customer");
+        State.set("activeTab", "catalogue");
+        State.set("selectedCategory", cat);
+        this.switchPortal("customer");
+        window.scrollTo({ top: 350, behavior: "smooth" });
+      });
     });
   },
 
@@ -169,7 +220,7 @@ const App = {
         <div class="user-badge-btn" id="btn-user-badge">
           <div class="user-avatar-circle">${user.full_name.charAt(0).toUpperCase()}</div>
           <span style="font-weight:600;">${user.full_name.split(' ')[0]}</span>
-          <span class="badge ${user.role === 'admin' ? 'badge-rx' : (user.role === 'pharmacy' ? 'badge-pulse' : (user.role === 'delivery' ? 'badge-otc' : 'badge-category'))}">
+          <span class="badge ${user.role === 'admin' ? 'badge-rx' : (user.role === 'pharmacy' ? 'badge-category' : (user.role === 'delivery' ? 'badge-otc' : 'badge-category'))}">
             ${user.role}
           </span>
         </div>
@@ -181,7 +232,6 @@ const App = {
         </button>
       `;
       document.getElementById("btn-header-login")?.addEventListener("click", () => {
-        // In demo mode, trigger demo customer login
         document.querySelector('.btn-demo-pill[data-role="customer"]')?.click();
       });
     }
@@ -278,7 +328,7 @@ const App = {
         // Append thinking placeholder
         const placeholder = document.createElement("div");
         placeholder.className = "ai-message assistant";
-        placeholder.textContent = "Reviewing symptoms and clinical guidelines...";
+        placeholder.textContent = "Analyzing symptoms against clinical safety guidelines...";
         messagesContainer.appendChild(placeholder);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
@@ -288,8 +338,8 @@ const App = {
           
           if (r.is_emergency) {
             placeholder.innerHTML = `
-              <div style="background:var(--rose-bg); border:1px solid var(--rose); padding:10px; border-radius:4px; color:#fda4af; font-weight:700;">
-                🚨 ${r.response}
+              <div style="background:var(--rose-bg); border:1px solid var(--rose); padding:10px; border-radius:var(--radius-sm); color:var(--rose); font-weight:700;">
+                🚨 EMERGENCY ALERT: ${r.response}
               </div>
             `;
           } else {
@@ -298,13 +348,13 @@ const App = {
             placeholder.innerHTML = `
               ${formatted}
               <div style="font-size:0.7rem; color:var(--text-muted); margin-top:8px; border-top:1px solid var(--border-subtle); padding-top:4px;">
-                ${r.disclaimer}
+                ${r.disclaimer || 'Guidance provided for non-emergency educational and triage reference only.'}
               </div>
             `;
           }
           messagesContainer.scrollTop = messagesContainer.scrollHeight;
         } catch (err) {
-          placeholder.textContent = "AI Assistant Error: " + err.message;
+          placeholder.textContent = "Assistant Notice: " + err.message;
         }
       });
     }

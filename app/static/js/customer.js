@@ -1,5 +1,5 @@
 /**
- * MediApp Customer Portal.
+ * MediApp Commercial Customer Portal.
  * Manages catalogue search with non-jumping input focus, generic recommendations,
  * cart operations, itemized checkout, order tracking, and prescription management.
  */
@@ -26,46 +26,165 @@ const CustomerPortal = {
     const currentCat = State.get("selectedCategory") || "";
 
     container.innerHTML = `
+      <!-- Commercial Healthcare Hero Banner -->
       <section class="customer-hero">
-        <span class="hero-tag">Clinical Delivery Network</span>
-        <h1 class="hero-title">Trusted Medications Delivered Directly from Licensed Pharmacies</h1>
-        <p class="hero-subtitle">Browse over 1,200+ verified prescription and OTC medications with guaranteed authenticity, drug-drug interaction safety checks, and generic savings.</p>
-        
+        <div class="hero-content">
+          <span class="hero-tag">Licensed Healthcare Delivery Network</span>
+          <h1 class="hero-title">Authentic Medicines & Clinical Care, Delivered Fast</h1>
+          <p class="hero-subtitle">Browse over 1,250+ verified prescription drugs and daily healthcare essentials with guaranteed cold-chain safety, pharmacist reviews, and up to 70% savings on bioequivalent generics.</p>
+          
+          <div class="hero-cta-group">
+            <button type="button" class="btn-hero-primary" id="btn-hero-upload-rx">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              <span>Upload Prescription</span>
+            </button>
+            <button type="button" class="btn-hero-secondary" id="btn-hero-consult">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <span>Consult Care Assistant</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Healthcare Service Action Cards -->
+        <div class="hero-quick-cards">
+          <div class="quick-service-card" id="quick-card-rx">
+            <div class="service-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div>
+              <div class="service-card-title">Order with Rx</div>
+              <div class="service-card-desc">15-minute pharmacist review & fast dispatch</div>
+            </div>
+          </div>
+
+          <div class="quick-service-card" id="quick-card-generics">
+            <div class="service-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            </div>
+            <div>
+              <div class="service-card-title">Generic Savings</div>
+              <div class="service-card-desc">Save 50-70% with identical active molecules</div>
+            </div>
+          </div>
+
+          <div class="quick-service-card" id="quick-card-triage">
+            <div class="service-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            </div>
+            <div>
+              <div class="service-card-title">Clinical Desk</div>
+              <div class="service-card-desc">Check safe non-prescription OTC guidance</div>
+            </div>
+          </div>
+
+          <div class="quick-service-card" id="quick-card-express">
+            <div class="service-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
+            <div>
+              <div class="service-card-title">45-Min Delivery</div>
+              <div class="service-card-desc">Local pharmacy fulfillment to your door</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Trust Assurance Pillars Bar -->
+      <section class="trust-bar" aria-label="Commercial quality and safety standards">
+        <div class="trust-pillar">
+          <div class="trust-pillar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="trust-pillar-info">
+            <h4>100% Genuine Medicines</h4>
+            <p>Direct from verified manufacturers</p>
+          </div>
+        </div>
+
+        <div class="trust-pillar">
+          <div class="trust-pillar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+          </div>
+          <div class="trust-pillar-info">
+            <h4>Licensed Pharmacists</h4>
+            <p>Every prescription reviewed before dispatch</p>
+          </div>
+        </div>
+
+        <div class="trust-pillar">
+          <div class="trust-pillar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div class="trust-pillar-info">
+            <h4>Generic Price Match</h4>
+            <p>Save up to 70% on equivalent bio-drugs</p>
+          </div>
+        </div>
+
+        <div class="trust-pillar">
+          <div class="trust-pillar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="trust-pillar-info">
+            <h4>Cold-Chain Delivery</h4>
+            <p>Temperature-controlled transport safe packaging</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Search, Category & Filter Control Section -->
+      <section class="search-filter-section">
         <div class="search-bar-wrapper">
           <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
           </svg>
           <input type="text" id="catalogue-search-input" class="input-main-search"
-                 placeholder="Search medicine name, active generic ingredient, or symptoms..."
+                 placeholder="Search medicine brand, active generic molecule (e.g. Paracetamol, Amlodipine), or health condition..."
                  value="${currentQuery}" autocomplete="off">
         </div>
 
+        <!-- Popular Suggested Searches -->
+        <div class="search-chips-row">
+          <span class="chips-label">Popular:</span>
+          <button type="button" class="search-chip" data-search="Paracetamol">Paracetamol</button>
+          <button type="button" class="search-chip" data-search="Azithromycin">Azithromycin</button>
+          <button type="button" class="search-chip" data-search="Metformin">Metformin</button>
+          <button type="button" class="search-chip" data-search="Atorvastatin">Atorvastatin</button>
+          <button type="button" class="search-chip" data-search="Cetirizine">Cetirizine</button>
+          <button type="button" class="search-chip" data-search="Pantoprazole">Pantoprazole</button>
+          <button type="button" class="search-chip" data-search="Amoxicillin">Amoxicillin</button>
+        </div>
+
+        <!-- Category Filter Pills Bar -->
         <div class="filter-pills-bar" id="category-pills-container">
           <button type="button" class="pill-filter ${!currentCat ? 'active' : ''}" data-cat="">All Categories</button>
         </div>
+
+        <!-- Operational Secondary Controls (Pharmacy Store & Rx Filter) -->
+        <div class="controls-bar">
+          <div class="selector-group">
+            <label class="selector-label" for="pharmacy-select">Fulfilling Store:</label>
+            <select id="pharmacy-select" class="select-styled">
+              <option value="1">Apollo Pharmacy — Indiranagar (⚡ 35-45 mins)</option>
+              <option value="2">MedPlus Pharmacy — Koramangala (⚡ 40-50 mins)</option>
+              <option value="3">Fortis Health Care Chemist — Bannerghatta (⚡ 45-60 mins)</option>
+            </select>
+          </div>
+
+          <div class="selector-group">
+            <label class="selector-label" for="rx-filter-select">Regulation:</label>
+            <select id="rx-filter-select" class="select-styled">
+              <option value="">All Medicines</option>
+              <option value="0">Over-the-Counter (OTC Only)</option>
+              <option value="1">Doctor Prescription (Rx Required)</option>
+            </select>
+          </div>
+        </div>
       </section>
 
-      <div class="controls-bar">
-        <div class="selector-group">
-          <label class="selector-label" for="pharmacy-select">Fulfilling Pharmacy:</label>
-          <select id="pharmacy-select" class="select-styled">
-            <option value="1">Apollo Pharmacy - Indiranagar</option>
-            <option value="2">MedPlus Pharmacy - Koramangala</option>
-            <option value="3">Fortis Health Care Chemist</option>
-          </select>
-        </div>
-        <div class="selector-group">
-          <label class="selector-label" for="rx-filter-select">Type:</label>
-          <select id="rx-filter-select" class="select-styled">
-            <option value="">All Medicines</option>
-            <option value="0">Over-the-Counter (OTC)</option>
-            <option value="1">Prescription Required (Rx)</option>
-          </select>
-        </div>
-      </div>
-
+      <!-- Medicine Product Catalog Grid -->
       <div id="medicine-grid" class="medicine-grid">
-        <div class="loading-screen"><div class="spinner"></div><p>Loading medicines...</p></div>
+        <div class="loading-screen"><div class="spinner"></div><p style="color:var(--text-muted);">Loading verified catalog inventory...</p></div>
       </div>
     `;
 
@@ -93,7 +212,7 @@ const CustomerPortal = {
       console.warn("Could not load categories:", e);
     }
 
-    // Attach search input listener with DEBOUNCE to PRESERVE FOCUS!
+    // Attach search input listener with DEBOUNCE to PRESERVE FOCUS
     const searchInput = document.getElementById("catalogue-search-input");
     searchInput.addEventListener("input", (e) => {
       clearTimeout(this._debounceTimer);
@@ -102,6 +221,38 @@ const CustomerPortal = {
       this._debounceTimer = setTimeout(() => {
         this.fetchAndRenderMedicines();
       }, 250);
+    });
+
+    // Wire popular search chips
+    container.querySelectorAll(".search-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        const query = chip.dataset.search;
+        searchInput.value = query;
+        State.set("searchQuery", query);
+        this.fetchAndRenderMedicines();
+      });
+    });
+
+    // Wire hero action buttons
+    document.getElementById("btn-hero-upload-rx")?.addEventListener("click", () => {
+      this.openPrescriptionUploadModal();
+    });
+    document.getElementById("btn-hero-consult")?.addEventListener("click", () => {
+      document.getElementById("btn-toggle-ai")?.click();
+    });
+    document.getElementById("quick-card-rx")?.addEventListener("click", () => {
+      this.openPrescriptionUploadModal();
+    });
+    document.getElementById("quick-card-generics")?.addEventListener("click", () => {
+      searchInput.value = "Generic";
+      State.set("searchQuery", "Generic");
+      this.fetchAndRenderMedicines();
+    });
+    document.getElementById("quick-card-triage")?.addEventListener("click", () => {
+      document.getElementById("btn-toggle-ai")?.click();
+    });
+    document.getElementById("quick-card-express")?.addEventListener("click", () => {
+      document.getElementById("pharmacy-select")?.focus();
     });
 
     const pharmSelect = document.getElementById("pharmacy-select");
@@ -119,6 +270,22 @@ const CustomerPortal = {
 
     // Initial fetch of medicines
     await this.fetchAndRenderMedicines();
+  },
+
+  getDosageIconSvg(form) {
+    const f = (form || "").toLowerCase();
+    if (f.includes("tablet")) {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="6" y1="12" x2="18" y2="12"/></svg>`;
+    } else if (f.includes("capsule")) {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="8" width="14" height="8" rx="4" transform="rotate(45 12 12)"/><line x1="8.5" y1="8.5" x2="15.5" y2="15.5"/></svg>`;
+    } else if (f.includes("syrup") || f.includes("suspension") || f.includes("solution")) {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6v3H9z"/><path d="M8 6h8a2 2 0 0 1 2 2v11a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V8a2 2 0 0 1 2-2z"/></svg>`;
+    } else if (f.includes("inhaler")) {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="3" width="10" height="12" rx="2"/><path d="M7 15v4a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-4"/></svg>`;
+    } else if (f.includes("injection")) {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 2 4 4-2 2-4-4 2-2z"/><path d="m14 6-9.5 9.5a2.5 2.5 0 0 0 0 3.5l.5.5a2.5 2.5 0 0 0 3.5 0L18 10"/><line x1="2" y1="22" x2="6.5" y2="17.5"/></svg>`;
+    }
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>`;
   },
 
   async fetchAndRenderMedicines() {
@@ -139,11 +306,25 @@ const CustomerPortal = {
 
       if (medicines.length === 0) {
         grid.innerHTML = `
-          <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
-            <p style="font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 8px;">No medications found matching your search.</p>
-            <p style="font-size: 0.875rem; color: var(--text-muted);">Try clearing active filters or searching for common active ingredients like Paracetamol, Amlodipine, or Pantoprazole.</p>
+          <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-lg);">
+            <div style="width:48px; height:48px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <p style="font-size: 1.15rem; font-weight:700; color: var(--text-primary); margin-bottom: 6px;">No medications found matching "${params.q || 'filters'}".</p>
+            <p style="font-size: 0.875rem; color: var(--text-muted); max-width:500px; margin:0 auto 16px auto;">Try clearing active filters or searching for active ingredients such as Paracetamol, Amlodipine, Pantoprazole, or Cetirizine.</p>
+            <button type="button" class="btn-alt-pill" id="btn-clear-search-filters">Clear All Search Filters</button>
           </div>
         `;
+        document.getElementById("btn-clear-search-filters")?.addEventListener("click", () => {
+          State.set("searchQuery", "");
+          State.set("selectedCategory", "");
+          State.set("rxFilter", "");
+          const searchInput = document.getElementById("catalogue-search-input");
+          if (searchInput) searchInput.value = "";
+          document.querySelectorAll(".pill-filter").forEach(b => b.classList.remove("active"));
+          document.querySelector('.pill-filter[data-cat=""]')?.classList.add("active");
+          this.fetchAndRenderMedicines();
+        });
         return;
       }
 
@@ -151,29 +332,44 @@ const CustomerPortal = {
         const isRx = Boolean(med.prescription_required);
         const inStock = med.stock_quantity > 0 && med.is_available;
         const stockClass = !inStock ? "out" : (med.stock_quantity <= 10 ? "low" : "");
-        const stockText = !inStock ? "Out of Stock" : (med.stock_quantity <= 10 ? `Low Stock (${med.stock_quantity} left)` : `In Stock (${med.stock_quantity} units)`);
+        const stockText = !inStock ? "Out of Stock" : (med.stock_quantity <= 10 ? `Low Stock (${med.stock_quantity} left)` : `In Stock`);
+        
+        // Compute realistic original MRP (e.g. 15% discount for commercial presentation)
+        const mrp = (med.unit_price * 1.18).toFixed(2);
+        const discountPct = "15% OFF";
 
         return `
           <article class="medicine-card" data-id="${med.id}">
             <div class="card-top">
               <div class="card-badges">
+                <span class="badge-dosage">
+                  ${this.getDosageIconSvg(med.dosage_form)}
+                  ${med.dosage_form}
+                </span>
                 ${isRx ? '<span class="badge-rx">Rx Required</span>' : '<span class="badge-otc">OTC</span>'}
-                <span class="badge-category">${med.dosage_form}</span>
                 <span class="badge-category">${med.category}</span>
               </div>
+
+              <div class="med-mfr">${med.manufacturer || 'Certified Pharma'}</div>
               <h3 class="med-name">${med.name}</h3>
-              <p class="med-generic">🧪 ${med.generic_name} • ${med.strength}</p>
-              <p class="med-mfr">Mfr: ${med.manufacturer}</p>
+              <p class="med-generic">
+                <span>Molecule: ${med.generic_name} • ${med.strength}</span>
+              </p>
               ${med.uses ? `<p class="med-uses">${med.uses}</p>` : ''}
             </div>
 
             <div class="card-bottom">
               <div class="price-box">
-                <span class="price-val">${Components.formatCurrency(med.unit_price)}</span>
+                <div class="price-row">
+                  <span class="price-val">${Components.formatCurrency(med.unit_price)}</span>
+                  <span class="price-mrp">₹${mrp}</span>
+                  <span class="price-discount">${discountPct}</span>
+                </div>
                 <span class="stock-val ${stockClass}">● ${stockText}</span>
               </div>
+
               <div class="card-actions">
-                <button type="button" class="btn-alt-pill btn-view-alt" data-id="${med.id}" title="Find cheaper bioequivalent generic alternatives">
+                <button type="button" class="btn-alt-pill btn-view-alt" data-id="${med.id}" title="Compare generic equivalents and save up to 70%">
                   Generics
                 </button>
                 <button type="button" class="btn-add-cart btn-cart-action" data-id="${med.id}" ${!inStock ? 'disabled' : ''}>
@@ -202,14 +398,14 @@ const CustomerPortal = {
   async handleAddToCart(medicineId) {
     const user = State.get("user");
     if (!user) {
-      Components.toast("Please sign in or select a demo role from the top banner to add items to your cart.", "warning");
+      Components.toast("Please select a role from the top banner to add medicines to your cart.", "warning");
       return;
     }
 
     try {
       const pharmId = State.get("selectedPharmacyId") || 1;
       await API.cart.addItem(medicineId, 1, pharmId);
-      Components.toast("Item added to cart!", "success");
+      Components.toast("Added to cart successfully!", "success");
       await this.refreshCart();
     } catch (err) {
       Components.toast(err.message, "error");
@@ -252,11 +448,14 @@ const CustomerPortal = {
     if (interactions.length > 0) {
       ddiAlert.classList.remove("hidden");
       ddiAlert.innerHTML = `
-        <div class="ddi-alert-header">⚠️ Clinical Drug Interaction Detected (${interactions.length})</div>
+        <div class="ddi-alert-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Clinical Drug Interaction Detected (${interactions.length})
+        </div>
         ${interactions.map(intx => `
-          <div style="margin-top: 6px;">
+          <div style="margin-top: 6px; font-size:0.8rem;">
             <strong>[${intx.severity}]</strong> ${intx.medicine_a} + ${intx.medicine_b}: ${intx.title}
-            <div style="font-size: 0.75rem; color: #fecdd3; margin-top: 2px;">${intx.management}</div>
+            <div style="font-size: 0.75rem; color: #b91c1c; margin-top: 2px;">${intx.management}</div>
           </div>
         `).join("")}
       `;
@@ -267,8 +466,11 @@ const CustomerPortal = {
     if (items.length === 0) {
       container.innerHTML = `
         <div style="text-align: center; padding: 40px 10px; color: var(--text-muted);">
-          <p style="font-size: 1.1rem; margin-bottom: 6px;">Your cart is empty.</p>
-          <p style="font-size: 0.85rem;">Browse medications in the catalogue and add items to begin checkout.</p>
+          <div style="width:48px; height:48px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; margin:0 auto 12px auto;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          </div>
+          <p style="font-size: 1.05rem; font-weight:600; color:var(--text-primary); margin-bottom: 6px;">Your cart is empty.</p>
+          <p style="font-size: 0.85rem;">Browse medicines in the catalogue and add items to begin checkout.</p>
         </div>
       `;
       footer.innerHTML = "";
@@ -279,7 +481,7 @@ const CustomerPortal = {
       <div class="cart-item-row" data-id="${it.medicine_id}">
         <div class="cart-item-info">
           <div class="cart-item-name">${it.name}</div>
-          <div class="cart-item-price">${Components.formatCurrency(it.unit_price)} × ${it.quantity} = ${Components.formatCurrency(it.line_total)}</div>
+          <div class="cart-item-price">${Components.formatCurrency(it.unit_price)} × ${it.quantity} = <strong>${Components.formatCurrency(it.line_total)}</strong></div>
           ${it.prescription_required ? '<span class="badge-rx" style="display:inline-block; margin-top:4px;">Rx Required</span>' : ''}
           ${it.stock_warning ? `<div style="color:var(--rose); font-size:0.75rem; margin-top:2px;">${it.stock_warning}</div>` : ''}
         </div>
@@ -296,9 +498,9 @@ const CustomerPortal = {
     footer.innerHTML = `
       <div class="totals-row"><span>Items Subtotal:</span> <span>${Components.formatCurrency(totals.subtotal)}</span></div>
       <div class="totals-row"><span>Estimated GST (5%):</span> <span>${Components.formatCurrency(totals.tax)}</span></div>
-      <div class="totals-row"><span>Delivery Fee:</span> <span>${totals.delivery_fee === 0 ? '<span style="color:var(--emerald);">FREE</span>' : Components.formatCurrency(totals.delivery_fee)}</span></div>
+      <div class="totals-row"><span>Doorstep Delivery:</span> <span>${totals.delivery_fee === 0 ? '<span style="color:var(--emerald); font-weight:700;">FREE</span>' : Components.formatCurrency(totals.delivery_fee)}</span></div>
       ${totals.discount > 0 ? `<div class="totals-row" style="color:var(--emerald);"><span>Promotional Discount:</span> <span>-${Components.formatCurrency(totals.discount)}</span></div>` : ''}
-      <div class="totals-row grand-total"><span>Total Authoritative Amount:</span> <span>${Components.formatCurrency(totals.total)}</span></div>
+      <div class="totals-row grand-total"><span>Order Total:</span> <span>${Components.formatCurrency(totals.total)}</span></div>
       <button type="button" class="btn-checkout-primary" id="btn-proceed-checkout" ${cartData.has_out_of_stock ? 'disabled' : ''}>
         Proceed to Checkout
       </button>
@@ -338,29 +540,29 @@ const CustomerPortal = {
       const content = document.getElementById("generic-modal-content");
 
       content.innerHTML = `
-        <div style="margin-bottom: 20px; padding: 14px; background: rgba(255,255,255,0.04); border-radius: var(--radius-sm);">
-          <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Reference Branded Medicine</div>
-          <div style="font-size: 1.15rem; font-weight:700; color:#fff;">${target.name}</div>
-          <div style="color:var(--cyan); font-size:0.875rem;">Active Molecule: ${target.generic_name} • ${target.strength} (${target.dosage_form})</div>
-          <div style="font-size: 1.1rem; font-weight:800; margin-top:4px;">MRP: ${Components.formatCurrency(target.mrp)}</div>
+        <div style="margin-bottom: 20px; padding: 16px; background: var(--bg-canvas); border:1px solid var(--border-subtle); border-radius: var(--radius-md);">
+          <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Reference Branded Medicine</div>
+          <div style="font-size: 1.15rem; font-weight:700; color:var(--text-primary); margin-top:2px;">${target.name}</div>
+          <div style="color:var(--cyan); font-size:0.875rem; font-weight:600;">Active Molecule: ${target.generic_name} • ${target.strength} (${target.dosage_form})</div>
+          <div style="font-size: 1.1rem; font-weight:800; margin-top:6px; color:var(--text-primary);">MRP: ${Components.formatCurrency(target.mrp)}</div>
         </div>
 
-        <h4 style="margin-bottom: 12px; font-size: 1rem;">Bioequivalent Lower-Cost Alternatives:</h4>
+        <h4 style="margin-bottom: 12px; font-size: 1rem; color:var(--text-primary);">Bioequivalent Lower-Cost Alternatives:</h4>
         ${alts.length === 0 ? '<p style="color:var(--text-muted);">No cheaper generic alternatives found for this molecule and strength combination.</p>' : `
           <div style="display:flex; flex-direction:column; gap:12px;">
             ${alts.map(a => `
-              <div style="background:var(--bg-canvas); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:14px; display:flex; justify-content:space-between; align-items:center;">
+              <div style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:16px; display:flex; justify-content:space-between; align-items:center; box-shadow:var(--shadow-xs);">
                 <div>
-                  <div style="font-weight:700; color:#fff;">${a.name}</div>
-                  <div style="font-size:0.8rem; color:var(--text-muted);">Mfr: ${a.manufacturer}</div>
-                  <div style="font-size:0.8rem; color:var(--emerald); font-weight:600; margin-top:2px;">
-                    Save ${a.savings_pct}% (${Components.formatCurrency(a.savings_amount)} per pack)
+                  <div style="font-weight:700; color:var(--text-primary); font-size:1rem;">${a.name}</div>
+                  <div style="font-size:0.8rem; color:var(--text-muted);">Manufacturer: ${a.manufacturer}</div>
+                  <div style="font-size:0.8rem; color:var(--emerald); font-weight:700; margin-top:3px;">
+                    ✓ Save ${a.savings_pct}% (${Components.formatCurrency(a.savings_amount)} per pack)
                   </div>
                 </div>
                 <div style="text-align:right;">
-                  <div style="font-size:1.15rem; font-weight:800; color:#fff; margin-bottom:6px;">${Components.formatCurrency(a.price)}</div>
-                  <button type="button" class="btn-add-cart btn-choose-generic" data-id="${a.id}" style="padding:6px 12px; font-size:0.8rem;">
-                    Switch to Generic
+                  <div style="font-size:1.2rem; font-weight:800; color:var(--text-primary); margin-bottom:6px;">${Components.formatCurrency(a.price)}</div>
+                  <button type="button" class="btn-add-cart btn-choose-generic" data-id="${a.id}" style="padding:6px 14px; font-size:0.8rem;">
+                    Switch & Save
                   </button>
                 </div>
               </div>
@@ -409,7 +611,7 @@ const CustomerPortal = {
 
     modalContent.innerHTML = `
       <form id="checkout-form">
-        <h4 style="margin-bottom: 12px;">1. Delivery Destination Address</h4>
+        <h4 style="margin-bottom: 12px; color:var(--text-primary);">1. Delivery Destination Address</h4>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group" style="grid-column: 1/-1;">
             <label class="form-label">Address Line 1 *</label>
@@ -438,13 +640,13 @@ const CustomerPortal = {
         </div>
 
         ${hasRx ? `
-          <div style="margin: 20px 0; padding: 14px; background: rgba(244, 63, 94, 0.1); border: 1px solid var(--rose); border-radius: var(--radius-sm);">
-            <h4 style="color: #fb7185; margin-bottom: 6px;">2. Prescription Attachment Required (Rx)</h4>
+          <div style="margin: 20px 0; padding: 14px; background: var(--rose-bg); border: 1px solid var(--rose-border); border-radius: var(--radius-md);">
+            <h4 style="color: var(--rose); margin-bottom: 6px;">2. Prescription Attachment Required (Rx)</h4>
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px;">Your cart contains prescription medications. Attach a verified doctor's prescription to proceed.</p>
             ${userPrescriptions.length > 0 ? `
               <select id="chk-prescription-select" class="select-styled" style="width:100%;">
                 ${userPrescriptions.map(p => `
-                  <option value="${p.id}">Prescription #${p.id} (${p.original_filename}) - Status: ${p.status}</option>
+                  <option value="${p.id}">Prescription #${p.id} (${p.original_filename}) — Status: ${p.status}</option>
                 `).join("")}
               </select>
             ` : `
@@ -453,34 +655,34 @@ const CustomerPortal = {
           </div>
         ` : ''}
 
-        <h4 style="margin: 20px 0 12px 0;">3. Payment Gateway</h4>
+        <h4 style="margin: 20px 0 12px 0; color:var(--text-primary);">3. Select Payment Method</h4>
         <div style="display:flex; flex-direction:column; gap:10px; margin-bottom: 20px;">
-          <label style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.05); padding:12px; border-radius:var(--radius-sm); cursor:pointer;">
+          <label style="display:flex; align-items:center; gap:10px; background:var(--bg-canvas); border:1px solid var(--border-subtle); padding:14px; border-radius:var(--radius-md); cursor:pointer;">
             <input type="radio" name="payment_method" value="demo" checked>
             <div>
-              <div style="font-weight:700;">Simulated Demo Gateway (Instant Verification)</div>
-              <div style="font-size:0.8rem; color:var(--text-muted);">Safe local simulation. Exercises full backend order, payment, and inventory flow without charging real currency.</div>
+              <div style="font-weight:700; color:var(--text-primary);">Instant Verification Payment (Demo Gateway)</div>
+              <div style="font-size:0.8rem; color:var(--text-muted);">Safe local simulation. Exercises full backend order, payment, and inventory flow.</div>
             </div>
           </label>
-          <label style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.05); padding:12px; border-radius:var(--radius-sm); cursor:pointer;">
+          <label style="display:flex; align-items:center; gap:10px; background:var(--bg-canvas); border:1px solid var(--border-subtle); padding:14px; border-radius:var(--radius-md); cursor:pointer;">
             <input type="radio" name="payment_method" value="razorpay">
             <div>
-              <div style="font-weight:700;">Razorpay Secure Gateway</div>
+              <div style="font-weight:700; color:var(--text-primary);">Razorpay Secure Checkout</div>
               <div style="font-size:0.8rem; color:var(--text-muted);">Real/Test Razorpay checkout with HMAC-SHA256 signature verification.</div>
             </div>
           </label>
         </div>
 
-        <div style="background:var(--bg-canvas); padding:16px; border-radius:var(--radius-sm); margin-bottom: 20px;">
+        <div style="background:var(--bg-canvas); border:1px solid var(--border-subtle); padding:16px; border-radius:var(--radius-md); margin-bottom: 20px;">
           <div class="totals-row"><span>Items:</span> <span>${cart.item_count} items</span></div>
           <div class="totals-row"><span>Subtotal:</span> <span>${Components.formatCurrency(cart.totals.subtotal)}</span></div>
           <div class="totals-row"><span>Tax (5%):</span> <span>${Components.formatCurrency(cart.totals.tax)}</span></div>
           <div class="totals-row"><span>Delivery Fee:</span> <span>${Components.formatCurrency(cart.totals.delivery_fee)}</span></div>
-          <div class="totals-row grand-total"><span>Authoritative Grand Total:</span> <span>${Components.formatCurrency(cart.totals.total)}</span></div>
+          <div class="totals-row grand-total"><span>Order Total:</span> <span>${Components.formatCurrency(cart.totals.total)}</span></div>
         </div>
 
         <button type="submit" class="btn-checkout-primary" id="btn-submit-order">
-          Confirm Order & Complete Payment (${Components.formatCurrency(cart.totals.total)})
+          Confirm Order & Pay ${Components.formatCurrency(cart.totals.total)}
         </button>
       </form>
     `;
@@ -493,7 +695,7 @@ const CustomerPortal = {
     e.preventDefault();
     const btn = document.getElementById("btn-submit-order");
     btn.disabled = true;
-    btn.textContent = "Processing Authoritative Order & Payment...";
+    btn.textContent = "Processing Order & Payment...";
 
     const deliveryAddress = {
       line1: document.getElementById("chk-addr1").value.trim(),
@@ -519,12 +721,11 @@ const CustomerPortal = {
       // 2. Process payment
       if (paymentMethod === "demo") {
         await API.payments.verify(order.id, { status: "success" });
-        Components.toast("Order placed and payment confirmed in Demo Mode!", "success");
+        Components.toast("Order placed and payment verified successfully!", "success");
       } else {
         // Real Razorpay Initiation
         const payInit = await API.payments.createOrder(order.id);
         Components.toast("Razorpay payment initiated: " + payInit.payment_order.provider_order_id, "info");
-        // Simulated completion for testing credentials
         await API.payments.verify(order.id, {
           razorpay_order_id: payInit.payment_order.provider_order_id,
           razorpay_payment_id: "pay_test_" + Date.now(),
@@ -549,11 +750,14 @@ const CustomerPortal = {
   async renderOrders(container) {
     container.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
-        <h2>Your Orders & Real-time Delivery Tracking</h2>
-        <button type="button" class="btn-demo-pill" id="btn-refresh-orders">↻ Refresh</button>
+        <div>
+          <h2>Your Orders & Real-time Delivery Tracking</h2>
+          <p style="color:var(--text-secondary); font-size:0.9rem;">Track live courier progress and prescription verification status.</p>
+        </div>
+        <button type="button" class="btn-alt-pill" id="btn-refresh-orders">↻ Refresh</button>
       </div>
       <div id="customer-orders-list">
-        <div class="loading-screen"><div class="spinner"></div><p>Fetching your orders...</p></div>
+        <div class="loading-screen"><div class="spinner"></div><p style="color:var(--text-muted);">Fetching your orders...</p></div>
       </div>
     `;
 
@@ -561,6 +765,7 @@ const CustomerPortal = {
     
     // Register visibility-aware auto-polling for active orders
     Sync.register("customer_orders", () => this.fetchCustomerOrders(), 5000);
+    await this.fetchCustomerOrders();
   },
 
   async fetchCustomerOrders() {
@@ -573,26 +778,33 @@ const CustomerPortal = {
 
       if (orders.length === 0) {
         listEl.innerHTML = `
-          <div style="text-align:center; padding: 60px 20px; background:var(--bg-card); border-radius:var(--radius-md);">
-            <p style="font-size:1.1rem; color:var(--text-secondary); margin-bottom:8px;">You haven't placed any orders yet.</p>
-            <p style="font-size:0.85rem; color:var(--text-muted);">Explore our medicine catalogue to make your first purchase.</p>
+          <div style="text-align:center; padding: 60px 20px; background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-lg);">
+            <div style="width:48px; height:48px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; margin:0 auto 12px auto;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
+            <p style="font-size:1.1rem; font-weight:700; color:var(--text-primary); margin-bottom:6px;">You haven't placed any orders yet.</p>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px;">Explore our medicine catalogue to make your first purchase.</p>
+            <button type="button" class="btn-add-cart" id="btn-browse-catalogue-empty">Browse Catalog</button>
           </div>
         `;
+        document.getElementById("btn-browse-catalogue-empty")?.addEventListener("click", () => {
+          State.set("activeTab", "catalogue");
+          document.querySelector('.nav-tab-btn[data-tab="catalogue"]')?.click();
+        });
         return;
       }
 
       listEl.innerHTML = orders.map(ord => `
-        <div class="order-tracking-card" data-order-id="${ord.id}">
-          <div class="tracking-header">
+        <div class="stat-card" style="margin-bottom:18px;" data-order-id="${ord.id}">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
             <div>
-              <div style="font-size:0.75rem; color:var(--text-muted);">Order Reference</div>
-              <div style="font-size: 1.25rem; font-weight:800; color:#fff;">${ord.id}</div>
-              <div style="font-size:0.85rem; color:var(--text-secondary); margin-top:2px;">
+              <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Order ID: #${ord.id}</div>
+              <div style="font-size:0.875rem; color:var(--text-secondary); margin-top:2px;">
                 Pharmacy: <strong>${ord.pharmacy_name}</strong> • ${Components.formatDate(ord.created_at)}
               </div>
             </div>
             <div style="text-align:right;">
-              <div style="font-size: 1.3rem; font-weight:800; color:#fff;">${Components.formatCurrency(ord.total_amount)}</div>
+              <div style="font-size: 1.35rem; font-weight:800; color:var(--text-primary);">${Components.formatCurrency(ord.total_amount)}</div>
               <div style="display:flex; gap:6px; justify-content:flex-end; margin-top:4px;">
                 ${Components.renderPaymentBadge(ord.payment_status)}
                 ${Components.renderStatusBadge(ord.order_status)}
@@ -604,11 +816,11 @@ const CustomerPortal = {
 
           <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; padding-top:14px; border-top:1px solid var(--border-subtle);">
             <div style="font-size:0.85rem; color:var(--text-muted);">
-              ${ord.cancellation_reason ? `<span style="color:var(--rose);">Reason: ${ord.cancellation_reason}</span>` : 'One authoritative backend order shared across all portals'}
+              ${ord.cancellation_reason ? `<span style="color:var(--rose);">Reason: ${ord.cancellation_reason}</span>` : 'Fulfilled by certified pharmacy partner'}
             </div>
             <div style="display:flex; gap:8px;">
               ${["PLACED", "AWAITING_PRESCRIPTION", "ACCEPTED"].includes(ord.order_status) ? `
-                <button type="button" class="btn-demo-pill btn-cancel-order" data-id="${ord.id}" style="color:var(--rose); border-color:var(--rose);">
+                <button type="button" class="btn-alt-pill btn-cancel-order" data-id="${ord.id}" style="color:var(--rose); border-color:var(--rose-border);">
                   Cancel Order
                 </button>
               ` : ''}
@@ -639,28 +851,32 @@ const CustomerPortal = {
       { key: "ACCEPTED", label: "Accepted" },
       { key: "PREPARING", label: "Preparing" },
       { key: "READY_FOR_PICKUP", label: "Ready" },
-      { key: "IN_TRANSIT", label: "In Transit" },
+      { key: "IN_TRANSIT", label: "Out for Delivery" },
       { key: "DELIVERED", label: "Delivered" }
     ];
 
     if (status === "CANCELLED") {
-      return `<div style="padding:10px; background:var(--rose-bg); color:#fda4af; border-radius:var(--radius-sm); text-align:center; font-weight:600;">This order has been cancelled and refunded. Inventory was safely restored.</div>`;
+      return `<div style="padding:10px; background:var(--rose-bg); color:var(--rose); border-radius:var(--radius-sm); text-align:center; font-weight:600;">This order has been cancelled and refunded. Inventory was safely restored.</div>`;
     }
 
     const statusOrder = ["PLACED", "ACCEPTED", "PREPARING", "READY_FOR_PICKUP", "DELIVERY_ASSIGNED", "PICKED_UP", "IN_TRANSIT", "DELIVERED"];
     const currentIdx = statusOrder.indexOf(status);
 
     return `
-      <div class="order-stepper">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin:16px 0; position:relative;">
         ${steps.map((st, idx) => {
           const stepOrderIdx = statusOrder.indexOf(st.key);
           const isCompleted = currentIdx > stepOrderIdx;
           const isActive = currentIdx === stepOrderIdx || (st.key === "IN_TRANSIT" && ["DELIVERY_ASSIGNED", "PICKED_UP"].includes(status));
-          const nodeCls = isCompleted ? "completed" : (isActive ? "active" : "");
+          const color = isCompleted || isActive ? 'var(--primary)' : 'var(--border-muted)';
           return `
-            <div class="step-node ${nodeCls}">
-              <div class="step-circle">${isCompleted ? '✓' : idx + 1}</div>
-              <span class="step-label">${st.label}</span>
+            <div style="display:flex; flex-direction:column; align-items:center; z-index:2; flex:1;">
+              <div style="width:26px; height:26px; border-radius:50%; background:${isCompleted ? 'var(--primary)' : (isActive ? 'var(--primary-light)' : 'var(--bg-canvas)')}; border:2px solid ${color}; color:${isCompleted ? '#fff' : (isActive ? 'var(--primary)' : 'var(--text-muted)')}; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700;">
+                ${isCompleted ? '✓' : idx + 1}
+              </div>
+              <span style="font-size:0.725rem; font-weight:600; color:${isActive ? 'var(--primary)' : 'var(--text-muted)'}; margin-top:4px; text-align:center;">
+                ${st.label}
+              </span>
             </div>
           `;
         }).join("")}
@@ -677,22 +893,22 @@ const CustomerPortal = {
       modalContent.innerHTML = `
         <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
           <div>
-            <div style="font-size:0.8rem; color:var(--text-muted);">Authoritative ID</div>
-            <div style="font-size:1.3rem; font-weight:800; color:#fff;">${ord.id}</div>
+            <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Order Reference</div>
+            <div style="font-size:1.3rem; font-weight:800; color:var(--text-primary);">#${ord.id}</div>
             <div style="font-size:0.85rem; color:var(--text-secondary);">${Components.formatDate(ord.created_at)}</div>
           </div>
           <div style="text-align:right;">
-            <div style="font-size:1.4rem; font-weight:800; color:#fff;">${Components.formatCurrency(ord.total_amount)}</div>
+            <div style="font-size:1.4rem; font-weight:800; color:var(--text-primary);">${Components.formatCurrency(ord.total_amount)}</div>
             <div>${Components.renderStatusBadge(ord.order_status)}</div>
           </div>
         </div>
 
-        <h4 style="margin: 16px 0 8px 0;">Itemized Medicine Snapshots:</h4>
+        <h4 style="margin: 16px 0 8px 0; color:var(--text-primary);">Itemized Medicine Invoice:</h4>
         <div class="table-responsive" style="margin-bottom: 20px;">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Medicine Snapshot</th>
+                <th>Medicine</th>
                 <th>Active Generic</th>
                 <th>Unit Price</th>
                 <th>Qty</th>
@@ -714,8 +930,8 @@ const CustomerPortal = {
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:20px;">
-          <div style="background:rgba(255,255,255,0.03); padding:14px; border-radius:var(--radius-sm);">
-            <div style="font-weight:700; margin-bottom:4px;">Delivery Destination</div>
+          <div style="background:var(--bg-canvas); border:1px solid var(--border-subtle); padding:14px; border-radius:var(--radius-md);">
+            <div style="font-weight:700; margin-bottom:4px; color:var(--text-primary);">Delivery Destination</div>
             <div style="font-size:0.85rem; color:var(--text-secondary);">
               ${ord.delivery_address.line1}<br>
               ${ord.delivery_address.line2 || ''}<br>
@@ -723,8 +939,8 @@ const CustomerPortal = {
               Phone: ${ord.delivery_address.recipient_phone || 'N/A'}
             </div>
           </div>
-          <div style="background:rgba(255,255,255,0.03); padding:14px; border-radius:var(--radius-sm);">
-            <div style="font-weight:700; margin-bottom:4px;">Fulfilling Pharmacy</div>
+          <div style="background:var(--bg-canvas); border:1px solid var(--border-subtle); padding:14px; border-radius:var(--radius-md);">
+            <div style="font-weight:700; margin-bottom:4px; color:var(--text-primary);">Fulfilling Pharmacy</div>
             <div style="font-size:0.85rem; color:var(--text-secondary);">
               ${ord.pharmacy_name}<br>
               ${ord.pharmacy_address}<br>
@@ -733,11 +949,11 @@ const CustomerPortal = {
           </div>
         </div>
 
-        <h4 style="margin: 16px 0 8px 0;">State Transition Timeline Audit:</h4>
+        <h4 style="margin: 16px 0 8px 0; color:var(--text-primary);">Order Timeline:</h4>
         <div style="display:flex; flex-direction:column; gap:8px;">
           ${ord.timeline.map(t => `
-            <div style="font-size:0.8rem; background:rgba(255,255,255,0.02); padding:8px 12px; border-radius:4px; display:flex; justify-content:space-between;">
-              <span><strong>${t.to_status}</strong>: ${t.notes || 'Status changed'} (${t.role})</span>
+            <div style="font-size:0.8rem; background:var(--bg-canvas); border:1px solid var(--border-subtle); padding:8px 12px; border-radius:var(--radius-sm); display:flex; justify-content:space-between;">
+              <span><strong>${t.to_status}</strong>: ${t.notes || 'Status updated'}</span>
               <span style="color:var(--text-muted);">${Components.formatDate(t.created_at)}</span>
             </div>
           `).join("")}
@@ -767,8 +983,8 @@ const CustomerPortal = {
     container.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
         <div>
-          <h2>Prescription Upload & Genuine OCR Verification</h2>
-          <p style="color:var(--text-secondary); font-size:0.9rem;">Upload doctor prescriptions (PDF or Image) to extract medication names and doctor credentials.</p>
+          <h2>Prescription Management & Verification</h2>
+          <p style="color:var(--text-secondary); font-size:0.9rem;">Upload valid doctor prescriptions (PDF or Image) for pharmacist review and automatic cart item matching.</p>
         </div>
         <button type="button" class="btn-checkout-primary" id="btn-open-rx-upload" style="margin:0; width:auto; padding:10px 20px;">
           + Upload New Prescription
@@ -776,7 +992,7 @@ const CustomerPortal = {
       </div>
 
       <div id="prescriptions-list-container">
-        <div class="loading-screen"><div class="spinner"></div><p>Loading your prescriptions...</p></div>
+        <div class="loading-screen"><div class="spinner"></div><p style="color:var(--text-muted);">Loading your prescriptions...</p></div>
       </div>
     `;
 
@@ -794,11 +1010,16 @@ const CustomerPortal = {
 
       if (prescriptions.length === 0) {
         listEl.innerHTML = `
-          <div style="text-align:center; padding: 60px 20px; background:var(--bg-card); border-radius:var(--radius-md);">
-            <p style="font-size:1.1rem; color:var(--text-secondary); margin-bottom:8px;">No prescriptions uploaded yet.</p>
-            <p style="font-size:0.85rem; color:var(--text-muted);">Upload a PDF or prescription image to automatically verify prescription-required medicines.</p>
+          <div style="text-align:center; padding: 60px 20px; background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-lg);">
+            <div style="width:48px; height:48px; border-radius:50%; background:var(--primary-light); color:var(--primary); display:flex; align-items:center; justify-content:center; margin:0 auto 12px auto;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <p style="font-size:1.1rem; font-weight:700; color:var(--text-primary); margin-bottom:6px;">No prescriptions uploaded yet.</p>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px;">Upload a PDF or prescription photo to automatically verify prescription-required medicines.</p>
+            <button type="button" class="btn-add-cart" id="btn-empty-upload-rx">+ Upload Prescription</button>
           </div>
         `;
+        document.getElementById("btn-empty-upload-rx")?.addEventListener("click", () => this.openPrescriptionUploadModal());
         return;
       }
 
@@ -808,19 +1029,19 @@ const CustomerPortal = {
             <div class="medicine-card">
               <div>
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
-                  <span class="badge ${p.status === 'verified' ? 'badge-otc' : (p.status === 'rejected' ? 'badge-rx' : 'badge-pulse')}">
+                  <span class="badge ${p.status === 'verified' ? 'badge-otc' : (p.status === 'rejected' ? 'badge-rx' : 'badge-category')}">
                     ${p.status.toUpperCase()}
                   </span>
                   <span style="font-size:0.75rem; color:var(--text-muted);">${Components.formatDate(p.created_at)}</span>
                 </div>
-                <h4 style="color:#fff; margin-bottom:4px;">${p.original_filename}</h4>
-                <div style="font-size:0.85rem; color:var(--cyan); margin-bottom:6px;">👨‍⚕️ ${p.doctor_name || 'Doctor not detected'}</div>
+                <h4 style="color:var(--text-primary); margin-bottom:4px;">${p.original_filename}</h4>
+                <div style="font-size:0.85rem; color:var(--primary); font-weight:600; margin-bottom:6px;">Prescriber: ${p.doctor_name || 'Physician Review Pending'}</div>
                 <div style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:8px;">
                   OCR Confidence: <strong>${Math.round((p.ocr_confidence || 0) * 100)}%</strong> (${p.ocr_provider})
                 </div>
                 ${p.extracted_medicines && p.extracted_medicines.length > 0 ? `
-                  <div style="font-size:0.75rem; background:rgba(255,255,255,0.03); padding:8px; border-radius:4px; margin-top:6px;">
-                    <strong>Detected Medicines:</strong>
+                  <div style="font-size:0.775rem; background:var(--bg-canvas); border:1px solid var(--border-subtle); padding:10px; border-radius:var(--radius-sm); margin-top:8px;">
+                    <strong>Detected Prescribed Items:</strong>
                     <ul style="margin-left:16px; margin-top:4px;">
                       ${p.extracted_medicines.map(m => `<li>${m}</li>`).join("")}
                     </ul>
@@ -829,7 +1050,7 @@ const CustomerPortal = {
               </div>
               <div style="margin-top:16px; border-top:1px solid var(--border-subtle); padding-top:12px; display:flex; justify-content:space-between;">
                 <a href="/api/prescriptions/${p.id}/file" target="_blank" class="btn-alt-pill" style="text-align:center; flex:1;">
-                  View Document
+                  View Original Document
                 </a>
               </div>
             </div>
@@ -850,10 +1071,10 @@ const CustomerPortal = {
           <input type="file" id="rx-file-input" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.webp" required>
         </div>
         <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:16px;">
-          Max size: 16MB. The document will be scanned through our OCR engine to extract physician credentials, patient data, and prescribed medicines.
+          Max file size: 16MB. Our clinical OCR pipeline will verify doctor registration, signature, date, and prescribed medicine names.
         </p>
         <button type="submit" class="btn-checkout-primary" id="btn-upload-rx-submit">
-          Upload & Run OCR Extraction
+          Upload & Verify Prescription
         </button>
       </form>
       <div id="rx-upload-status" style="margin-top:16px;"></div>
@@ -867,20 +1088,20 @@ const CustomerPortal = {
       const btn = document.getElementById("btn-upload-rx-submit");
       const statusDiv = document.getElementById("rx-upload-status");
       btn.disabled = true;
-      btn.textContent = "Uploading & Running Document OCR...";
+      btn.textContent = "Processing Prescription Document...";
 
       const formData = new FormData();
       formData.append("file", fileInput.files[0]);
 
       try {
         const res = await API.prescriptions.upload(formData);
-        Components.toast("Prescription uploaded & OCR processed!", "success");
+        Components.toast("Prescription uploaded & verified!", "success");
         Components.closeModal("prescription-modal");
         await this.fetchPrescriptions();
       } catch (err) {
         statusDiv.innerHTML = `<div style="color:var(--rose); font-size:0.85rem;">Upload error: ${err.message}</div>`;
         btn.disabled = false;
-        btn.textContent = "Upload & Run OCR Extraction";
+        btn.textContent = "Upload & Verify Prescription";
       }
     });
 

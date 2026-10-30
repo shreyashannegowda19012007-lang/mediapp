@@ -77,14 +77,14 @@ const DeliveryPortal = {
           <div class="tracking-header">
             <div>
               <span class="badge badge-pulse">ACTIVE MISSION</span>
-              <div style="font-size: 1.4rem; font-weight:800; color:#fff; margin-top:4px;">${ord.id}</div>
+              <div style="font-size: 1.4rem; font-weight:800; color:var(--text-primary); margin-top:4px;">${ord.id}</div>
               <div style="font-size:0.85rem; color:var(--text-secondary); margin-top:2px;">
                 Earned Delivery Payout: <strong>${Components.formatCurrency(ord.delivery_fee)}</strong>
               </div>
             </div>
             <div style="text-align:right;">
               ${Components.renderStatusBadge(st)}
-              <div style="font-size:1.2rem; font-weight:800; color:#fff; margin-top:4px;">${Components.formatCurrency(ord.total_amount)}</div>
+              <div style="font-size:1.2rem; font-weight:800; color:var(--text-primary); margin-top:4px;">${Components.formatCurrency(ord.total_amount)}</div>
             </div>
           </div>
 
@@ -92,15 +92,15 @@ const DeliveryPortal = {
             <!-- Pharmacy Pickup -->
             <div style="background:rgba(255,255,255,0.03); padding:16px; border-radius:var(--radius-sm); border-left:4px solid var(--primary);">
               <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Step 1: Pickup Location</div>
-              <div style="font-size:1.1rem; font-weight:700; color:#fff; margin:4px 0;">${ord.pharmacy_name}</div>
+              <div style="font-size:1.1rem; font-weight:700; color:var(--text-primary); margin:4px 0;">${ord.pharmacy_name}</div>
               <div style="font-size:0.85rem; color:var(--text-secondary);">${ord.pharmacy_address}</div>
               <div style="font-size:0.85rem; color:var(--primary); margin-top:4px;">📞 Pharmacy: ${ord.pharmacy_phone}</div>
             </div>
 
             <!-- Customer Destination -->
-            <div style="background:rgba(255,255,255,0.03); padding:16px; border-radius:var(--radius-sm); border-left:4px solid var(--emerald);">
+            <div style="background:var(--bg-canvas); padding:16px; border-radius:var(--radius-md); border-left:4px solid var(--emerald); border:1px solid var(--border-subtle);">
               <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Step 2: Drop-off Location</div>
-              <div style="font-size:1.1rem; font-weight:700; color:#fff; margin:4px 0;">${ord.customer_name}</div>
+              <div style="font-size:1.1rem; font-weight:700; color:var(--text-primary); margin:4px 0;">${ord.customer_name}</div>
               <div style="font-size:0.85rem; color:var(--text-secondary);">
                 ${addr.line1 || ''}, ${addr.line2 || ''}<br>
                 ${addr.city || ''}, ${addr.state || ''} - ${addr.pincode || ''}
@@ -289,7 +289,7 @@ const DeliveryPortal = {
             <div class="tracking-header">
               <div>
                 <span class="badge badge-otc">READY FOR PICKUP</span>
-                <div style="font-size: 1.25rem; font-weight:800; color:#fff; margin-top:4px;">${ord.id}</div>
+                <div style="font-size: 1.25rem; font-weight:800; color:var(--text-primary); margin-top:4px;">${ord.id}</div>
                 <div style="font-size:0.85rem; color:var(--text-secondary); margin-top:2px;">
                   Pharmacy: <strong>${ord.pharmacy_name}</strong> (${ord.pharmacy_address})
                 </div>
