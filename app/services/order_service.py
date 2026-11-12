@@ -205,6 +205,8 @@ class OrderService:
                 )
                 if not rx_check:
                     raise ValueError("Invalid prescription attached or unauthorized.")
+                if rx_check["status"] == "rejected":
+                    raise ValueError(f"Attached prescription #{prescription_id} has been rejected and cannot be used for orders.")
 
             # 3. Calculate authoritative totals
             totals = PricingService.calculate_order_totals(enriched_items)

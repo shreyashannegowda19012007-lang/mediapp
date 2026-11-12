@@ -120,9 +120,18 @@ const PharmacyPortal = {
               Notes: ${Components.escapeHtml(ord.delivery_notes || 'Standard delivery')}
             </div>
             <div style="display:flex; gap:8px;">
-              ${ord.order_status === "PLACED" ? `
+              ${(ord.order_status === "PLACED" || ord.order_status === "PRESCRIPTION_VERIFIED") ? `
                 <button type="button" class="btn-checkout-primary btn-accept-order" data-id="${Components.escapeHtml(ord.id)}" style="width:auto; padding:8px 16px; margin:0; background:var(--emerald);">
                   Accept Order
+                </button>
+                <button type="button" class="btn-alt-pill btn-reject-order" data-id="${Components.escapeHtml(ord.id)}" style="color:var(--rose); border-color:var(--rose);">
+                  Reject
+                </button>
+              ` : ''}
+
+              ${ord.order_status === "AWAITING_PRESCRIPTION" ? `
+                <button type="button" class="btn-alt-pill btn-goto-rx" data-rxid="${ord.prescription_id || ''}" style="color:var(--amber); border-color:var(--amber);">
+                  Verify Rx #${ord.prescription_id || ''}
                 </button>
                 <button type="button" class="btn-alt-pill btn-reject-order" data-id="${Components.escapeHtml(ord.id)}" style="color:var(--rose); border-color:var(--rose);">
                   Reject
@@ -163,6 +172,15 @@ const PharmacyPortal = {
       });
       ordersList.querySelectorAll(".btn-inspect-order").forEach(b => {
         b.addEventListener("click", () => CustomerPortal.showOrderDetailsModal(b.dataset.id));
+      });
+      ordersList.querySelectorAll(".btn-goto-rx").forEach(b => {
+        b.addEventListener("click", () => {
+          State.set("activeTab", "prescriptions");
+          document.querySelectorAll("#portal-nav .nav-tab-btn").forEach(btn => {
+            btn.classList.toggle("active", btn.dataset.tab === "prescriptions");
+          });
+          this.init("prescriptions");
+        });
       });
 
     } catch (err) {
@@ -210,6 +228,8 @@ const PharmacyPortal = {
           <select id="pharm-order-status-filter" class="select-styled">
             <option value="">All Orders</option>
             <option value="PLACED">Placed</option>
+            <option value="AWAITING_PRESCRIPTION">Awaiting Prescription</option>
+            <option value="PRESCRIPTION_VERIFIED">Prescription Verified</option>
             <option value="ACCEPTED">Accepted</option>
             <option value="PREPARING">Preparing</option>
             <option value="READY_FOR_PICKUP">Ready for Pickup</option>
@@ -295,9 +315,10 @@ const PharmacyPortal = {
           <h2>Pharmacy Inventory Management</h2>
           <p style="color:var(--text-secondary); font-size:0.9rem;">Maintain real-time medicine stock, adjust unit pricing, and configure batch thresholds.</p>
         </div>
-        <div style="display:flex; gap:10px;">
-          <input type="text" id="inv-search-input" class="form-control" placeholder="Search stocked medicines..." style="width:250px;">
+        <div style="display:flex; gap:10px; align-items:center;">
+          <input type="text" id="inv-search-input" class="form-control" placeholder="Search stocked medicines..." style="width:220px;">
           <button type="button" class="btn-demo-pill" id="btn-toggle-low-stock">Show Low Stock Only</button>
+          <button type="button" class="btn-checkout-primary" id="btn-add-inventory-item" style="width:auto; margin:0; padding:8px 16px; background:var(--emerald);">+ Stock New Medicine</button>
         </div>
       </div>
 
@@ -309,6 +330,10 @@ const PharmacyPortal = {
     let lowStockActive = false;
     const searchInput = document.getElementById("inv-search-input");
     const lowStockBtn = document.getElementById("btn-toggle-low-stock");
+    const addInvBtn = document.getElementById("btn-add-inventory-item");
+    if (addInvBtn) {
+      addInvBtn.addEventListener("click", () => this.openAddStockModal());
+    }
 
     searchInput.addEventListener("input", (e) => {
       clearTimeout(this._invSearchTimer);
@@ -376,14 +401,22 @@ const PharmacyPortal = {
                       </span>
                     </td>
                     <td>
-                      <button type="button" class="btn-alt-pill btn-edit-stock"
-                              data-id="${it.medicine_id}"
-                              data-name="${Components.escapeHtml(it.name)}"
-                              data-qty="${it.stock_quantity}"
-                              data-price="${it.unit_price}"
-                              data-avail="${it.is_available}">
-                        Edit Stock
-                      </button>
+                      <div style="display:flex; gap:6px;">
+                        <button type="button" class="btn-alt-pill btn-edit-stock"
+                                data-id="${it.medicine_id}"
+                                data-name="${Components.escapeHtml(it.name)}"
+                                data-qty="${it.stock_quantity}"
+                                data-price="${it.unit_price}"
+                                data-avail="${it.is_available}">
+                          Edit Stock
+                        </button>
+                        <button type="button" class="btn-alt-pill btn-delete-stock"
+                                data-id="${it.medicine_id}"
+                                data-name="${Components.escapeHtml(it.name)}"
+                                style="color:var(--rose); border-color:var(--rose);">
+                          Remove
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 `;
@@ -401,6 +434,10 @@ const PharmacyPortal = {
           price: parseFloat(b.dataset.price),
           avail: b.dataset.avail === "1" || b.dataset.avail === "true"
         }));
+      });
+
+      container.querySelectorAll(".btn-delete-stock").forEach(b => {
+        b.addEventListener("click", () => this.handleDeleteStock(parseInt(b.dataset.id), b.dataset.name));
       });
 
     } catch (err) {
@@ -445,6 +482,136 @@ const PharmacyPortal = {
           is_available: newAvail
         });
         Components.toast("Inventory stock updated successfully.", "success");
+        Components.closeModal("order-detail-modal");
+        await this.fetchInventoryTable();
+      } catch (err) {
+        Components.toast(err.message, "error");
+      }
+    });
+
+    Components.openModal("order-detail-modal");
+  },
+
+  async handleDeleteStock(medicineId, medicineName) {
+    if (!confirm(`Are you sure you want to remove '${medicineName}' from pharmacy inventory?`)) return;
+    try {
+      await API.pharmacy.deleteInventory(medicineId);
+      Components.toast(`'${medicineName}' removed from inventory.`, "info");
+      await this.fetchInventoryTable();
+    } catch (err) {
+      Components.toast(err.message, "error");
+    }
+  },
+
+  async openAddStockModal() {
+    const modalContent = document.getElementById("order-detail-content");
+    const modalTitle = document.getElementById("order-detail-title");
+    if (modalTitle) modalTitle.textContent = "Stock New Medicine in Pharmacy";
+
+    modalContent.innerHTML = `
+      <form id="add-stock-form">
+        <div class="form-group">
+          <label class="form-label">Search Medicine Catalogue *</label>
+          <input type="text" id="add-stock-search" class="form-control" placeholder="Type medicine name (e.g. Paracetamol, Augmentin)..." autocomplete="off" required>
+          <input type="hidden" id="add-stock-med-id" value="">
+          <div id="add-stock-search-results" style="max-height:160px; overflow-y:auto; margin-top:6px; border:1px solid var(--border-subtle); border-radius:var(--radius-sm); display:none; background:var(--bg-card);"></div>
+        </div>
+        <div id="add-stock-selected-info" style="display:none; padding:10px; margin-bottom:14px; background:rgba(255,255,255,0.04); border-radius:var(--radius-sm); font-size:0.85rem;"></div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Stock Quantity (Units) *</label>
+            <input type="number" id="add-stock-qty" class="form-control" min="0" value="50" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Unit Selling Price (₹) *</label>
+            <input type="number" step="0.01" id="add-stock-price" class="form-control" min="0" value="100.00" required>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px;">
+          <div class="form-group">
+            <label class="form-label">Batch Number</label>
+            <input type="text" id="add-stock-batch" class="form-control" placeholder="e.g. BATCH-2026-X">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Expiry Date</label>
+            <input type="date" id="add-stock-expiry" class="form-control">
+          </div>
+        </div>
+        <div class="form-group" style="display:flex; align-items:center; gap:10px; margin-top:16px;">
+          <input type="checkbox" id="add-stock-avail" checked style="width:18px; height:18px;">
+          <label for="add-stock-avail" style="font-size:0.9rem; cursor:pointer;">Available for Customer Ordering</label>
+        </div>
+        <button type="submit" class="btn-checkout-primary" style="margin-top:20px;">
+          Add to Pharmacy Inventory
+        </button>
+      </form>
+    `;
+
+    const searchInput = document.getElementById("add-stock-search");
+    const resultsBox = document.getElementById("add-stock-search-results");
+    const selectedInfo = document.getElementById("add-stock-selected-info");
+    const medIdInput = document.getElementById("add-stock-med-id");
+    const priceInput = document.getElementById("add-stock-price");
+
+    let timer = null;
+    searchInput.addEventListener("input", (e) => {
+      clearTimeout(timer);
+      const val = e.target.value.trim();
+      if (!val) {
+        resultsBox.style.display = "none";
+        return;
+      }
+      timer = setTimeout(async () => {
+        try {
+          const res = await API.medicines.search({ q: val, limit: 8 });
+          const meds = res.medicines || [];
+          if (meds.length === 0) {
+            resultsBox.innerHTML = '<div style="padding:8px 12px; color:var(--text-muted); font-size:0.85rem;">No medicines found.</div>';
+          } else {
+            resultsBox.innerHTML = meds.map(m => `
+              <div class="med-search-item" data-id="${m.id}" data-name="${Components.escapeHtml(m.name)}" data-mrp="${m.mrp}" data-gen="${Components.escapeHtml(m.generic_name)}" style="padding:8px 12px; cursor:pointer; border-bottom:1px solid var(--border-subtle); font-size:0.85rem;">
+                <strong>${Components.escapeHtml(m.name)}</strong> (${Components.escapeHtml(m.strength)}) • <span style="color:var(--cyan);">${Components.escapeHtml(m.generic_name)}</span> • ₹${m.mrp}
+              </div>
+            `).join("");
+            resultsBox.querySelectorAll(".med-search-item").forEach(item => {
+              item.addEventListener("click", () => {
+                medIdInput.value = item.dataset.id;
+                searchInput.value = item.dataset.name;
+                priceInput.value = item.dataset.mrp;
+                resultsBox.style.display = "none";
+                selectedInfo.style.display = "block";
+                selectedInfo.innerHTML = `Selected: <strong>${item.dataset.name}</strong> • Molecule: ${item.dataset.gen} • Standard MRP: ₹${item.dataset.mrp}`;
+              });
+            });
+          }
+          resultsBox.style.display = "block";
+        } catch {}
+      }, 250);
+    });
+
+    document.getElementById("add-stock-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const medId = parseInt(medIdInput.value);
+      if (!medId) {
+        Components.toast("Please select a medicine from the catalogue search.", "warning");
+        return;
+      }
+      const qty = parseInt(document.getElementById("add-stock-qty").value);
+      const price = parseFloat(document.getElementById("add-stock-price").value);
+      const batch = document.getElementById("add-stock-batch").value.trim() || null;
+      const expiry = document.getElementById("add-stock-expiry").value.trim() || null;
+      const avail = document.getElementById("add-stock-avail").checked;
+
+      try {
+        await API.pharmacy.addInventory({
+          medicine_id: medId,
+          quantity: qty,
+          unit_price: price,
+          batch_number: batch,
+          expiry_date: expiry,
+          is_available: avail
+        });
+        Components.toast("Medicine successfully added to inventory!", "success");
         Components.closeModal("order-detail-modal");
         await this.fetchInventoryTable();
       } catch (err) {

@@ -52,7 +52,7 @@ A complete, production-grade, ground-up rebuild of **MediApp**: a multi-portal m
 | **Authentication** | Session-based Auth with PBKDF2-SHA256 password hashing, Google OAuth 2.0 flow, and 1-click Demo Switcher |
 | **Payments** | Razorpay Python SDK + HMAC-SHA256 Signature Verification + Local Demo Provider |
 | **AI / OCR** | Google Gemini REST API, `pypdf`, `pytesseract`, PIL / Pillow |
-| **Testing** | `pytest`, `pytest-cov` (32 tests covering Scenarios A through G) |
+| **Testing** | `pytest`, `pytest-cov`, `playwright` (65 automated unit/integration tests, 12-stage Playwright browser suite, 15 live cross-portal lifecycle stages) |
 
 ---
 
@@ -120,16 +120,19 @@ You can switch between any of the 4 roles using the **Quick Demo Switcher** bar 
 
 ---
 
-## 🧪 Automated Testing Suite
+## 🧪 Automated Testing Suite & Validation Reports
 
-MediApp includes an extensive automated test suite covering unit calculations, database integrity, state transitions, API endpoints, and end-to-end acceptance scenarios (Scenarios A through G):
+MediApp includes an extensive automated test suite covering unit calculations, database integrity, state transitions, API endpoints, cross-portal workflow orchestration, security/RBAC boundaries, and real browser end-to-end automation (60 Pytest tests + 12-stage Playwright suite):
 
 ```powershell
-# Run all tests
+# Run all tests (including Playwright headless Chromium suite)
 .\.venv\Scripts\python.exe -m pytest -v
 
-# Run with coverage report
+# Run with test coverage report
 .\.venv\Scripts\python.exe -m pytest --cov=app --cov-report=term-missing tests/
+
+# Run live cross-portal verification against active server
+.\.venv\Scripts\python.exe tests/verify_live_cross_portal.py
 ```
 
 ### Test Coverage Highlights:
@@ -137,8 +140,8 @@ MediApp includes an extensive automated test suite covering unit calculations, d
 - `tests/test_state_machine.py`: Legal order state transitions and role permission enforcement.
 - `tests/test_inventory.py`: Concurrent stock checks, atomic reservation, overselling prevention, stock restoration.
 - `tests/test_ddi.py`: Substance name normalization, contraindicated drug interactions, generic bioequivalent matching.
-- `tests/test_auth_rbac.py`: Session management, role-based access control, IDOR protection.
-- `tests/test_api_orders.py`: Cart to order conversion, order item snapshots, customer data isolation.
+- `tests/test_auth_rbac.py`: Session management, role-based access control, IDOR protection, cross-pharmacy cart conflict (DEF-15), static asset 404 behavior (DEF-03).
+- `tests/test_api_orders.py`: Cart to order conversion, order item snapshots, customer data isolation, concurrent delivery claiming (DEF-08).
 - `tests/test_api_payments.py`: Razorpay signature validation, demo payment progression, replay rejection.
 - `tests/test_api_prescriptions.py`: Upload validation, OCR entity extraction, pharmacist verification flow.
 - `tests/test_api_ai.py`: Emergency red-flag triage warnings, clinical OTC suggestions.
@@ -148,6 +151,20 @@ MediApp includes an extensive automated test suite covering unit calculations, d
   - **Scenario E**: Admin oversight & real database analytics computation.
   - **Scenario F**: Order cancellation and atomic inventory restoration.
   - **Scenario G**: Prescription upload, digital parsing, and pharmacist approval.
+- `tests/test_edge_cases_and_security.py`:
+  - Boundary input validation & XSS/SQL injection resilience.
+  - Role-Based Access Control (RBAC) & Insecure Direct Object Reference (IDOR) isolation.
+  - Prescription medical privacy (HIPAA / DEF-05).
+  - Administrator lockout protection (DEF-11).
+  - Terminal order state transition locking.
+- `tests/test_browser_suite.py`:
+  - 12 automated stages in real Chromium browser validating the DOM, debounced search, modal dialogs, cart drawer, checkout, and live status synchronization across all 4 portals.
+
+### Audit & Verification Reports:
+- [COMPLETE_WORKFLOW_AUDIT.md](COMPLETE_WORKFLOW_AUDIT.md): Complete audit across all 4 portals, forms, buttons, and workflows.
+- [DEFECT_REGISTER.md](DEFECT_REGISTER.md): Defect register covering DEF-01 through DEF-15 with root causes and code diffs.
+- [CROSS_PORTAL_WORKFLOW_REPORT.md](CROSS_PORTAL_WORKFLOW_REPORT.md): Lifecycle verification, state machine flows, and financial integrity.
+- [TEST_COVERAGE_REPORT.md](TEST_COVERAGE_REPORT.md): Code coverage breakdown and unverified boundary limitations.
 
 ---
 
@@ -239,19 +256,26 @@ d:/MediApp/
 │   ├── migrations.py               # Schema Migrations Runner
 │   ├── schema.sql                  # 17 Tables, Constraints & 16 Indexes
 │   └── seed.py                     # Idempotent Database Seeder
-├── tests/                          # 32 Pytest Automated Test Cases
+├── tests/                          # 65 Pytest Automated Test Cases & Browser Suite
 │   ├── conftest.py
 │   ├── test_api_ai.py
 │   ├── test_api_orders.py
 │   ├── test_api_payments.py
 │   ├── test_api_prescriptions.py
 │   ├── test_auth_rbac.py
+│   ├── test_browser_suite.py
 │   ├── test_ddi.py
 │   ├── test_e2e_scenarios.py
+│   ├── test_edge_cases_and_security.py
 │   ├── test_inventory.py
 │   ├── test_pricing.py
-│   └── test_state_machine.py
+│   ├── test_state_machine.py
+│   └── verify_live_cross_portal.py
 ├── uploads/                        # Prescription File Storage (Protected)
+├── COMPLETE_WORKFLOW_AUDIT.md      # Full 4-portal audit across real browser & APIs
+├── CROSS_PORTAL_WORKFLOW_REPORT.md # Cross-portal state sync & multi-actor lifecycle report
+├── DEFECT_REGISTER.md              # 23 defects (DEF-01 to DEF-23) with root causes & fixes
+├── TEST_COVERAGE_REPORT.md         # Statement coverage analysis (72% overall, core services 87-97%)
 ├── .env.example
 ├── generate_data.py                # Synthetic Catalogue & Clinical DDI Generator
 ├── requirements.txt

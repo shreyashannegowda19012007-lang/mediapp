@@ -142,6 +142,17 @@ def claim_delivery(order_id: str):
         order = query_db("SELECT * FROM orders WHERE id = ?", (order_id,), one=True, conn=conn)
         if not order:
             return jsonify({"error": f"Order '{order_id}' not found."}), 404
+
+        # Ensure rider does not exceed active courier batch capacity (max 5 active deliveries)
+        active_count_row = query_db("""
+            SELECT COUNT(*) as c FROM orders 
+            WHERE delivery_person_id = ? AND order_status IN ('DELIVERY_ASSIGNED', 'PICKED_UP', 'IN_TRANSIT')
+        """, (user_id,), one=True, conn=conn)
+        if active_count_row and active_count_row["c"] >= 5:
+            return jsonify({
+                "error": "You have reached the maximum active delivery capacity (5 orders). Complete existing deliveries before claiming more."
+            }), 409
+
         if order["delivery_person_id"] is not None:
             return jsonify({"error": "This delivery has already been claimed by another rider."}), 409
         if order["order_status"] != "READY_FOR_PICKUP":

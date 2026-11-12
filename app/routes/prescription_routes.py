@@ -11,6 +11,7 @@ from flask import Blueprint, request, jsonify, session, send_file
 from app.config import Config
 from app.services.auth_service import login_required, roles_required
 from app.services.ocr_service import OCRService
+from app.services.order_service import OrderService
 from app.database import query_db, get_db
 
 prescription_bp = Blueprint("prescriptions", __name__, url_prefix="/api/prescriptions")
@@ -44,6 +45,11 @@ def upload_prescription():
     
     file.save(file_path)
     file_size = os.path.getsize(file_path)
+    if file_size == 0:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        return jsonify({"error": "Uploaded file is empty (0 bytes)."}), 400
+
     mime_type = file.mimetype or "application/octet-stream"
 
     # Execute OCR extraction pipeline
@@ -199,7 +205,41 @@ def verify_prescription(rx_id: int):
             verified_at = CURRENT_TIMESTAMP
         WHERE id = ?
     """, (decision, user_id, rejection_reason if decision == "rejected" else None, rx_id))
+    if cur.rowcount == 0:
+        return jsonify({"error": f"Prescription ID {rx_id} not found."}), 404
     conn.commit()
+
+    # Synchronize any linked orders waiting for this prescription
+    user_role = session.get("role", "pharmacy")
+    linked_orders = query_db(
+        "SELECT id FROM orders WHERE prescription_id = ? AND order_status = 'AWAITING_PRESCRIPTION'",
+        (rx_id,),
+        conn=conn
+    )
+    for ord_row in linked_orders:
+        oid = ord_row["id"]
+        try:
+            if decision == "verified":
+                OrderService.transition_order_status(
+                    order_id=oid,
+                    target_status="PRESCRIPTION_VERIFIED",
+                    user_id=user_id,
+                    user_role=user_role,
+                    notes="Prescription verified and approved by licensed pharmacist",
+                    conn=conn
+                )
+            elif decision == "rejected":
+                OrderService.transition_order_status(
+                    order_id=oid,
+                    target_status="CANCELLED",
+                    user_id=user_id,
+                    user_role=user_role,
+                    notes=f"Prescription rejected by pharmacist: {rejection_reason or 'Clinical documentation invalid'}",
+                    conn=conn
+                )
+        except Exception as e:
+            # Continue updating remaining orders if any individual order has transition issues
+            pass
 
     return jsonify({
         "status": "success",

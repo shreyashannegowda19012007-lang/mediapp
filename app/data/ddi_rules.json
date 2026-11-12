@@ -41,6 +41,16 @@
   },
   {
     "pair": [
+      "Sildenafil",
+      "Nitroglycerin"
+    ],
+    "severity": "CONTRAINDICATED",
+    "title": "Potentially Fatal Hypotension",
+    "description": "Co-administration of PDE5 inhibitors (Sildenafil/Tadalafil) with organic nitrates (Nitroglycerin) causes excessive accumulation of cGMP, leading to catastrophic refractory hypotension and cardiovascular collapse.",
+    "management": "STRICTLY CONTRAINDICATED. Never take Sildenafil or Tadalafil within 24-48 hours of nitrate medication."
+  },
+  {
+    "pair": [
       "Tadalafil",
       "Isosorbide Dinitrate"
     ],

@@ -346,6 +346,9 @@ const DeliveryPortal = {
       await API.delivery.claim(orderId);
       Components.toast(`Delivery ${orderId} successfully claimed!`, "success");
       State.set("activeTab", "active");
+      document.querySelectorAll("#portal-nav .nav-tab-btn").forEach(b => {
+        b.classList.toggle("active", b.dataset.tab === "active");
+      });
       await this.init("active");
     } catch (err) {
       Components.toast(err.message, "error");

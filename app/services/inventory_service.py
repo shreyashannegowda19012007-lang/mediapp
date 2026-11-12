@@ -155,3 +155,15 @@ class InventoryService:
             (pharmacy_id, medicine_id, quantity, unit_price, 1 if is_available else 0, batch_number, expiry_date)
         )
         c.commit()
+
+    @staticmethod
+    def delete_stock(pharmacy_id: int, medicine_id: int, conn: sqlite3.Connection = None) -> bool:
+        """Removes a medicine record from pharmacy inventory."""
+        c = conn or get_db()
+        cur = c.cursor()
+        cur.execute(
+            "DELETE FROM pharmacy_inventory WHERE pharmacy_id = ? AND medicine_id = ?",
+            (pharmacy_id, medicine_id)
+        )
+        c.commit()
+        return cur.rowcount > 0

@@ -108,6 +108,11 @@ body.theme-dark {
   padding: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 130px;
+}
+
 body {
   font-family: var(--font-body);
   background-color: var(--bg-canvas);
@@ -980,8 +985,7 @@ body.theme-dark .pill-filter:hover {
   border-top: 1px solid var(--border-subtle);
   padding-top: 14px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 12px;
 }
 
@@ -1029,6 +1033,21 @@ body.theme-dark .pill-filter:hover {
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
+}
+
+.card-actions .btn-alt-pill {
+  flex: 1;
+  text-align: center;
+  justify-content: center;
+  display: inline-flex;
+}
+
+.card-actions .btn-add-cart {
+  flex: 1;
+  text-align: center;
+  justify-content: center;
+  display: inline-flex;
 }
 
 .btn-alt-pill {

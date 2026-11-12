@@ -253,6 +253,10 @@ def add_inventory_item():
     if not medicine_id or quantity is None or unit_price is None:
         return jsonify({"error": "medicine_id, quantity, and unit_price are required."}), 400
 
+    med = query_db("SELECT id FROM medicines WHERE id = ?", (medicine_id,), one=True)
+    if not med:
+        return jsonify({"error": f"Medicine ID {medicine_id} does not exist in catalogue."}), 404
+
     try:
         InventoryService.update_stock(
             pharmacy_id=pharmacy_id,
@@ -266,6 +270,8 @@ def add_inventory_item():
         return jsonify({"status": "success", "message": "Inventory saved successfully."})
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": f"Failed to save inventory: {str(e)}"}), 400
 
 @pharmacy_bp.route("/inventory/<int:medicine_id>", methods=["PUT"])
 @login_required
@@ -304,3 +310,17 @@ def update_inventory_item(medicine_id: int):
         return jsonify({"status": "success", "message": "Stock record updated."})
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
+
+@pharmacy_bp.route("/inventory/<int:medicine_id>", methods=["DELETE"])
+@login_required
+@roles_required("pharmacy", "admin")
+def delete_inventory_item(medicine_id: int):
+    try:
+        pharmacy_id = get_current_pharmacy_id()
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
+
+    deleted = InventoryService.delete_stock(pharmacy_id, medicine_id)
+    if not deleted:
+        return jsonify({"error": "Inventory record not found."}), 404
+    return jsonify({"status": "success", "message": "Medicine removed from pharmacy inventory."})

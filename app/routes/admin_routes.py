@@ -108,6 +108,12 @@ def toggle_user_status(user_id: int):
     data = request.get_json() or {}
     is_active = 1 if data.get("is_active", True) else 0
 
+    target = query_db("SELECT role FROM users WHERE id = ?", (user_id,), one=True)
+    if not target:
+        return jsonify({"error": "User not found."}), 404
+    if target["role"] == "admin" and not is_active:
+        return jsonify({"error": "Administrator accounts cannot be deactivated."}), 400
+
     conn = get_db()
     cur = conn.cursor()
     cur.execute("UPDATE users SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (is_active, user_id))
@@ -137,6 +143,8 @@ def update_pharmacy_status(pharmacy_id: int):
     conn = get_db()
     cur = conn.cursor()
     cur.execute("UPDATE pharmacies SET status = ? WHERE id = ?", (new_status, pharmacy_id))
+    if cur.rowcount == 0:
+        return jsonify({"error": f"Pharmacy ID {pharmacy_id} not found."}), 404
     conn.commit()
     return jsonify({"status": "success", "message": f"Pharmacy status changed to {new_status}."})
 

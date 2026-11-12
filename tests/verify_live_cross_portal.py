@@ -289,6 +289,66 @@ def run_e2e_verification():
     assert r_static_missing.status_code == 404, f"Expected 404 for missing static file, got {r_static_missing.status_code}"
     log("DEF-03 verified: Missing static files return HTTP 404 instead of serving index.html")
 
+    # 14. Live Prescription Lifecycle & Order Auto-Transition Verification (DEF-16)
+    # Upload new prescription
+    files_rx2 = {"file": ("rx_voveran.png", b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15c4", "image/png")}
+    r_rx2 = cust_session.post(f"{BASE_URL}/api/prescriptions/upload", files=files_rx2)
+    assert r_rx2.status_code in (200, 201), f"Rx upload failed: {r_rx2.text}"
+    rx2_id = r_rx2.json().get("prescription", {}).get("id") or r_rx2.json().get("id")
+
+    # Place order for Rx medicine 7 (Voveran SR 100mg)
+    cust_session.delete(f"{BASE_URL}/api/cart")
+    cust_session.post(f"{BASE_URL}/api/cart/items", json={"medicine_id": 7, "quantity": 1, "pharmacy_id": fulfilling_pharmacy_id})
+    r_rx_ord = cust_session.post(f"{BASE_URL}/api/orders", json={
+        "delivery_address": order_payload["delivery_address"],
+        "prescription_id": rx2_id
+    })
+    assert r_rx_ord.status_code == 201, f"Rx order failed: {r_rx_ord.text}"
+    rx_ord_id = r_rx_ord.json()["order"]["id"]
+    assert r_rx_ord.json()["order"]["order_status"] == "AWAITING_PRESCRIPTION"
+    log(f"DEF-16: Placed Rx order {rx_ord_id} in AWAITING_PRESCRIPTION status")
+
+    # Pharmacist verifies prescription -> order must auto-transition to PRESCRIPTION_VERIFIED
+    r_rx2_ver = pharm_session.post(f"{BASE_URL}/api/prescriptions/{rx2_id}/verify", json={"decision": "verified"})
+    assert r_rx2_ver.status_code == 200, f"Verify failed: {r_rx2_ver.text}"
+    r_check_rx_ord = pharm_session.get(f"{BASE_URL}/api/orders/{rx_ord_id}")
+    assert r_check_rx_ord.json()["order"]["order_status"] == "PRESCRIPTION_VERIFIED"
+    log(f"DEF-16 verified: Order {rx_ord_id} automatically transitioned to PRESCRIPTION_VERIFIED upon prescription approval")
+
+    # Pharmacy can accept the verified Rx order
+    r_rx_accept = pharm_session.post(f"{BASE_URL}/api/pharmacy/orders/{rx_ord_id}/accept")
+    assert r_rx_accept.status_code == 200, f"Rx order accept failed: {r_rx_accept.text}"
+    assert r_rx_accept.json()["order"]["order_status"] == "ACCEPTED"
+    log(f"DEF-16 verified: Pharmacy accepted PRESCRIPTION_VERIFIED order {rx_ord_id}")
+
+    # 15. Live Pharmacy Inventory CRUD (Add & Delete) Verification (DEF-17)
+    r_inv_add = pharm_session.post(f"{BASE_URL}/api/pharmacy/inventory", json={
+        "medicine_id": 3,
+        "quantity": 150,
+        "unit_price": 25.0,
+        "batch_number": "LIVE-TEST-BATCH",
+        "expiry_date": "2028-01-01",
+        "is_available": True
+    })
+    assert r_inv_add.status_code == 200, f"Inventory add failed: {r_inv_add.text}"
+    log("DEF-17 verified: Pharmacy successfully added/updated inventory item")
+
+    r_inv_del = pharm_session.delete(f"{BASE_URL}/api/pharmacy/inventory/3")
+    assert r_inv_del.status_code == 200, f"Inventory delete failed: {r_inv_del.text}"
+    # Second delete returns 404
+    r_inv_del404 = pharm_session.delete(f"{BASE_URL}/api/pharmacy/inventory/3")
+    assert r_inv_del404.status_code == 404
+    # Restore medicine 3 stock so subsequent tests have stock
+    pharm_session.post(f"{BASE_URL}/api/pharmacy/inventory", json={
+        "medicine_id": 3,
+        "quantity": 150,
+        "unit_price": 22.0,
+        "batch_number": "BATCH-RESTORED",
+        "expiry_date": "2028-01-01",
+        "is_available": True
+    })
+    log("DEF-17 verified: Pharmacy DELETE /inventory/<id> removes item and handles 404 idempotency")
+
     print("=" * 60)
     print("ALL LIVE CROSS-PORTAL E2E TESTS PASSED PERFECTLY!")
     print("=" * 60)

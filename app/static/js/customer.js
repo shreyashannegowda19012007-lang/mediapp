@@ -192,6 +192,17 @@ const CustomerPortal = {
     try {
       const catRes = await API.medicines.getCategories();
       const pillsContainer = document.getElementById("category-pills-container");
+      if (pillsContainer) {
+        const allCatBtn = pillsContainer.querySelector('.pill-filter[data-cat=""]');
+        if (allCatBtn) {
+          allCatBtn.addEventListener("click", () => {
+            document.querySelectorAll(".pill-filter").forEach(b => b.classList.remove("active"));
+            allCatBtn.classList.add("active");
+            State.set("selectedCategory", "");
+            this.fetchAndRenderMedicines();
+          });
+        }
+      }
       if (pillsContainer && catRes.categories) {
         catRes.categories.slice(0, 10).forEach(c => {
           const btn = document.createElement("button");
@@ -1001,6 +1012,10 @@ const CustomerPortal = {
       const res = await API.orders.get(orderId);
       const ord = res.order;
       const modalContent = document.getElementById("order-detail-content");
+      const modalTitle = document.getElementById("order-detail-title");
+      if (modalTitle) {
+        modalTitle.textContent = `Order Details — #${ord.id}`;
+      }
 
       modalContent.innerHTML = `
         <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">

@@ -117,7 +117,8 @@ const API = {
     rejectOrder: (order_id, reason) => API.post(`/api/pharmacy/orders/${order_id}/reject`, { reason }),
     getInventory: (params) => API.get("/api/pharmacy/inventory", params),
     addInventory: (item) => API.post("/api/pharmacy/inventory", item),
-    updateInventory: (medicine_id, updates) => API.put(`/api/pharmacy/inventory/${medicine_id}`, updates)
+    updateInventory: (medicine_id, updates) => API.put(`/api/pharmacy/inventory/${medicine_id}`, updates),
+    deleteInventory: (medicine_id) => API.delete(`/api/pharmacy/inventory/${medicine_id}`)
   },
 
   // Delivery Portal Endpoints
