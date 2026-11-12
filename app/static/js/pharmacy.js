@@ -60,7 +60,7 @@ const PharmacyPortal = {
       const queue = res.active_queue || [];
 
       if (metaEl) {
-        metaEl.innerHTML = `<strong>${p.name}</strong> • License: <code>${p.license_number}</code> • ${p.address} • Rating: ⭐ ${p.rating}`;
+        metaEl.innerHTML = `<strong>${Components.escapeHtml(p.name)}</strong> • License: <code>${Components.escapeHtml(p.license_number)}</code> • ${Components.escapeHtml(p.address)} • Rating: ⭐ ${p.rating}`;
       }
 
       statsGrid.innerHTML = `
@@ -100,13 +100,13 @@ const PharmacyPortal = {
       }
 
       ordersList.innerHTML = queue.map(ord => `
-        <div class="order-tracking-card" data-id="${ord.id}">
+        <div class="order-tracking-card" data-id="${Components.escapeHtml(ord.id)}">
           <div class="tracking-header">
             <div>
               <div style="font-size:0.75rem; color:var(--text-muted);">Order ID</div>
-              <div style="font-size: 1.25rem; font-weight:800; color:var(--text-primary);">${ord.id}</div>
+              <div style="font-size: 1.25rem; font-weight:800; color:var(--text-primary);">${Components.escapeHtml(ord.id)}</div>
               <div style="font-size:0.85rem; color:var(--text-secondary); margin-top:2px;">
-                Customer: <strong>${ord.customer_name}</strong> (${ord.customer_phone}) • ${Components.formatDate(ord.created_at)}
+                Customer: <strong>${Components.escapeHtml(ord.customer_name)}</strong> (${Components.escapeHtml(ord.customer_phone)}) • ${Components.formatDate(ord.created_at)}
               </div>
             </div>
             <div style="text-align:right;">
@@ -117,31 +117,31 @@ const PharmacyPortal = {
 
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:14px;">
             <div style="font-size:0.85rem; color:var(--text-secondary);">
-              Notes: ${ord.delivery_notes || 'Standard delivery'}
+              Notes: ${Components.escapeHtml(ord.delivery_notes || 'Standard delivery')}
             </div>
             <div style="display:flex; gap:8px;">
               ${ord.order_status === "PLACED" ? `
-                <button type="button" class="btn-checkout-primary btn-accept-order" data-id="${ord.id}" style="width:auto; padding:8px 16px; margin:0; background:var(--emerald);">
+                <button type="button" class="btn-checkout-primary btn-accept-order" data-id="${Components.escapeHtml(ord.id)}" style="width:auto; padding:8px 16px; margin:0; background:var(--emerald);">
                   Accept Order
                 </button>
-                <button type="button" class="btn-alt-pill btn-reject-order" data-id="${ord.id}" style="color:var(--rose); border-color:var(--rose);">
+                <button type="button" class="btn-alt-pill btn-reject-order" data-id="${Components.escapeHtml(ord.id)}" style="color:var(--rose); border-color:var(--rose);">
                   Reject
                 </button>
               ` : ''}
 
               ${ord.order_status === "ACCEPTED" ? `
-                <button type="button" class="btn-checkout-primary btn-prep-order" data-id="${ord.id}" style="width:auto; padding:8px 16px; margin:0;">
+                <button type="button" class="btn-checkout-primary btn-prep-order" data-id="${Components.escapeHtml(ord.id)}" style="width:auto; padding:8px 16px; margin:0;">
                   Start Packaging
                 </button>
               ` : ''}
 
               ${ord.order_status === "PREPARING" ? `
-                <button type="button" class="btn-checkout-primary btn-ready-order" data-id="${ord.id}" style="width:auto; padding:8px 16px; margin:0; background:var(--emerald);">
+                <button type="button" class="btn-checkout-primary btn-ready-order" data-id="${Components.escapeHtml(ord.id)}" style="width:auto; padding:8px 16px; margin:0; background:var(--emerald);">
                   Mark Ready for Pickup
                 </button>
               ` : ''}
 
-              <button type="button" class="btn-alt-pill btn-inspect-order" data-id="${ord.id}">
+              <button type="button" class="btn-alt-pill btn-inspect-order" data-id="${Components.escapeHtml(ord.id)}">
                 Inspect Order
               </button>
             </div>
@@ -261,14 +261,14 @@ const PharmacyPortal = {
             <tbody>
               ${orders.map(o => `
                 <tr>
-                  <td><strong>${o.id}</strong></td>
-                  <td>${o.customer_name} (${o.customer_phone})</td>
+                  <td><strong>${Components.escapeHtml(o.id)}</strong></td>
+                  <td>${Components.escapeHtml(o.customer_name)} (${Components.escapeHtml(o.customer_phone)})</td>
                   <td>${Components.formatDate(o.created_at)}</td>
                   <td><strong>${Components.formatCurrency(o.total_amount)}</strong></td>
                   <td>${Components.renderStatusBadge(o.order_status)}</td>
                   <td>${Components.renderPaymentBadge(o.payment_status)}</td>
                   <td>
-                    <button type="button" class="btn-alt-pill btn-inspect-table-order" data-id="${o.id}">
+                    <button type="button" class="btn-alt-pill btn-inspect-table-order" data-id="${Components.escapeHtml(o.id)}">
                       Inspect
                     </button>
                   </td>
@@ -359,10 +359,10 @@ const PharmacyPortal = {
                 const isLow = it.stock_quantity <= it.low_stock_threshold;
                 return `
                   <tr>
-                    <td><strong>${it.name}</strong></td>
-                    <td style="color:var(--cyan);">${it.generic_name}</td>
-                    <td>${it.strength}</td>
-                    <td><code>${it.batch_number || 'N/A'}</code></td>
+                    <td><strong>${Components.escapeHtml(it.name)}</strong></td>
+                    <td style="color:var(--cyan);">${Components.escapeHtml(it.generic_name)}</td>
+                    <td>${Components.escapeHtml(it.strength)}</td>
+                    <td><code>${Components.escapeHtml(it.batch_number || 'N/A')}</code></td>
                     <td>${Components.formatCurrency(it.unit_price)}</td>
                     <td>
                       <span style="font-weight:700; ${isLow ? 'color:var(--amber);' : 'color:var(--emerald);'}">
@@ -378,7 +378,7 @@ const PharmacyPortal = {
                     <td>
                       <button type="button" class="btn-alt-pill btn-edit-stock"
                               data-id="${it.medicine_id}"
-                              data-name="${it.name}"
+                              data-name="${Components.escapeHtml(it.name)}"
                               data-qty="${it.stock_quantity}"
                               data-price="${it.unit_price}"
                               data-avail="${it.is_available}">

@@ -266,4 +266,4 @@ d:/MediApp/
 - **SQL Injection Prevention**: 100% of database queries use parameterized SQL (`?` placeholders).
 - **IDOR Protection**: Customers can only view their own orders/prescriptions; pharmacy staff can only access orders and inventory for their designated store; delivery riders can only view deliveries assigned to them.
 - **Protected File Uploads**: Uploaded prescriptions are sanitized with UUID filenames, validated for safe extensions and MIME types, capped at 10 MB, and served exclusively through authenticated, role-checked endpoints.
-- **Replay-Protected Payments**: Payment verification tokens and signatures are recorded in a dedicated `payment_transactions` table to prevent transaction reuse or duplicate callbacks.
+- **Replay-Protected Payments**: Payment verification tokens and signatures are recorded in a dedicated `payments` table to prevent transaction reuse or duplicate callbacks.

@@ -18,11 +18,17 @@ def seed_database(db_path: str = None):
     # 1. Seed Demo Users
     users_data = [
         ("demo.customer@mediapp.local", "Customer@MediApp2026!", "Aditi Sharma", "+91 9876543210", "customer"),
+        ("customer@mediapp.local", "Demo@Customer123", "Aditi Sharma", "+91 9876543210", "customer"),
         ("demo.pharmacy@mediapp.local", "Pharmacy@MediApp2026!", "Rajesh Varma (Lead Pharmacist)", "+91 9876543211", "pharmacy"),
+        ("apollo.koramangala@mediapp.local", "Demo@Pharmacy123", "Rajesh Varma (Lead Pharmacist)", "+91 9876543211", "pharmacy"),
         ("pharmacy2@mediapp.local", "Pharmacy@MediApp2026!", "Suresh Patel (Pharmacist)", "+91 9876543212", "pharmacy"),
+        ("medplus.btm@mediapp.local", "Demo@Pharmacy123", "Suresh Patel (Pharmacist)", "+91 9876543212", "pharmacy"),
         ("demo.delivery@mediapp.local", "Delivery@MediApp2026!", "Kiran Kumar", "+91 9123456789", "delivery"),
+        ("rajesh.delivery@mediapp.local", "Demo@Delivery123", "Rajesh Kumar", "+91 9123456789", "delivery"),
         ("delivery2@mediapp.local", "Delivery@MediApp2026!", "Vikram Singh", "+91 9123456780", "delivery"),
-        ("demo.admin@mediapp.local", "Admin@MediApp2026!", "Dr. Neha Rao (Chief Administrator)", "+91 9999900000", "admin")
+        ("suresh.delivery@mediapp.local", "Demo@Delivery123", "Suresh Nair", "+91 9123456780", "delivery"),
+        ("demo.admin@mediapp.local", "Admin@MediApp2026!", "Dr. Neha Rao (Chief Administrator)", "+91 9999900000", "admin"),
+        ("admin@mediapp.local", "Demo@Admin123", "System Administrator", "+91 9999900000", "admin")
     ]
 
     user_ids = {}
@@ -72,32 +78,31 @@ def seed_database(db_path: str = None):
             pharmacy_ids.append(row[0])
 
     # Associate Pharmacy Staff
-    cur.execute("SELECT id FROM pharmacy_staff WHERE user_id = ?", (user_ids["demo.pharmacy@mediapp.local"],))
-    if not cur.fetchone():
-        cur.execute("INSERT INTO pharmacy_staff (pharmacy_id, user_id, role_title) VALUES (?, ?, ?)",
-                    (pharmacy_ids[0], user_ids["demo.pharmacy@mediapp.local"], "Chief Pharmacist"))
-
-    cur.execute("SELECT id FROM pharmacy_staff WHERE user_id = ?", (user_ids["pharmacy2@mediapp.local"],))
-    if not cur.fetchone():
-        cur.execute("INSERT INTO pharmacy_staff (pharmacy_id, user_id, role_title) VALUES (?, ?, ?)",
-                    (pharmacy_ids[1], user_ids["pharmacy2@mediapp.local"], "Managing Pharmacist"))
+    pharm_staff_map = [
+        (pharmacy_ids[0], user_ids["demo.pharmacy@mediapp.local"], "Chief Pharmacist"),
+        (pharmacy_ids[0], user_ids["apollo.koramangala@mediapp.local"], "Lead Pharmacist"),
+        (pharmacy_ids[1], user_ids["pharmacy2@mediapp.local"], "Managing Pharmacist"),
+        (pharmacy_ids[1], user_ids["medplus.btm@mediapp.local"], "Supervising Pharmacist")
+    ]
+    for p_id, u_id, title in pharm_staff_map:
+        cur.execute("SELECT id FROM pharmacy_staff WHERE user_id = ?", (u_id,))
+        if not cur.fetchone():
+            cur.execute("INSERT INTO pharmacy_staff (pharmacy_id, user_id, role_title) VALUES (?, ?, ?)", (p_id, u_id, title))
 
     # 4. Seed Delivery Profiles
-    deliv1_id = user_ids["demo.delivery@mediapp.local"]
-    cur.execute("SELECT id FROM delivery_profiles WHERE user_id = ?", (deliv1_id,))
-    if not cur.fetchone():
-        cur.execute("""
-            INSERT INTO delivery_profiles (user_id, vehicle_type, vehicle_number, driving_license, is_available, current_latitude, current_longitude, status, rating)
-            VALUES (?, ?, ?, ?, 1, 12.9716, 77.5946, 'approved', 4.9)
-        """, (deliv1_id, "Motorcycle", "KA-03-HA-8821", "DL-0420180091234"))
-
-    deliv2_id = user_ids["delivery2@mediapp.local"]
-    cur.execute("SELECT id FROM delivery_profiles WHERE user_id = ?", (deliv2_id,))
-    if not cur.fetchone():
-        cur.execute("""
-            INSERT INTO delivery_profiles (user_id, vehicle_type, vehicle_number, driving_license, is_available, current_latitude, current_longitude, status, rating)
-            VALUES (?, ?, ?, ?, 1, 12.9352, 77.6245, 'approved', 4.8)
-        """, (deliv2_id, "Scooter", "KA-05-EJ-4392", "DL-0420200084321"))
+    deliv_profiles_data = [
+        (user_ids["demo.delivery@mediapp.local"], "Motorcycle", "KA-03-HA-8821", "DL-0420180091234"),
+        (user_ids["rajesh.delivery@mediapp.local"], "Scooter", "KA-03-HA-8822", "DL-0420180091235"),
+        (user_ids["delivery2@mediapp.local"], "Scooter", "KA-05-EJ-4392", "DL-0420200084321"),
+        (user_ids["suresh.delivery@mediapp.local"], "Motorcycle", "KA-05-EJ-4393", "DL-0420200084322")
+    ]
+    for u_id, v_type, v_num, dl in deliv_profiles_data:
+        cur.execute("SELECT id FROM delivery_profiles WHERE user_id = ?", (u_id,))
+        if not cur.fetchone():
+            cur.execute("""
+                INSERT INTO delivery_profiles (user_id, vehicle_type, vehicle_number, driving_license, is_available, current_latitude, current_longitude, status, rating)
+                VALUES (?, ?, ?, ?, 1, 12.9716, 77.5946, 'approved', 4.9)
+            """, (u_id, v_type, v_num, dl))
 
     # 5. Ingest Medicines from A_Z_medicines.csv
     csv_file = os.path.join(os.path.dirname(__file__), "data", "A_Z_medicines.csv")
@@ -183,6 +188,7 @@ def seed_database(db_path: str = None):
         cur.execute("INSERT INTO cart_items (cart_id, medicine_id, quantity) VALUES (?, 1, 1)", (cart_id,))
 
     # 9. Seed Demonstrative Orders Across Different Lifecycle States
+    deliv1_id = user_ids["demo.delivery@mediapp.local"]
     sample_address = json.dumps({
         "line1": "Flat 402, Green Glen Layout",
         "line2": "Outer Ring Road, Bellandur",

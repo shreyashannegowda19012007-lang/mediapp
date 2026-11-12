@@ -83,6 +83,8 @@ def create_app(config_class=None) -> Flask:
     def not_found(e):
         if request.path.startswith("/api/"):
             return jsonify({"error": "Resource not found."}), 404
+        if request.path.startswith("/static/"):
+            return "Static resource not found", 404
         # For browser navigation, fallback to SPA index.html
         return render_template("index.html")
 

@@ -99,7 +99,9 @@ class AIService:
 
         api_key = Config.GEMINI_API_KEY
         # 2. Real Gemini Integration
-        if not Config.is_demo() and api_key:
+        if not Config.is_demo():
+            if not api_key:
+                raise ValueError("APP_MODE is set to 'real' but GEMINI_API_KEY is not configured on the server.")
             try:
                 endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
                 payload = {
@@ -126,9 +128,12 @@ class AIService:
                             "response": text,
                             "disclaimer": "AI-generated medical summary from Google Gemini. For informational purposes only. Consult a physician for diagnosis."
                         }
+                    raise RuntimeError("Gemini API returned response without candidate content.")
+                else:
+                    raise RuntimeError(f"Gemini API returned HTTP {res.status_code}: {res.text}")
             except Exception as e:
-                # Log error without crashing
-                pass
+                # In real mode, do not silently fallback to demo mode
+                raise RuntimeError(f"External AI Provider failure: {str(e)}")
 
         # 3. Labelled Demo Fallback
         matched_topic = None

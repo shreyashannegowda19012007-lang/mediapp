@@ -4,6 +4,17 @@
  */
 
 const Components = {
+  // DOM XSS Sanitizer Utility (Entity Encoding)
+  escapeHtml(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  },
+
   // Toast notifications with clean SVG icons
   toast(message, type = "info", duration = 3500) {
     const container = document.getElementById("toast-container");
@@ -181,3 +192,21 @@ const Components = {
     });
   }
 };
+
+// Global Escape key handler for accessible modal dismissal
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    document.querySelectorAll(".modal-backdrop:not(.hidden)").forEach(m => {
+      m.classList.add("hidden");
+    });
+    const drawer = document.getElementById("cart-drawer-overlay");
+    if (drawer && !drawer.classList.contains("hidden")) {
+      drawer.classList.add("hidden");
+    }
+    const aiWindow = document.getElementById("ai-chat-window");
+    if (aiWindow && !aiWindow.classList.contains("hidden")) {
+      aiWindow.classList.add("hidden");
+    }
+    document.body.style.overflow = "";
+  }
+});

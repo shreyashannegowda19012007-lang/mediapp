@@ -91,7 +91,8 @@ def razorpay_webhook():
                     "razorpay_payment_id": payment_id,
                     "razorpay_signature": signature
                 })
-            except Exception:
-                pass
+            except Exception as e:
+                import logging
+                logging.getLogger("mediapp").warning(f"Webhook payment completion skipped for order '{receipt_order_id}': {e}")
 
     return jsonify({"status": "received"}), 200

@@ -398,7 +398,8 @@ const CustomerPortal = {
   async handleAddToCart(medicineId) {
     const user = State.get("user");
     if (!user) {
-      Components.toast("Please select a role from the top banner to add medicines to your cart.", "warning");
+      Components.toast("Please sign in to add medicines to your cart.", "warning");
+      Components.openModal("auth-modal");
       return;
     }
 
@@ -408,7 +409,21 @@ const CustomerPortal = {
       Components.toast("Added to cart successfully!", "success");
       await this.refreshCart();
     } catch (err) {
-      Components.toast(err.message, "error");
+      if (err.status === 409 || (err.data && err.data.conflict)) {
+        const confirmSwitch = confirm(`${err.message}\n\nWould you like to clear your current cart and switch to this pharmacy?`);
+        if (confirmSwitch) {
+          try {
+            const pharmId = State.get("selectedPharmacyId") || 1;
+            await API.cart.addItem(medicineId, 1, pharmId, true);
+            Components.toast("Cart updated to new fulfilling pharmacy!", "success");
+            await this.refreshCart();
+          } catch (retryErr) {
+            Components.toast(retryErr.message, "error");
+          }
+        }
+      } else {
+        Components.toast(err.message, "error");
+      }
     }
   },
 
@@ -609,33 +624,62 @@ const CustomerPortal = {
       } catch {}
     }
 
+    // Fetch saved customer addresses
+    let savedAddresses = [];
+    try {
+      const addrRes = await API.auth.getAddresses();
+      savedAddresses = addrRes.addresses || [];
+    } catch {}
+
+    const defaultAddr = savedAddresses.find(a => a.is_default) || savedAddresses[0] || null;
+    const initAddr1 = defaultAddr ? defaultAddr.line1 : "Flat 402, Green Glen Layout";
+    const initAddr2 = defaultAddr ? (defaultAddr.line2 || "") : "Outer Ring Road, Bellandur";
+    const initCity = defaultAddr ? defaultAddr.city : "Bengaluru";
+    const initState = defaultAddr ? defaultAddr.state : "Karnataka";
+    const initPin = defaultAddr ? defaultAddr.pincode : "560103";
+
     modalContent.innerHTML = `
       <form id="checkout-form">
         <h4 style="margin-bottom: 12px; color:var(--text-primary);">1. Delivery Destination Address</h4>
+        
+        ${savedAddresses.length > 0 ? `
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label">Choose Saved Address:</label>
+            <select id="chk-saved-addr-select" class="select-styled" style="width:100%;">
+              ${savedAddresses.map((a, idx) => `
+                <option value="${idx}" ${a.id === (defaultAddr ? defaultAddr.id : null) ? 'selected' : ''}>
+                  ${Components.escapeHtml(a.line1)}, ${Components.escapeHtml(a.city)} (${Components.escapeHtml(a.pincode)})${a.is_default ? ' [Default]' : ''}
+                </option>
+              `).join("")}
+              <option value="custom">-- Enter New / Custom Address --</option>
+            </select>
+          </div>
+        ` : ''}
+
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group" style="grid-column: 1/-1;">
             <label class="form-label">Address Line 1 *</label>
-            <input type="text" id="chk-addr1" class="form-control" required value="Flat 402, Green Glen Layout">
+            <input type="text" id="chk-addr1" class="form-control" required value="${Components.escapeHtml(initAddr1)}">
           </div>
           <div class="form-group" style="grid-column: 1/-1;">
             <label class="form-label">Address Line 2 (Area, Landmark)</label>
-            <input type="text" id="chk-addr2" class="form-control" value="Outer Ring Road, Bellandur">
+            <input type="text" id="chk-addr2" class="form-control" value="${Components.escapeHtml(initAddr2)}">
           </div>
           <div class="form-group">
             <label class="form-label">City *</label>
-            <input type="text" id="chk-city" class="form-control" required value="Bengaluru">
+            <input type="text" id="chk-city" class="form-control" required value="${Components.escapeHtml(initCity)}">
           </div>
           <div class="form-group">
             <label class="form-label">State *</label>
-            <input type="text" id="chk-state" class="form-control" required value="Karnataka">
+            <input type="text" id="chk-state" class="form-control" required value="${Components.escapeHtml(initState)}">
           </div>
           <div class="form-group">
             <label class="form-label">Pincode *</label>
-            <input type="text" id="chk-pin" class="form-control" required value="560103">
+            <input type="text" id="chk-pin" class="form-control" required value="${Components.escapeHtml(initPin)}">
           </div>
           <div class="form-group">
             <label class="form-label">Recipient Contact Phone *</label>
-            <input type="text" id="chk-phone" class="form-control" required value="${user.phone || '+91 9876543210'}">
+            <input type="text" id="chk-phone" class="form-control" required value="${Components.escapeHtml(user.phone || '+91 9876543210')}">
           </div>
         </div>
 
@@ -688,6 +732,30 @@ const CustomerPortal = {
     `;
 
     document.getElementById("checkout-form").addEventListener("submit", (e) => this.handleOrderSubmit(e));
+
+    const addrSelect = document.getElementById("chk-saved-addr-select");
+    if (addrSelect) {
+      addrSelect.addEventListener("change", (e) => {
+        const val = e.target.value;
+        if (val !== "custom") {
+          const a = savedAddresses[parseInt(val)];
+          if (a) {
+            document.getElementById("chk-addr1").value = a.line1 || "";
+            document.getElementById("chk-addr2").value = a.line2 || "";
+            document.getElementById("chk-city").value = a.city || "";
+            document.getElementById("chk-state").value = a.state || "";
+            document.getElementById("chk-pin").value = a.pincode || "";
+          }
+        } else {
+          document.getElementById("chk-addr1").value = "";
+          document.getElementById("chk-addr2").value = "";
+          document.getElementById("chk-city").value = "";
+          document.getElementById("chk-state").value = "";
+          document.getElementById("chk-pin").value = "";
+        }
+      });
+    }
+
     Components.openModal("checkout-modal");
   },
 
@@ -725,12 +793,56 @@ const CustomerPortal = {
       } else {
         // Real Razorpay Initiation
         const payInit = await API.payments.createOrder(order.id);
-        Components.toast("Razorpay payment initiated: " + payInit.payment_order.provider_order_id, "info");
-        await API.payments.verify(order.id, {
-          razorpay_order_id: payInit.payment_order.provider_order_id,
-          razorpay_payment_id: "pay_test_" + Date.now(),
-          razorpay_signature: "mock_test_sig"
-        });
+        const pOrder = payInit.payment_order;
+
+        if (window.Razorpay) {
+          const user = State.get("user") || {};
+          await new Promise((resolve, reject) => {
+            const rzp = new window.Razorpay({
+              key: pOrder.key,
+              amount: pOrder.amount * 100,
+              currency: pOrder.currency || "INR",
+              name: "MediApp Healthcare",
+              description: `Prescription Order ${order.id}`,
+              order_id: pOrder.provider_order_id,
+              prefill: {
+                name: user.full_name || "",
+                email: user.email || "",
+                contact: user.phone || ""
+              },
+              theme: { color: "#0284c7" },
+              handler: async (response) => {
+                try {
+                  await API.payments.verify(order.id, {
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature
+                  });
+                  resolve();
+                } catch (vErr) {
+                  reject(vErr);
+                }
+              },
+              modal: {
+                ondismiss: () => {
+                  reject(new Error("Razorpay payment modal was dismissed without completion."));
+                }
+              }
+            });
+            rzp.on("payment.failed", (resp) => {
+              reject(new Error(resp.error?.description || "Payment failed at gateway."));
+            });
+            rzp.open();
+          });
+          Components.toast("Payment completed and verified via Razorpay!", "success");
+        } else {
+          Components.toast("Razorpay SDK offline: simulating verification...", "info");
+          await API.payments.verify(order.id, {
+            razorpay_order_id: pOrder.provider_order_id,
+            razorpay_payment_id: "pay_test_" + Date.now(),
+            razorpay_signature: "mock_test_sig"
+          });
+        }
       }
 
       // Close modal, refresh cart and view orders
@@ -800,7 +912,7 @@ const CustomerPortal = {
             <div>
               <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Order ID: #${ord.id}</div>
               <div style="font-size:0.875rem; color:var(--text-secondary); margin-top:2px;">
-                Pharmacy: <strong>${ord.pharmacy_name}</strong> • ${Components.formatDate(ord.created_at)}
+                Pharmacy: <strong>${Components.escapeHtml(ord.pharmacy_name)}</strong> • ${Components.formatDate(ord.created_at)}
               </div>
             </div>
             <div style="text-align:right;">
@@ -816,10 +928,10 @@ const CustomerPortal = {
 
           <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; padding-top:14px; border-top:1px solid var(--border-subtle);">
             <div style="font-size:0.85rem; color:var(--text-muted);">
-              ${ord.cancellation_reason ? `<span style="color:var(--rose);">Reason: ${ord.cancellation_reason}</span>` : 'Fulfilled by certified pharmacy partner'}
+              ${ord.cancellation_reason ? `<span style="color:var(--rose);">Reason: ${Components.escapeHtml(ord.cancellation_reason)}</span>` : 'Fulfilled by certified pharmacy partner'}
             </div>
             <div style="display:flex; gap:8px;">
-              ${["PLACED", "AWAITING_PRESCRIPTION", "ACCEPTED"].includes(ord.order_status) ? `
+              ${["PLACED", "AWAITING_PRESCRIPTION"].includes(ord.order_status) ? `
                 <button type="button" class="btn-alt-pill btn-cancel-order" data-id="${ord.id}" style="color:var(--rose); border-color:var(--rose-border);">
                   Cancel Order
                 </button>
@@ -918,8 +1030,8 @@ const CustomerPortal = {
             <tbody>
               ${ord.items.map(it => `
                 <tr>
-                  <td><strong>${it.medicine_name_snapshot}</strong></td>
-                  <td>${it.generic_name_snapshot} (${it.strength_snapshot})</td>
+                  <td><strong>${Components.escapeHtml(it.medicine_name_snapshot)}</strong></td>
+                  <td>${Components.escapeHtml(it.generic_name_snapshot)} (${Components.escapeHtml(it.strength_snapshot)})</td>
                   <td>${Components.formatCurrency(it.unit_price)}</td>
                   <td>${it.quantity}</td>
                   <td><strong>${Components.formatCurrency(it.total_price)}</strong></td>
@@ -933,18 +1045,18 @@ const CustomerPortal = {
           <div style="background:var(--bg-canvas); border:1px solid var(--border-subtle); padding:14px; border-radius:var(--radius-md);">
             <div style="font-weight:700; margin-bottom:4px; color:var(--text-primary);">Delivery Destination</div>
             <div style="font-size:0.85rem; color:var(--text-secondary);">
-              ${ord.delivery_address.line1}<br>
-              ${ord.delivery_address.line2 || ''}<br>
-              ${ord.delivery_address.city}, ${ord.delivery_address.state} - ${ord.delivery_address.pincode}<br>
-              Phone: ${ord.delivery_address.recipient_phone || 'N/A'}
+              ${Components.escapeHtml(ord.delivery_address.line1)}<br>
+              ${ord.delivery_address.line2 ? `${Components.escapeHtml(ord.delivery_address.line2)}<br>` : ''}
+              ${Components.escapeHtml(ord.delivery_address.city)}, ${Components.escapeHtml(ord.delivery_address.state)} - ${Components.escapeHtml(ord.delivery_address.pincode)}<br>
+              Phone: ${Components.escapeHtml(ord.delivery_address.recipient_phone || 'N/A')}
             </div>
           </div>
           <div style="background:var(--bg-canvas); border:1px solid var(--border-subtle); padding:14px; border-radius:var(--radius-md);">
             <div style="font-weight:700; margin-bottom:4px; color:var(--text-primary);">Fulfilling Pharmacy</div>
             <div style="font-size:0.85rem; color:var(--text-secondary);">
-              ${ord.pharmacy_name}<br>
-              ${ord.pharmacy_address}<br>
-              Phone: ${ord.pharmacy_phone}
+              ${Components.escapeHtml(ord.pharmacy_name)}<br>
+              ${Components.escapeHtml(ord.pharmacy_address)}<br>
+              Phone: ${Components.escapeHtml(ord.pharmacy_phone)}
             </div>
           </div>
         </div>
@@ -953,7 +1065,7 @@ const CustomerPortal = {
         <div style="display:flex; flex-direction:column; gap:8px;">
           ${ord.timeline.map(t => `
             <div style="font-size:0.8rem; background:var(--bg-canvas); border:1px solid var(--border-subtle); padding:8px 12px; border-radius:var(--radius-sm); display:flex; justify-content:space-between;">
-              <span><strong>${t.to_status}</strong>: ${t.notes || 'Status updated'}</span>
+              <span><strong>${Components.escapeHtml(t.to_status)}</strong>: ${Components.escapeHtml(t.notes || 'Status updated')}</span>
               <span style="color:var(--text-muted);">${Components.formatDate(t.created_at)}</span>
             </div>
           `).join("")}

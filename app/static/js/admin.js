@@ -109,8 +109,8 @@ const AdminPortal = {
               ${orders.map(o => `
                 <tr>
                   <td><strong>${o.id}</strong></td>
-                  <td>${o.customer_name}</td>
-                  <td>${o.pharmacy_name}</td>
+                  <td>${Components.escapeHtml(o.customer_name)}</td>
+                  <td>${Components.escapeHtml(o.pharmacy_name)}</td>
                   <td>${Components.formatDate(o.created_at)}</td>
                   <td><strong>${Components.formatCurrency(o.total_amount)}</strong></td>
                   <td>${Components.renderStatusBadge(o.order_status)}</td>
@@ -190,9 +190,9 @@ const AdminPortal = {
               ${users.map(u => `
                 <tr>
                   <td>${u.id}</td>
-                  <td><strong>${u.full_name}</strong></td>
-                  <td>${u.email}</td>
-                  <td>${u.phone || 'N/A'}</td>
+                  <td><strong>${Components.escapeHtml(u.full_name)}</strong></td>
+                  <td>${Components.escapeHtml(u.email)}</td>
+                  <td>${Components.escapeHtml(u.phone || 'N/A')}</td>
                   <td><span class="badge ${u.role === 'admin' ? 'badge-rx' : (u.role === 'pharmacy' ? 'badge-pulse' : (u.role === 'delivery' ? 'badge-otc' : 'badge-category'))}">${u.role.toUpperCase()}</span></td>
                   <td>${u.google_id ? 'Google OAuth 2.0' : 'Email/Password'}</td>
                   <td><span class="badge ${u.is_active ? 'badge-otc' : 'badge-rx'}">${u.is_active ? 'Active' : 'Suspended'}</span></td>
@@ -271,10 +271,10 @@ const AdminPortal = {
               ${pharms.map(p => `
                 <tr>
                   <td>${p.id}</td>
-                  <td><strong>${p.name}</strong></td>
-                  <td><code>${p.license_number}</code></td>
-                  <td>${p.city} (${p.address})</td>
-                  <td>${p.phone}</td>
+                  <td><strong>${Components.escapeHtml(p.name)}</strong></td>
+                  <td><code>${Components.escapeHtml(p.license_number)}</code></td>
+                  <td>${Components.escapeHtml(p.city)} (${Components.escapeHtml(p.address)})</td>
+                  <td>${Components.escapeHtml(p.phone)}</td>
                   <td>⭐ ${p.rating}</td>
                   <td><span class="badge ${p.status === 'approved' ? 'badge-otc' : (p.status === 'suspended' ? 'badge-rx' : 'badge-pulse')}">${p.status.toUpperCase()}</span></td>
                   <td>
@@ -353,9 +353,9 @@ const AdminPortal = {
               ${orders.map(o => `
                 <tr>
                   <td><strong>${o.id}</strong></td>
-                  <td>${o.customer_name}</td>
-                  <td>${o.pharmacy_name}</td>
-                  <td>${o.delivery_name || '<span style="color:var(--text-muted);">Unassigned</span>'}</td>
+                  <td>${Components.escapeHtml(o.customer_name)}</td>
+                  <td>${Components.escapeHtml(o.pharmacy_name)}</td>
+                  <td>${o.delivery_name ? Components.escapeHtml(o.delivery_name) : '<span style="color:var(--text-muted);">Unassigned</span>'}</td>
                   <td><strong>${Components.formatCurrency(o.total_amount)}</strong></td>
                   <td>${Components.renderStatusBadge(o.order_status)}</td>
                   <td>${Components.renderPaymentBadge(o.payment_status)}</td>

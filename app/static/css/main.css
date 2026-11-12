@@ -40,7 +40,7 @@
   /* High-Contrast Clinical Typography */
   --text-primary: #0f172a;
   --text-secondary: #334155;
-  --text-muted: #64748b;
+  --text-muted: #475569;
   --text-inverse: #ffffff;
 
   /* Refined Elevation & Shadows */
@@ -351,6 +351,9 @@ button, input, select, textarea {
   padding: 4px;
   border-radius: var(--radius-full);
   border: 1px solid var(--border-subtle);
+  overflow-x: auto;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 .nav-tab-btn {

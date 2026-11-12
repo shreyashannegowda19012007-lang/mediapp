@@ -109,9 +109,11 @@ def list_prescriptions():
     user_id = session["user_id"]
     role = session["role"]
     
-    if role == "customer":
+    if role == "delivery":
+        return jsonify({"error": "Access denied. Delivery personnel are not authorized to view prescriptions."}), 403
+    elif role == "customer":
         rows = query_db("SELECT * FROM prescriptions WHERE customer_id = ? ORDER BY id DESC", (user_id,))
-    else:
+    elif role in ("pharmacy", "admin"):
         # Pharmacy and admin can view pending or all prescriptions
         rows = query_db("""
             SELECT p.*, u.full_name as customer_name, u.email as customer_email
@@ -120,6 +122,8 @@ def list_prescriptions():
             ORDER BY p.id DESC
             LIMIT 50
         """)
+    else:
+        return jsonify({"error": "Unauthorized role."}), 403
 
     result = []
     for r in rows:
@@ -138,6 +142,9 @@ def get_prescription(rx_id: int):
     user_id = session["user_id"]
     role = session["role"]
     
+    if role == "delivery":
+        return jsonify({"error": "Access denied. Delivery personnel are not authorized to view patient medical prescriptions."}), 403
+
     rx = query_db("""
         SELECT p.*, u.full_name as customer_name, u.email as customer_email
         FROM prescriptions p
@@ -149,7 +156,10 @@ def get_prescription(rx_id: int):
         return jsonify({"error": f"Prescription ID {rx_id} not found."}), 404
         
     if role == "customer" and rx["customer_id"] != user_id:
-        return jsonify({"error": "Access denied."}), 403
+        return jsonify({"error": "Access denied. You do not own this prescription."}), 403
+
+    if role not in ("customer", "pharmacy", "admin"):
+        return jsonify({"error": "Unauthorized role."}), 403
 
     rx_dict = dict(rx)
     try:
@@ -163,6 +173,14 @@ def get_prescription(rx_id: int):
 @login_required
 @roles_required("pharmacy", "admin")
 def verify_prescription(rx_id: int):
+    if session.get("role") == "pharmacy":
+        pharm_id = session.get("pharmacy_id")
+        if not pharm_id:
+            return jsonify({"error": "User is not associated with an approved pharmacy."}), 403
+        pharm = query_db("SELECT status FROM pharmacies WHERE id = ?", (pharm_id,), one=True)
+        if not pharm or pharm["status"] != "approved":
+            return jsonify({"error": "Associated pharmacy is not approved to verify prescriptions."}), 403
+
     data = request.get_json() or {}
     decision = data.get("decision", "verified") # 'verified' or 'rejected'
     rejection_reason = data.get("rejection_reason")
@@ -195,12 +213,18 @@ def download_prescription_file(rx_id: int):
     user_id = session["user_id"]
     role = session["role"]
     
+    if role == "delivery":
+        return jsonify({"error": "Access denied. Delivery personnel are not authorized to download patient prescriptions."}), 403
+
     rx = query_db("SELECT customer_id, file_path, original_filename, mime_type FROM prescriptions WHERE id = ?", (rx_id,), one=True)
     if not rx:
         return jsonify({"error": "Prescription not found."}), 404
         
     if role == "customer" and rx["customer_id"] != user_id:
-        return jsonify({"error": "Access denied."}), 403
+        return jsonify({"error": "Access denied. You do not own this prescription."}), 403
+
+    if role not in ("customer", "pharmacy", "admin"):
+        return jsonify({"error": "Unauthorized role."}), 403
 
     if not os.path.exists(rx["file_path"]):
         return jsonify({"error": "Prescription file does not exist on disk."}), 404

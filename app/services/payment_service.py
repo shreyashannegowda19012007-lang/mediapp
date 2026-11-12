@@ -145,6 +145,8 @@ class PaymentService:
         order = query_db("SELECT * FROM orders WHERE id = ?", (order_id,), one=True)
         if not order:
             raise ValueError(f"Order '{order_id}' not found.")
+        if order["order_status"] == "CANCELLED":
+            raise ValueError("Cannot initiate payment for a cancelled order.")
         if order["payment_status"] == "paid":
             raise ValueError("This order has already been paid.")
 
@@ -179,6 +181,8 @@ class PaymentService:
             order = query_db("SELECT * FROM orders WHERE id = ?", (order_id,), one=True, conn=conn)
             if not order:
                 raise ValueError(f"Order '{order_id}' not found.")
+            if order["order_status"] == "CANCELLED":
+                raise ValueError("Cannot complete payment for a cancelled order.")
             if order["payment_status"] == "paid":
                 # Idempotent response if already processed
                 return {"status": "success", "message": "Order was already marked as paid.", "order_id": order_id}

@@ -11,6 +11,16 @@ from app.database import query_db, get_db, transaction
 
 delivery_bp = Blueprint("delivery", __name__, url_prefix="/api/delivery")
 
+def check_delivery_authorization():
+    if session.get("role") == "admin":
+        return
+    user_id = session.get("user_id")
+    dp = query_db("SELECT status FROM delivery_profiles WHERE user_id = ?", (user_id,), one=True)
+    if not dp:
+        raise PermissionError("No delivery partner profile found for this user account.")
+    if dp["status"] != "approved":
+        raise PermissionError(f"Delivery partner account status is '{dp['status']}'. Must be 'approved' to claim and perform deliveries.")
+
 @delivery_bp.route("/profile", methods=["GET"])
 @login_required
 @roles_required("delivery", "admin")
@@ -24,11 +34,56 @@ def get_delivery_profile():
     """, (user_id,), one=True)
     return jsonify({"status": "success", "profile": dict(profile) if profile else None})
 
+@delivery_bp.route("/location", methods=["POST"])
+@login_required
+@roles_required("delivery", "admin")
+def update_delivery_location():
+    """Broadcasts rider GPS coordinates and updates live location in database."""
+    try:
+        check_delivery_authorization()
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
+
+    user_id = session["user_id"]
+    data = request.get_json() or {}
+    lat = data.get("latitude")
+    lon = data.get("longitude")
+
+    if lat is None or lon is None:
+        return jsonify({"error": "Both latitude and longitude are required."}), 400
+
+    try:
+        lat_f = float(lat)
+        lon_f = float(lon)
+        if not (-90 <= lat_f <= 90 and -180 <= lon_f <= 180):
+            return jsonify({"error": "Coordinates out of bounds."}), 400
+    except (ValueError, TypeError):
+        return jsonify({"error": "Coordinates must be valid numeric values."}), 400
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE delivery_profiles
+        SET current_latitude = ?, current_longitude = ?
+        WHERE user_id = ?
+    """, (lat_f, lon_f, user_id))
+    conn.commit()
+
+    return jsonify({
+        "status": "success",
+        "message": "Delivery location updated.",
+        "location": {"latitude": lat_f, "longitude": lon_f}
+    })
+
 @delivery_bp.route("/available", methods=["GET"])
 @login_required
 @roles_required("delivery", "admin")
 def get_available_deliveries():
     """Returns orders ready for pickup that have not yet been assigned to a delivery person."""
+    try:
+        check_delivery_authorization()
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
     orders = query_db("""
         SELECT o.id, o.order_status, o.total_amount, o.delivery_fee, o.created_at,
                p.name as pharmacy_name, p.address as pharmacy_address, p.phone as pharmacy_phone,
@@ -73,6 +128,11 @@ def get_active_delivery():
 @roles_required("delivery", "admin")
 def claim_delivery(order_id: str):
     """Atomically claims an order from the available pool."""
+    try:
+        check_delivery_authorization()
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
+
     user_id = session["user_id"]
     conn = get_db()
     with transaction(conn):
@@ -87,12 +147,15 @@ def claim_delivery(order_id: str):
         if order["order_status"] != "READY_FOR_PICKUP":
             return jsonify({"error": f"Order cannot be claimed in status '{order['order_status']}'."}), 400
 
-        # Assign order to delivery person and update status to DELIVERY_ASSIGNED
+        # Assign order to delivery person and update status to DELIVERY_ASSIGNED atomically
         cur.execute("""
             UPDATE orders
             SET delivery_person_id = ?, order_status = 'DELIVERY_ASSIGNED', updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
+            WHERE id = ? AND delivery_person_id IS NULL AND order_status = 'READY_FOR_PICKUP'
         """, (user_id, order_id))
+
+        if cur.rowcount == 0:
+            return jsonify({"error": "This delivery has already been claimed by another rider."}), 409
 
         # Create or update delivery assignment
         cur.execute("""
@@ -116,6 +179,11 @@ def claim_delivery(order_id: str):
 @login_required
 @roles_required("delivery", "admin")
 def pickup_order(order_id: str):
+    try:
+        check_delivery_authorization()
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
+
     user_id = session["user_id"]
     try:
         conn = get_db()
@@ -136,13 +204,20 @@ def pickup_order(order_id: str):
                 conn=conn
             )
         return jsonify({"status": "success", "message": "Order marked as picked up."})
-    except (ValueError, PermissionError) as e:
+    except PermissionError as pe:
+        return jsonify({"error": str(pe)}), 403
+    except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
 @delivery_bp.route("/orders/<string:order_id>/in-transit", methods=["POST"])
 @login_required
 @roles_required("delivery", "admin")
 def mark_in_transit(order_id: str):
+    try:
+        check_delivery_authorization()
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
+
     user_id = session["user_id"]
     try:
         conn = get_db()
@@ -163,13 +238,20 @@ def mark_in_transit(order_id: str):
                 conn=conn
             )
         return jsonify({"status": "success", "message": "Order marked in transit."})
-    except (ValueError, PermissionError) as e:
+    except PermissionError as pe:
+        return jsonify({"error": str(pe)}), 403
+    except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
 @delivery_bp.route("/orders/<string:order_id>/complete", methods=["POST"])
 @login_required
 @roles_required("delivery", "admin")
 def complete_delivery(order_id: str):
+    try:
+        check_delivery_authorization()
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
+
     user_id = session["user_id"]
     data = request.get_json() or {}
     proof = data.get("proof", "Customer signature / Handover confirmed")
@@ -193,13 +275,20 @@ def complete_delivery(order_id: str):
                 conn=conn
             )
         return jsonify({"status": "success", "message": "Order marked as successfully delivered."})
-    except (ValueError, PermissionError) as e:
+    except PermissionError as pe:
+        return jsonify({"error": str(pe)}), 403
+    except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
 @delivery_bp.route("/orders/<string:order_id>/fail", methods=["POST"])
 @login_required
 @roles_required("delivery", "admin")
 def fail_delivery(order_id: str):
+    try:
+        check_delivery_authorization()
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
+
     user_id = session["user_id"]
     data = request.get_json() or {}
     reason = data.get("reason", "Customer unavailable / Address unreachable")
@@ -223,7 +312,9 @@ def fail_delivery(order_id: str):
                 conn=conn
             )
         return jsonify({"status": "success", "message": "Order status updated to delivery failed."})
-    except (ValueError, PermissionError) as e:
+    except PermissionError as pe:
+        return jsonify({"error": str(pe)}), 403
+    except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
 @delivery_bp.route("/history", methods=["GET"])

@@ -164,7 +164,9 @@ def transition_status(order_id: str):
             "message": f"Order status transitioned to '{target_status}'.",
             "order": updated_order
         })
-    except (ValueError, PermissionError) as e:
+    except PermissionError as pe:
+        return jsonify({"error": str(pe)}), 403
+    except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": f"Transition failed: {str(e)}"}), 500
@@ -188,7 +190,9 @@ def cancel_order(order_id: str):
             "message": "Order has been cancelled.",
             "order": updated_order
         })
-    except (ValueError, PermissionError) as e:
+    except PermissionError as pe:
+        return jsonify({"error": str(pe)}), 403
+    except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": f"Cancellation failed: {str(e)}"}), 500

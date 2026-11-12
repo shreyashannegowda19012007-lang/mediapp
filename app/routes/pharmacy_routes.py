@@ -17,6 +17,11 @@ def get_current_pharmacy_id() -> int:
         pharm_id = request.args.get("pharmacy_id", type=int) or 1
     if not pharm_id:
         raise PermissionError("User is not associated with an approved pharmacy.")
+    pharm = query_db("SELECT status, name FROM pharmacies WHERE id = ?", (pharm_id,), one=True)
+    if not pharm:
+        raise PermissionError("Associated pharmacy not found.")
+    if session.get("role") != "admin" and pharm["status"] != "approved":
+        raise PermissionError(f"Pharmacy '{pharm['name']}' is {pharm['status']} and cannot perform operational duties.")
     return pharm_id
 
 @pharmacy_bp.route("/dashboard", methods=["GET"])
@@ -118,6 +123,17 @@ def list_pharmacy_orders():
 @roles_required("pharmacy", "admin")
 def accept_order(order_id: str):
     try:
+        pharmacy_id = get_current_pharmacy_id()
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
+
+    order = query_db("SELECT pharmacy_id FROM orders WHERE id = ?", (order_id,), one=True)
+    if not order:
+        return jsonify({"error": f"Order '{order_id}' not found."}), 404
+    if session.get("role") != "admin" and order["pharmacy_id"] != pharmacy_id:
+        return jsonify({"error": "Access denied. Order belongs to another pharmacy store."}), 403
+
+    try:
         updated = OrderService.transition_order_status(
             order_id=order_id,
             target_status="ACCEPTED",
@@ -126,13 +142,26 @@ def accept_order(order_id: str):
             notes="Order accepted by pharmacy"
         )
         return jsonify({"status": "success", "message": "Order accepted.", "order": updated})
-    except (ValueError, PermissionError) as e:
+    except PermissionError as pe:
+        return jsonify({"error": str(pe)}), 403
+    except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
 @pharmacy_bp.route("/orders/<string:order_id>/reject", methods=["POST"])
 @login_required
 @roles_required("pharmacy", "admin")
 def reject_order(order_id: str):
+    try:
+        pharmacy_id = get_current_pharmacy_id()
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
+
+    order = query_db("SELECT pharmacy_id FROM orders WHERE id = ?", (order_id,), one=True)
+    if not order:
+        return jsonify({"error": f"Order '{order_id}' not found."}), 404
+    if session.get("role") != "admin" and order["pharmacy_id"] != pharmacy_id:
+        return jsonify({"error": "Access denied. Order belongs to another pharmacy store."}), 403
+
     data = request.get_json() or {}
     reason = data.get("reason", "Rejected by pharmacy")
     try:
@@ -144,7 +173,9 @@ def reject_order(order_id: str):
             notes=f"Pharmacy rejected: {reason}"
         )
         return jsonify({"status": "success", "message": "Order rejected and cancelled.", "order": updated})
-    except (ValueError, PermissionError) as e:
+    except PermissionError as pe:
+        return jsonify({"error": str(pe)}), 403
+    except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
 @pharmacy_bp.route("/inventory", methods=["GET"])

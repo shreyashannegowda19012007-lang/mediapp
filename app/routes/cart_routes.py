@@ -11,8 +11,8 @@ from app.services.ddi_service import DDIService
 
 cart_bp = Blueprint("cart", __name__, url_prefix="/api/cart")
 
-def get_or_create_cart(user_id: int, pharmacy_id: int | None = None) -> dict:
-    """Retrieves or creates user cart, updating pharmacy association if specified."""
+def get_or_create_cart(user_id: int, pharmacy_id: int | None = None, clear_if_different: bool = False) -> dict:
+    """Retrieves or creates user cart, managing pharmacy association and item isolation."""
     conn = get_db()
     cur = conn.cursor()
     cart = query_db("SELECT * FROM carts WHERE user_id = ?", (user_id,), one=True)
@@ -27,6 +27,18 @@ def get_or_create_cart(user_id: int, pharmacy_id: int | None = None) -> dict:
         conn.commit()
         cart = query_db("SELECT * FROM carts WHERE id = ?", (cur.lastrowid,), one=True)
     elif pharmacy_id and cart["pharmacy_id"] != pharmacy_id:
+        # Check if cart has existing items
+        item_count_row = query_db("SELECT COUNT(*) as c FROM cart_items WHERE cart_id = ?", (cart["id"],), one=True)
+        has_items = (item_count_row["c"] > 0) if item_count_row else False
+
+        if has_items and not clear_if_different:
+            cur_pharm = query_db("SELECT name FROM pharmacies WHERE id = ?", (cart["pharmacy_id"],), one=True)
+            new_pharm = query_db("SELECT name FROM pharmacies WHERE id = ?", (pharmacy_id,), one=True)
+            raise ValueError(f"CROSS_PHARMACY_CONFLICT:{cur_pharm['name'] if cur_pharm else 'another pharmacy'}:{new_pharm['name'] if new_pharm else 'the selected pharmacy'}")
+
+        if clear_if_different:
+            cur.execute("DELETE FROM cart_items WHERE cart_id = ?", (cart["id"],))
+
         cur.execute("UPDATE carts SET pharmacy_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (pharmacy_id, cart["id"]))
         conn.commit()
         cart = query_db("SELECT * FROM carts WHERE id = ?", (cart["id"],), one=True)
@@ -100,12 +112,27 @@ def add_to_cart():
     medicine_id = data.get("medicine_id")
     quantity = data.get("quantity", 1)
     pharmacy_id = data.get("pharmacy_id")
+    clear_existing = data.get("clear_existing", False)
 
     if not medicine_id or quantity <= 0:
         return jsonify({"error": "Valid medicine_id and quantity > 0 are required."}), 400
 
     user_id = session["user_id"]
-    cart = get_or_create_cart(user_id, pharmacy_id)
+    try:
+        cart = get_or_create_cart(user_id, pharmacy_id, clear_if_different=bool(clear_existing))
+    except ValueError as ve:
+        if str(ve).startswith("CROSS_PHARMACY_CONFLICT:"):
+            parts = str(ve).split(":")
+            old_name = parts[1] if len(parts) > 1 else "another pharmacy"
+            new_name = parts[2] if len(parts) > 2 else "new pharmacy"
+            return jsonify({
+                "error": f"Your cart contains items from '{old_name}'. Each order must be fulfilled by a single pharmacy.",
+                "conflict": True,
+                "current_pharmacy": old_name,
+                "target_pharmacy": new_name
+            }), 409
+        return jsonify({"error": str(ve)}), 400
+
     target_pharmacy_id = cart["pharmacy_id"]
 
     # Verify stock availability

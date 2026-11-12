@@ -69,12 +69,16 @@ const API = {
 
   // Auth Endpoints
   auth: {
+    register: (payload) => API.post("/api/auth/register", payload),
     login: (email, password) => API.post("/api/auth/login", { email, password }),
     demoLogin: (role) => API.post("/api/auth/demo-login", { role }),
+    switchRole: (role) => API.post("/api/auth/switch-role", { role }),
     logout: () => API.post("/api/auth/logout"),
     getMe: () => API.get("/api/auth/me"),
     getGoogleUrl: () => API.get("/api/auth/google/url"),
-    updateProfile: (profile) => API.put("/api/auth/profile", profile)
+    updateProfile: (profile) => API.put("/api/auth/profile", profile),
+    getAddresses: () => API.get("/api/auth/addresses"),
+    addAddress: (addr) => API.post("/api/auth/addresses", addr)
   },
 
   // Medicine Catalogue Endpoints
@@ -90,7 +94,7 @@ const API = {
   // Cart Endpoints
   cart: {
     get: () => API.get("/api/cart"),
-    addItem: (medicine_id, quantity = 1, pharmacy_id) => API.post("/api/cart/items", { medicine_id, quantity, pharmacy_id }),
+    addItem: (medicine_id, quantity = 1, pharmacy_id, clear_existing = false) => API.post("/api/cart/items", { medicine_id, quantity, pharmacy_id, clear_existing }),
     updateItem: (medicine_id, quantity) => API.put(`/api/cart/items/${medicine_id}`, { quantity }),
     removeItem: (medicine_id) => API.delete(`/api/cart/items/${medicine_id}`),
     clear: () => API.delete("/api/cart")
@@ -126,7 +130,8 @@ const API = {
     inTransit: (order_id) => API.post(`/api/delivery/orders/${order_id}/in-transit`),
     complete: (order_id, proof) => API.post(`/api/delivery/orders/${order_id}/complete`, { proof }),
     fail: (order_id, reason) => API.post(`/api/delivery/orders/${order_id}/fail`, { reason }),
-    getHistory: () => API.get("/api/delivery/history")
+    getHistory: () => API.get("/api/delivery/history"),
+    updateLocation: (latitude, longitude) => API.post("/api/delivery/location", { latitude, longitude })
   },
 
   // Administrator Endpoints

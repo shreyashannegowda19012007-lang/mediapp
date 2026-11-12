@@ -324,10 +324,95 @@
       </div>
     </div>
 
+    <!-- Authentication & Registration Modal -->
+    <div id="auth-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 id="auth-modal-title">Sign In or Register</h3>
+          <button type="button" class="btn-close-modal" id="btn-close-auth">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 20px;">
+          <!-- Tabs for Sign In vs Register -->
+          <div class="auth-tabs" style="display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid var(--border-subtle); padding-bottom:10px;">
+            <button type="button" class="btn-demo-pill active" id="tab-btn-signin" style="flex:1;">Sign In</button>
+            <button type="button" class="btn-demo-pill" id="tab-btn-register" style="flex:1;">Create Account</button>
+          </div>
+
+          <!-- Sign In Pane -->
+          <div id="auth-signin-pane">
+            <form id="form-signin">
+              <div class="form-group" style="margin-bottom:14px;">
+                <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Email Address</label>
+                <input type="email" id="signin-email" class="input-main-search" placeholder="e.g. demo.customer@mediapp.local" required style="width:100%;">
+              </div>
+              <div class="form-group" style="margin-bottom:18px;">
+                <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Password</label>
+                <input type="password" id="signin-password" class="input-main-search" placeholder="••••••••" required style="width:100%;">
+              </div>
+              <button type="submit" class="btn-checkout-primary" id="btn-submit-signin" style="width:100%; margin-bottom:14px;">Sign In</button>
+            </form>
+
+            <div style="text-align:center; margin:16px 0; position:relative;">
+              <span style="background:var(--bg-card); padding:0 10px; color:var(--text-muted); font-size:0.8rem; position:relative; z-index:1;">OR</span>
+              <div style="position:absolute; top:50%; left:0; right:0; height:1px; background:var(--border-subtle); z-index:0;"></div>
+            </div>
+
+            <!-- Google Sign-In Button -->
+            <button type="button" class="btn-alt-pill" id="btn-google-signin" style="width:100%; display:flex; align-items:center; justify-content:center; gap:10px; padding:12px; font-weight:600;">
+              <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+              <span>Continue with Google</span>
+            </button>
+            <div id="google-auth-notice" style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:8px;"></div>
+          </div>
+
+          <!-- Register Pane -->
+          <div id="auth-register-pane" class="hidden">
+            <form id="form-register">
+              <div class="form-group" style="margin-bottom:12px;">
+                <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Full Name</label>
+                <input type="text" id="reg-name" class="input-main-search" placeholder="e.g. Ramesh Kumar" required style="width:100%;">
+              </div>
+              <div class="form-group" style="margin-bottom:12px;">
+                <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Email Address</label>
+                <input type="email" id="reg-email" class="input-main-search" placeholder="e.g. ramesh@example.com" required style="width:100%;">
+              </div>
+              <div class="form-group" style="margin-bottom:12px;">
+                <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Phone Number</label>
+                <input type="tel" id="reg-phone" class="input-main-search" placeholder="+91 9876543210" required style="width:100%;">
+              </div>
+              <div class="form-group" style="margin-bottom:12px;">
+                <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Password (min 8 characters)</label>
+                <input type="password" id="reg-password" class="input-main-search" placeholder="••••••••" minlength="8" required style="width:100%;">
+              </div>
+              <div class="form-group" style="margin-bottom:16px;">
+                <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Delivery Address (Optional)</label>
+                <input type="text" id="reg-address" class="input-main-search" placeholder="Flat / House, Street, Pincode" style="width:100%;">
+              </div>
+              <button type="submit" class="btn-checkout-primary" id="btn-submit-register" style="width:100%;">Create Customer Account</button>
+            </form>
+          </div>
+
+          <!-- Demo Accounts Helper -->
+          <div id="demo-accounts-helper" style="margin-top:20px; padding:12px; background:var(--bg-canvas); border:1px solid var(--border-subtle); border-radius:var(--radius-sm);">
+            <div style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--text-muted); margin-bottom:8px;">1-Click Demo Evaluation Accounts:</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <button type="button" class="btn-alt-pill btn-quick-demo" data-role="customer" style="font-size:0.8rem; padding:6px 10px; text-align:left;">🛒 Customer</button>
+              <button type="button" class="btn-alt-pill btn-quick-demo" data-role="pharmacy" style="font-size:0.8rem; padding:6px 10px; text-align:left;">💊 Pharmacy</button>
+              <button type="button" class="btn-alt-pill btn-quick-demo" data-role="delivery" style="font-size:0.8rem; padding:6px 10px; text-align:left;">🚴 Delivery</button>
+              <button type="button" class="btn-alt-pill btn-quick-demo" data-role="admin" style="font-size:0.8rem; padding:6px 10px; text-align:left;">🛡️ Admin</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Global Toast Notifications Container -->
     <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
   </div>
+
+  <!-- Razorpay Official Checkout Gateway SDK -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
   <!-- Application Modular Scripts -->
   <script src="/static/js/api.js"></script>

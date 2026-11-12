@@ -56,6 +56,15 @@ class OCRService:
         Analyzes raw document text to detect doctor credentials,
         patient details, date, and candidate medications with confidence scoring.
         """
+        if not text or not text.strip():
+            return {
+                "doctor_name": None,
+                "patient_name": None,
+                "prescription_date": None,
+                "extracted_medicines": [],
+                "confidence": 0.0
+            }
+
         doctor_name = None
         patient_name = None
         prescription_date = None
@@ -112,38 +121,54 @@ class OCRService:
     def process_document(cls, file_path: str, mime_type: str) -> dict[str, Any]:
         """
         Executes end-to-end OCR and semantic medical extraction pipeline.
+        Never fabricates clinical information or injects synthetic facts for unreadable uploads.
         """
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"Prescription file not found at '{file_path}'.")
 
         text = ""
-        provider = "heuristic"
+        provider = "none"
 
         if "pdf" in mime_type.lower() or file_path.lower().endswith(".pdf"):
             try:
-                text = cls.extract_text_from_pdf(file_path)
-                provider = "pdf_text_parser"
+                extracted_pdf_text = cls.extract_text_from_pdf(file_path)
+                if extracted_pdf_text and extracted_pdf_text.strip():
+                    text = extracted_pdf_text.strip()
+                    provider = "pdf_text_parser"
             except Exception:
                 text = ""
 
+            # If pypdf could not extract text, inspect raw stream for readable text content
+            if not text:
+                try:
+                    with open(file_path, "rb") as f:
+                        raw = f.read()
+                    matches = re.findall(r"[\x20-\x7E\t\n\r]{4,}", raw.decode("latin-1", errors="ignore"))
+                    joined = "\n".join(matches)
+                    if any(kw in joined.lower() for kw in ("dr.", "rx", "tab", "mg", "telma", "atorva", "dolo")):
+                        text = joined
+                        provider = "raw_stream_extractor"
+                except Exception:
+                    pass
+
         if not text:
-            # Attempt image extraction
+            # Attempt image extraction via Tesseract
             extracted, prov = cls.extract_text_from_image(file_path)
-            if extracted:
-                text = extracted
+            if extracted and extracted.strip():
+                text = extracted.strip()
                 provider = prov
 
         if not text:
-            # Fallback to sample structured recognition for demonstration test documents
-            text = (
-                "Rx Dr. Arvind Kapoor, MD (Cardiology) Reg #44821\n"
-                "Patient: Aditi Sharma, Age: 32, Female\n"
-                "Date: 2026-10-25\n"
-                "1. Tab Telma 40mg - 1 OD morning\n"
-                "2. Tab Atorva 20mg - 1 HS night\n"
-                "3. Tab Dolo 650mg - SOS for fever"
-            )
-            provider = "demo_pattern_recognizer"
+            # Unreadable document - zero clinical fabrication
+            return {
+                "doctor_name": None,
+                "patient_name": None,
+                "prescription_date": None,
+                "raw_text": "",
+                "extracted_medicines": [],
+                "confidence": 0.0,
+                "provider": "unreadable"
+            }
 
         entities = cls.parse_prescription_entities(text)
         entities["raw_text"] = text

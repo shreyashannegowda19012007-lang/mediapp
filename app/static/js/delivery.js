@@ -7,6 +7,7 @@
 const DeliveryPortal = {
   async init(tab = "active") {
     Sync.stopAll();
+    this.startLocationTracking();
     const container = document.getElementById("main-content");
 
     if (tab === "active") {
@@ -15,6 +16,25 @@ const DeliveryPortal = {
       await this.renderAvailablePool(container);
     } else if (tab === "history") {
       await this.renderHistory(container);
+    }
+  },
+
+  startLocationTracking() {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          State.set("courierLocation", {
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude
+          });
+          API.delivery.updateLocation(pos.coords.latitude, pos.coords.longitude).catch(() => {});
+        },
+        (err) => {
+          // Graceful fallback when permission denied or offline
+          console.info("Geolocation info:", err.message);
+        },
+        { timeout: 5000, enableHighAccuracy: true }
+      );
     }
   },
 
@@ -77,7 +97,7 @@ const DeliveryPortal = {
           <div class="tracking-header">
             <div>
               <span class="badge badge-pulse">ACTIVE MISSION</span>
-              <div style="font-size: 1.4rem; font-weight:800; color:var(--text-primary); margin-top:4px;">${ord.id}</div>
+              <div style="font-size: 1.4rem; font-weight:800; color:var(--text-primary); margin-top:4px;">${Components.escapeHtml(ord.id)}</div>
               <div style="font-size:0.85rem; color:var(--text-secondary); margin-top:2px;">
                 Earned Delivery Payout: <strong>${Components.formatCurrency(ord.delivery_fee)}</strong>
               </div>
@@ -92,20 +112,20 @@ const DeliveryPortal = {
             <!-- Pharmacy Pickup -->
             <div style="background:rgba(255,255,255,0.03); padding:16px; border-radius:var(--radius-sm); border-left:4px solid var(--primary);">
               <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Step 1: Pickup Location</div>
-              <div style="font-size:1.1rem; font-weight:700; color:var(--text-primary); margin:4px 0;">${ord.pharmacy_name}</div>
-              <div style="font-size:0.85rem; color:var(--text-secondary);">${ord.pharmacy_address}</div>
-              <div style="font-size:0.85rem; color:var(--primary); margin-top:4px;">📞 Pharmacy: ${ord.pharmacy_phone}</div>
+              <div style="font-size:1.1rem; font-weight:700; color:var(--text-primary); margin:4px 0;">${Components.escapeHtml(ord.pharmacy_name)}</div>
+              <div style="font-size:0.85rem; color:var(--text-secondary);">${Components.escapeHtml(ord.pharmacy_address)}</div>
+              <div style="font-size:0.85rem; color:var(--primary); margin-top:4px;">📞 Pharmacy: ${Components.escapeHtml(ord.pharmacy_phone)}</div>
             </div>
 
             <!-- Customer Destination -->
             <div style="background:var(--bg-canvas); padding:16px; border-radius:var(--radius-md); border-left:4px solid var(--emerald); border:1px solid var(--border-subtle);">
               <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Step 2: Drop-off Location</div>
-              <div style="font-size:1.1rem; font-weight:700; color:var(--text-primary); margin:4px 0;">${ord.customer_name}</div>
+              <div style="font-size:1.1rem; font-weight:700; color:var(--text-primary); margin:4px 0;">${Components.escapeHtml(ord.customer_name)}</div>
               <div style="font-size:0.85rem; color:var(--text-secondary);">
-                ${addr.line1 || ''}, ${addr.line2 || ''}<br>
-                ${addr.city || ''}, ${addr.state || ''} - ${addr.pincode || ''}
+                ${Components.escapeHtml(addr.line1 || '')}, ${Components.escapeHtml(addr.line2 || '')}<br>
+                ${Components.escapeHtml(addr.city || '')}, ${Components.escapeHtml(addr.state || '')} - ${Components.escapeHtml(addr.pincode || '')}
               </div>
-              <div style="font-size:0.85rem; color:var(--emerald); margin-top:4px;">📞 Customer: ${addr.recipient_phone || ord.customer_phone}</div>
+              <div style="font-size:0.85rem; color:var(--emerald); margin-top:4px;">📞 Customer: ${Components.escapeHtml(addr.recipient_phone || ord.customer_phone)}</div>
             </div>
           </div>
 
@@ -285,13 +305,13 @@ const DeliveryPortal = {
         try { addr = JSON.parse(ord.delivery_address_json); } catch {}
 
         return `
-          <div class="order-tracking-card" data-id="${ord.id}">
+          <div class="order-tracking-card" data-id="${Components.escapeHtml(ord.id)}">
             <div class="tracking-header">
               <div>
                 <span class="badge badge-otc">READY FOR PICKUP</span>
-                <div style="font-size: 1.25rem; font-weight:800; color:var(--text-primary); margin-top:4px;">${ord.id}</div>
+                <div style="font-size: 1.25rem; font-weight:800; color:var(--text-primary); margin-top:4px;">${Components.escapeHtml(ord.id)}</div>
                 <div style="font-size:0.85rem; color:var(--text-secondary); margin-top:2px;">
-                  Pharmacy: <strong>${ord.pharmacy_name}</strong> (${ord.pharmacy_address})
+                  Pharmacy: <strong>${Components.escapeHtml(ord.pharmacy_name)}</strong> (${Components.escapeHtml(ord.pharmacy_address)})
                 </div>
               </div>
               <div style="text-align:right;">
@@ -302,9 +322,9 @@ const DeliveryPortal = {
 
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:14px;">
               <div style="font-size:0.85rem; color:var(--text-secondary);">
-                Destination: ${addr.line1 || ''}, ${addr.city || ''} (Phone: ${addr.recipient_phone || 'N/A'})
+                Destination: ${Components.escapeHtml(addr.line1 || '')}, ${Components.escapeHtml(addr.city || '')} (Phone: ${Components.escapeHtml(addr.recipient_phone || 'N/A')})
               </div>
-              <button type="button" class="btn-checkout-primary btn-claim-order" data-id="${ord.id}" style="width:auto; margin:0; padding:10px 22px;">
+              <button type="button" class="btn-checkout-primary btn-claim-order" data-id="${Components.escapeHtml(ord.id)}" style="width:auto; margin:0; padding:10px 22px;">
                 ⚡ Claim This Delivery
               </button>
             </div>
@@ -377,12 +397,12 @@ const DeliveryPortal = {
             <tbody>
               ${history.map(h => `
                 <tr>
-                  <td><strong>${h.id}</strong></td>
-                  <td>${h.pharmacy_name}</td>
+                  <td><strong>${Components.escapeHtml(h.id)}</strong></td>
+                  <td>${Components.escapeHtml(h.pharmacy_name)}</td>
                   <td>${Components.formatCurrency(h.total_amount)}</td>
                   <td><strong style="color:var(--emerald);">${Components.formatCurrency(h.delivery_fee)}</strong></td>
                   <td>${Components.formatDate(h.delivery_time || h.created_at)}</td>
-                  <td>${h.proof_of_delivery || h.failure_reason || 'Standard handover'}</td>
+                  <td>${Components.escapeHtml(h.proof_of_delivery || h.failure_reason || 'Standard handover')}</td>
                   <td>${Components.renderStatusBadge(h.order_status)}</td>
                 </tr>
               `).join("")}

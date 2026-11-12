@@ -293,6 +293,24 @@ class OrderService:
             current_status = order["order_status"]
             OrderStateMachine.validate_transition(current_status, target_status, user_role)
 
+            # Authoritative object-level authorization check
+            if user_role == "customer":
+                if order["customer_id"] != user_id:
+                    raise PermissionError("Access denied. You do not own this order.")
+            elif user_role == "pharmacy":
+                staff = query_db(
+                    "SELECT pharmacy_id FROM pharmacy_staff WHERE user_id = ?",
+                    (user_id,),
+                    one=True,
+                    conn=managed_conn
+                )
+                pharmacy_id = staff["pharmacy_id"] if staff else None
+                if not pharmacy_id or pharmacy_id != order["pharmacy_id"]:
+                    raise PermissionError("Access denied. This order belongs to another pharmacy store.")
+            elif user_role == "delivery":
+                if target_status != "DELIVERY_ASSIGNED" and order["delivery_person_id"] != user_id:
+                    raise PermissionError("Access denied. This delivery is not assigned to you.")
+
             cur = managed_conn.cursor()
 
             # Handle cancellation: restore inventory & handle refund if paid

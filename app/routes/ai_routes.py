@@ -20,5 +20,7 @@ def consult_assistant():
         return jsonify({"status": "success", "result": result})
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
+    except RuntimeError as e:
+        return jsonify({"error": str(e)}), 502
     except Exception as e:
         return jsonify({"error": f"AI Assistant service error: {str(e)}"}), 500

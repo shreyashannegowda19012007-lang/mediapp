@@ -27,7 +27,7 @@ erDiagram
     ORDERS ||--o{ ORDER_ITEMS : contains
     MEDICINES ||--o{ ORDER_ITEMS : snapshots
     ORDERS ||--o{ ORDER_STATUS_HISTORY : logs
-    ORDERS ||--o{ PAYMENT_TRANSACTIONS : charges
+    ORDERS ||--o{ PAYMENTS : charges
     ORDERS ||--o| DELIVERY_ASSIGNMENTS : delivers
     DELIVERY_PERSONNEL ||--o{ DELIVERY_ASSIGNMENTS : assigned_to
     ORDERS ||--o{ AUDIT_LOGS : audits
@@ -49,7 +49,7 @@ erDiagram
 13. `orders`: Authoritative order entity (`ORD-YYYYMMDD-XXXX`, customer, pharmacy, address snapshot, financial totals, status, payment status).
 14. `order_items`: Price and name snapshots of items at order placement time.
 15. `order_status_history`: Immutable timeline of order transitions with responsible user and notes.
-16. `payment_transactions`: Gateway transaction tracking (provider, order ID, payment ID, signature, status, error code).
+16. `payments`: Gateway transaction tracking (provider, order ID, payment ID, signature, status, error code).
 17. `delivery_assignments`: Real-time courier dispatch tracking (rider, pickup timestamp, delivery milestone timestamps, OTP).
 
 ---
