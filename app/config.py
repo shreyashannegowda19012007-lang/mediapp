@@ -18,7 +18,7 @@ class Config:
     
     SECRET_KEY = os.getenv("SECRET_KEY", "dev_secret_key_change_in_production_8941fba0e3d")
     PORT = int(os.getenv("PORT", 5000))
-    HOST = os.getenv("HOST", "127.0.0.1")
+    HOST = os.getenv("HOST", "0.0.0.0")
     
     # Database
     DB_NAME = os.getenv("DATABASE_PATH", "mediapp.db")

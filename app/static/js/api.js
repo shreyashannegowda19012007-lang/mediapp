@@ -39,6 +39,11 @@ const API = {
       return data;
     } catch (err) {
       console.error(`API Error on [${options.method || "GET"} ${endpoint}]:`, err);
+      if (err.name === "TypeError" && err.message && err.message.toLowerCase().includes("fetch")) {
+        const netErr = new Error("Connection failed: MediApp server is unreachable. Please ensure the backend server is running on http://127.0.0.1:5000 (or http://localhost:5000).");
+        netErr.status = 0;
+        throw netErr;
+      }
       throw err;
     }
   },
