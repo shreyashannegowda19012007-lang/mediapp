@@ -35,12 +35,15 @@ const App = {
     } else if (urlParams.has("login_success")) {
       const user = State.get("user");
       const roleParam = urlParams.get("role");
+      const provider = urlParams.get("provider");
       if (user && roleParam && Array.isArray(user.authorized_roles) && user.authorized_roles.includes(roleParam)) {
         State.set("activeRole", roleParam);
       } else if (user) {
         State.set("activeRole", user.active_role || user.role || "customer");
       }
-      Components.toast("Signed in successfully via Google OAuth 2.0!", "success");
+      const providerMsg = provider === "google" ? " via Google Sign-In" : "";
+      const userName = user ? ` Welcome, ${user.full_name}!` : "";
+      Components.toast(`Signed in successfully${providerMsg}!${userName}`, "success");
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
@@ -275,10 +278,24 @@ const App = {
     // Google Sign-In trigger
     const btnGoogle = document.getElementById("btn-google-signin");
     const googleNotice = document.getElementById("google-auth-notice");
+    const caps = State.get("capabilities") || {};
+    if (googleNotice) {
+      if (caps.google_oauth_mode === "demo") {
+        googleNotice.textContent = "⚡ Simulated 1-Click Google OAuth active (Demo Environment)";
+        googleNotice.style.color = "var(--primary)";
+      } else if (caps.google_oauth_configured) {
+        googleNotice.textContent = "🔒 Official Google Cloud OAuth 2.0 active";
+        googleNotice.style.color = "var(--primary)";
+      } else {
+        googleNotice.textContent = "Google OAuth credentials not configured (.env).";
+        googleNotice.style.color = "var(--text-muted)";
+      }
+    }
+
     if (btnGoogle) {
       btnGoogle.addEventListener("click", async () => {
-        const caps = State.get("capabilities") || {};
-        if (!caps.google_oauth_configured) {
+        const currentCaps = State.get("capabilities") || {};
+        if (!currentCaps.google_oauth_configured) {
           if (googleNotice) {
             googleNotice.textContent = "Google OAuth credentials are not configured on this server.";
             googleNotice.style.color = "var(--rose)";
@@ -302,6 +319,13 @@ const App = {
     document.querySelectorAll(".btn-quick-demo").forEach(btn => {
       btn.addEventListener("click", async () => {
         const role = btn.dataset.role;
+        const email = btn.dataset.email;
+        const pass = btn.dataset.pass;
+        const emailInput = document.getElementById("signin-email");
+        const passInput = document.getElementById("signin-password");
+        if (emailInput && email) emailInput.value = email;
+        if (passInput && pass) passInput.value = pass;
+
         try {
           const res = await API.auth.demoLogin(role);
           State.set("user", res.user);

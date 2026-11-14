@@ -236,7 +236,22 @@ def google_callback():
     try:
         user = AuthService.exchange_google_code(code, state)
         set_user_session(user)
-        return redirect(f"/?login_success=1&role={user['role']}")
+        return redirect(f"/?login_success=1&role={user['role']}&provider=google")
+    except Exception as e:
+        return redirect(f"/?auth_error={str(e)}")
+
+@auth_bp.route("/google/demo-callback", methods=["GET"])
+def google_demo_callback():
+    """Simulates immediate Google OAuth sign-in flow for demo mode."""
+    if not Config.is_demo():
+        return redirect("/?auth_error=demo_disabled")
+    state = request.args.get("state")
+    if not state:
+        return redirect("/?auth_error=missing_oauth_params")
+    try:
+        user = AuthService.demo_google_login(state)
+        set_user_session(user)
+        return redirect(f"/?login_success=1&role={user['role']}&provider=google")
     except Exception as e:
         return redirect(f"/?auth_error={str(e)}")
 

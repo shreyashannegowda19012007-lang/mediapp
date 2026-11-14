@@ -17,32 +17,35 @@ def seed_database(db_path: str = None):
 
     # 1. Seed Demo Users
     users_data = [
-        ("demo.customer@mediapp.local", "Customer@MediApp2026!", "Aditi Sharma", "+91 9876543210", "customer"),
-        ("customer@mediapp.local", "Demo@Customer123", "Aditi Sharma", "+91 9876543210", "customer"),
-        ("demo.pharmacy@mediapp.local", "Pharmacy@MediApp2026!", "Rajesh Varma (Lead Pharmacist)", "+91 9876543211", "pharmacy"),
-        ("apollo.koramangala@mediapp.local", "Demo@Pharmacy123", "Rajesh Varma (Lead Pharmacist)", "+91 9876543211", "pharmacy"),
-        ("pharmacy2@mediapp.local", "Pharmacy@MediApp2026!", "Suresh Patel (Pharmacist)", "+91 9876543212", "pharmacy"),
-        ("medplus.btm@mediapp.local", "Demo@Pharmacy123", "Suresh Patel (Pharmacist)", "+91 9876543212", "pharmacy"),
-        ("demo.delivery@mediapp.local", "Delivery@MediApp2026!", "Kiran Kumar", "+91 9123456789", "delivery"),
-        ("rajesh.delivery@mediapp.local", "Demo@Delivery123", "Rajesh Kumar", "+91 9123456789", "delivery"),
-        ("delivery2@mediapp.local", "Delivery@MediApp2026!", "Vikram Singh", "+91 9123456780", "delivery"),
-        ("suresh.delivery@mediapp.local", "Demo@Delivery123", "Suresh Nair", "+91 9123456780", "delivery"),
-        ("demo.admin@mediapp.local", "Admin@MediApp2026!", "Dr. Neha Rao (Chief Administrator)", "+91 9999900000", "admin"),
-        ("admin@mediapp.local", "Demo@Admin123", "System Administrator", "+91 9999900000", "admin")
+        ("customer@mediapp.local", "Customer@123", "Aditi Sharma", "+91 9876543210", "customer"),
+        ("demo.customer@mediapp.local", "Customer@123", "Aditi Sharma", "+91 9876543210", "customer"),
+        ("pharmacy@mediapp.local", "Pharmacy@123", "Rajesh Varma (Lead Pharmacist)", "+91 9876543211", "pharmacy"),
+        ("demo.pharmacy@mediapp.local", "Pharmacy@123", "Rajesh Varma (Lead Pharmacist)", "+91 9876543211", "pharmacy"),
+        ("apollo.koramangala@mediapp.local", "Pharmacy@123", "Rajesh Varma (Lead Pharmacist)", "+91 9876543211", "pharmacy"),
+        ("pharmacy2@mediapp.local", "Pharmacy@123", "Suresh Patel (Pharmacist)", "+91 9876543212", "pharmacy"),
+        ("medplus.btm@mediapp.local", "Pharmacy@123", "Suresh Patel (Pharmacist)", "+91 9876543212", "pharmacy"),
+        ("delivery@mediapp.local", "Delivery@123", "Kiran Kumar", "+91 9123456789", "delivery"),
+        ("demo.delivery@mediapp.local", "Delivery@123", "Kiran Kumar", "+91 9123456789", "delivery"),
+        ("rajesh.delivery@mediapp.local", "Delivery@123", "Rajesh Kumar", "+91 9123456789", "delivery"),
+        ("delivery2@mediapp.local", "Delivery@123", "Vikram Singh", "+91 9123456780", "delivery"),
+        ("suresh.delivery@mediapp.local", "Delivery@123", "Suresh Nair", "+91 9123456780", "delivery"),
+        ("admin@mediapp.local", "Admin@123", "System Administrator", "+91 9999900000", "admin"),
+        ("demo.admin@mediapp.local", "Admin@123", "Dr. Neha Rao (Chief Administrator)", "+91 9999900000", "admin")
     ]
 
     user_ids = {}
     for email, pwd, name, phone, role in users_data:
         cur.execute("SELECT id FROM users WHERE email = ?", (email,))
         row = cur.fetchone()
+        hashed = generate_password_hash(pwd)
         if not row:
-            hashed = generate_password_hash(pwd)
             cur.execute(
                 "INSERT INTO users (email, password_hash, full_name, phone, role, is_active) VALUES (?, ?, ?, ?, ?, 1)",
                 (email, hashed, name, phone, role)
             )
             user_ids[email] = cur.lastrowid
         else:
+            cur.execute("UPDATE users SET password_hash = ? WHERE email = ?", (hashed, email))
             user_ids[email] = row[0]
 
     # 2. Seed Customer Addresses
@@ -80,7 +83,8 @@ def seed_database(db_path: str = None):
     # Associate Pharmacy Staff
     pharm_staff_map = [
         (pharmacy_ids[0], user_ids["demo.pharmacy@mediapp.local"], "Chief Pharmacist"),
-        (pharmacy_ids[0], user_ids["apollo.koramangala@mediapp.local"], "Lead Pharmacist"),
+        (pharmacy_ids[0], user_ids.get("pharmacy@mediapp.local", user_ids["demo.pharmacy@mediapp.local"]), "Lead Pharmacist"),
+        (pharmacy_ids[0], user_ids["apollo.koramangala@mediapp.local"], "Staff Pharmacist"),
         (pharmacy_ids[1], user_ids["pharmacy2@mediapp.local"], "Managing Pharmacist"),
         (pharmacy_ids[1], user_ids["medplus.btm@mediapp.local"], "Supervising Pharmacist")
     ]
@@ -92,6 +96,7 @@ def seed_database(db_path: str = None):
     # 4. Seed Delivery Profiles
     deliv_profiles_data = [
         (user_ids["demo.delivery@mediapp.local"], "Motorcycle", "KA-03-HA-8821", "DL-0420180091234"),
+        (user_ids.get("delivery@mediapp.local", user_ids["demo.delivery@mediapp.local"]), "Motorcycle", "KA-03-HA-8820", "DL-0420180091230"),
         (user_ids["rajesh.delivery@mediapp.local"], "Scooter", "KA-03-HA-8822", "DL-0420180091235"),
         (user_ids["delivery2@mediapp.local"], "Scooter", "KA-05-EJ-4392", "DL-0420200084321"),
         (user_ids["suresh.delivery@mediapp.local"], "Motorcycle", "KA-05-EJ-4393", "DL-0420200084322")

@@ -393,13 +393,31 @@
           </div>
 
           <!-- Demo Accounts Helper -->
-          <div id="demo-accounts-helper" style="margin-top:20px; padding:12px; background:var(--bg-canvas); border:1px solid var(--border-subtle); border-radius:var(--radius-sm);">
-            <div style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--text-muted); margin-bottom:8px;">1-Click Demo Evaluation Accounts:</div>
+          <div id="demo-accounts-helper" style="margin-top:20px; padding:14px; background:var(--bg-canvas); border:1px solid var(--border-subtle); border-radius:var(--radius-md);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <span style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--text-muted); letter-spacing:0.5px;">1-Click Role Accounts (Instant Access)</span>
+              <span style="font-size:0.7rem; background:rgba(30,136,229,0.1); color:var(--primary); padding:2px 6px; border-radius:4px; font-weight:600;">Demo Mode</span>
+            </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-              <button type="button" class="btn-alt-pill btn-quick-demo" data-role="customer" style="font-size:0.8rem; padding:6px 10px; text-align:left;">🛒 Customer</button>
-              <button type="button" class="btn-alt-pill btn-quick-demo" data-role="pharmacy" style="font-size:0.8rem; padding:6px 10px; text-align:left;">💊 Pharmacy</button>
-              <button type="button" class="btn-alt-pill btn-quick-demo" data-role="delivery" style="font-size:0.8rem; padding:6px 10px; text-align:left;">🚴 Delivery</button>
-              <button type="button" class="btn-alt-pill btn-quick-demo" data-role="admin" style="font-size:0.8rem; padding:6px 10px; text-align:left;">🛡️ Admin</button>
+              <button type="button" class="btn-alt-pill btn-quick-demo" data-role="customer" data-email="customer@mediapp.local" data-pass="Customer@123" style="font-size:0.8rem; padding:8px 10px; text-align:left; display:flex; flex-direction:column; gap:2px;">
+                <span style="font-weight:700; color:var(--text-primary);">🛒 Customer</span>
+                <span style="font-size:0.7rem; color:var(--text-muted);">customer@mediapp.local</span>
+              </button>
+              <button type="button" class="btn-alt-pill btn-quick-demo" data-role="pharmacy" data-email="pharmacy@mediapp.local" data-pass="Pharmacy@123" style="font-size:0.8rem; padding:8px 10px; text-align:left; display:flex; flex-direction:column; gap:2px;">
+                <span style="font-weight:700; color:var(--text-primary);">💊 Pharmacy</span>
+                <span style="font-size:0.7rem; color:var(--text-muted);">pharmacy@mediapp.local</span>
+              </button>
+              <button type="button" class="btn-alt-pill btn-quick-demo" data-role="delivery" data-email="delivery@mediapp.local" data-pass="Delivery@123" style="font-size:0.8rem; padding:8px 10px; text-align:left; display:flex; flex-direction:column; gap:2px;">
+                <span style="font-weight:700; color:var(--text-primary);">🚴 Delivery</span>
+                <span style="font-size:0.7rem; color:var(--text-muted);">delivery@mediapp.local</span>
+              </button>
+              <button type="button" class="btn-alt-pill btn-quick-demo" data-role="admin" data-email="admin@mediapp.local" data-pass="Admin@123" style="font-size:0.8rem; padding:8px 10px; text-align:left; display:flex; flex-direction:column; gap:2px;">
+                <span style="font-weight:700; color:var(--text-primary);">🛡️ Admin</span>
+                <span style="font-size:0.7rem; color:var(--text-muted);">admin@mediapp.local</span>
+              </button>
+            </div>
+            <div style="margin-top:10px; font-size:0.72rem; color:var(--text-muted); text-align:center;">
+              Standard Password for all accounts: <code style="font-family:monospace; background:var(--bg-card); padding:2px 5px; border-radius:3px; border:1px solid var(--border-subtle); font-weight:600; color:var(--text-primary);">Role@123</code> (e.g. <code>Customer@123</code>)
             </div>
           </div>
         </div>

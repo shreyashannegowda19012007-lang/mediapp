@@ -98,7 +98,29 @@ class AuthService:
             return None
 
         if not cls.verify_password(password, user["password_hash"]):
-            return None
+            # In demo mode, also allow standard role passwords or Password@123 as fallback for local accounts
+            is_valid_demo_fallback = (
+                Config.is_demo() and 
+                (user["email"].endswith("@mediapp.local") or user["email"].startswith("demo.")) and
+                password in [
+                    f"{user['role'].capitalize()}@123",
+                    "Password@123",
+                    "Customer@123",
+                    "Pharmacy@123",
+                    "Delivery@123",
+                    "Admin@123",
+                    "Demo@Customer123",
+                    "Demo@Pharmacy123",
+                    "Demo@Delivery123",
+                    "Demo@Admin123",
+                    "Customer@MediApp2026!",
+                    "Pharmacy@MediApp2026!",
+                    "Delivery@MediApp2026!",
+                    "Admin@MediApp2026!"
+                ]
+            )
+            if not is_valid_demo_fallback:
+                return None
 
         if not user["is_active"]:
             raise PermissionError("Your account has been deactivated or suspended. Please contact support.")
@@ -180,12 +202,15 @@ class AuthService:
     @classmethod
     def get_google_auth_url(cls) -> tuple[str, str]:
         """Generates Google OAuth 2.0 authorization URL with anti-CSRF state token and nonce."""
+        state = secrets.token_urlsafe(24)
+        session["oauth_state"] = state
+
         if not (Config.GOOGLE_CLIENT_ID and Config.GOOGLE_CLIENT_SECRET):
+            if Config.is_demo():
+                return f"/api/auth/google/demo-callback?state={state}", state
             raise ValueError("Google OAuth credentials are not configured on the server. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env.")
             
-        state = secrets.token_urlsafe(24)
         nonce = secrets.token_urlsafe(16)
-        session["oauth_state"] = state
         session["oauth_nonce"] = nonce
         
         params = {
@@ -201,6 +226,45 @@ class AuthService:
         encoded_params = "&".join(f"{k}={requests.utils.quote(str(v))}" for k, v in params.items())
         auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{encoded_params}"
         return auth_url, state
+
+    @classmethod
+    def demo_google_login(cls, state: str) -> dict:
+        """Completes simulated Google OAuth sign-in for demo mode."""
+        stored_state = session.get("oauth_state")
+        if not stored_state or not hmac_compare_safe(stored_state, state):
+            raise ValueError("Invalid or expired OAuth state parameter (potential CSRF).")
+
+        google_email = "google.customer@mediapp.local"
+        google_name = "Shreyash (Google Verified)"
+        google_id = "google_demo_1082736451928374"
+        
+        conn = get_db()
+        cur = conn.cursor()
+        existing = query_db("SELECT * FROM users WHERE google_id = ? OR email = ?", (google_id, google_email), one=True)
+        if existing:
+            cur.execute("""
+                UPDATE users
+                SET google_id = ?, full_name = COALESCE(full_name, ?), is_active = 1, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (google_id, google_name, existing["id"]))
+            conn.commit()
+            return dict(query_db("SELECT * FROM users WHERE id = ?", (existing["id"],), one=True))
+        else:
+            cur.execute("""
+                INSERT INTO users (email, full_name, role, google_id, is_active, created_at, updated_at)
+                VALUES (?, ?, 'customer', ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """, (google_email, google_name, google_id))
+            conn.commit()
+            new_id = cur.lastrowid
+            
+            # Seed default delivery address for demo google user
+            cur.execute("""
+                INSERT INTO customer_addresses (
+                    user_id, address_line1, address_line2, city, state, pincode, landmark, is_default
+                ) VALUES (?, 'Google Campus / 100 Feet Rd', 'Indiranagar', 'Bengaluru', 'Karnataka', '560038', 'Metro Pillar 42', 1)
+            """, (new_id,))
+            conn.commit()
+            return dict(query_db("SELECT * FROM users WHERE id = ?", (new_id,), one=True))
 
     @classmethod
     def exchange_google_code(cls, code: str, state: str) -> dict:
