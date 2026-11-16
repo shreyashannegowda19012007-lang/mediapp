@@ -111,9 +111,6 @@ def create_app(config_class=None) -> Flask:
     # 6. Single Page Application (SPA) Root Route
     @app.route("/", methods=["GET"])
     def index():
-        # Decoupled architecture: forward client directly to Next.js clinical frontend
-        if request.query_string:
-            return redirect(f"http://localhost:3000/?{request.query_string.decode('utf-8')}")
-        return redirect("http://localhost:3000")
+        return render_template("index.html")
 
     return app
