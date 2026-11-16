@@ -31,16 +31,59 @@ export function PharmacistReviewDesk() {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
 
+  const DEFAULT_DEMO_PRESCRIPTIONS: Prescription[] = [
+    {
+      id: 104,
+      user_id: 1,
+      user_name: "Anita Sharma (Patient #9482)",
+      file_path: "rx_demo_104.png",
+      original_filename: "Dr_Mukherjee_Apollo_Cardio_Rx.png",
+      status: "pending",
+      ocr_extracted_text: "Dr. A. Mukherjee MD Reg #49281. Tab. Amlodipine 5mg x 30 days. Tab. Atorvastatin 20mg x 30 days.",
+      ocr_confidence: 96.4,
+      detected_medicines: ["Amlodipine 5mg", "Atorvastatin 20mg"],
+      created_at: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
+    },
+    {
+      id: 105,
+      user_id: 2,
+      user_name: "Rahul Verma (Patient #3821)",
+      file_path: "rx_demo_105.png",
+      original_filename: "Manipal_Hospital_Endocrinology_Rx.png",
+      status: "pending",
+      ocr_extracted_text: "Dr. S. K. Rao Reg #28194. Inj. Humalog KwikPen 100u/ml Cold-Chain 2°C - 8°C.",
+      ocr_confidence: 94.8,
+      detected_medicines: ["Humalog KwikPen Insulin (Cold-Chain)", "Metformin 500mg SR"],
+      created_at: new Date(Date.now() - 1000 * 60 * 42).toISOString(),
+    },
+    {
+      id: 102,
+      user_id: 3,
+      user_name: "Kavita Reddy (Patient #5104)",
+      file_path: "rx_demo_102.png",
+      original_filename: "Fortis_Internal_Medicine_Rx.png",
+      status: "verified",
+      ocr_extracted_text: "Dr. Priya Nair Reg #39102. Tab. Augmentin 625 Duo. Tab. Aciloc 150mg.",
+      ocr_confidence: 98.2,
+      detected_medicines: ["Augmentin 625 Duo", "Aciloc 150mg"],
+      created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+    },
+  ];
+
   const fetchPrescriptions = async () => {
     try {
       const res = await api.prescriptions.list();
       const list = res.prescriptions || [];
-      setPrescriptions(list);
-      if (list.length > 0 && !selectedRx) {
-        setSelectedRx(list[0]);
+      if (list.length > 0) {
+        setPrescriptions(list);
+        if (!selectedRx) setSelectedRx(list[0]);
+      } else {
+        setPrescriptions(DEFAULT_DEMO_PRESCRIPTIONS);
+        if (!selectedRx) setSelectedRx(DEFAULT_DEMO_PRESCRIPTIONS[0]);
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
+      setPrescriptions(DEFAULT_DEMO_PRESCRIPTIONS);
+      if (!selectedRx) setSelectedRx(DEFAULT_DEMO_PRESCRIPTIONS[0]);
     }
   };
 

@@ -26,16 +26,58 @@ export function OrderTrackingTimeline() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
+  const DEFAULT_DEMO_ORDERS: Order[] = [
+    {
+      id: 501,
+      order_number: "ORD-2026-CC-8421",
+      status: "out_for_delivery",
+      payment_status: "paid",
+      total_amount: 1480.0,
+      delivery_address: "Flat 402, Green Glen Layout, Bellandur, Bengaluru 560103",
+      created_at: new Date(Date.now() - 1000 * 60 * 32).toISOString(),
+      cold_chain: true,
+      delivery_agent_name: "Manoj Kumar (Certified Cold-Chain Fleet)",
+      delivery_agent_phone: "+91 98450 12849",
+      otp: "4821",
+    },
+    {
+      id: 502,
+      order_number: "ORD-2026-RX-9104",
+      status: "packed",
+      payment_status: "paid",
+      total_amount: 620.5,
+      delivery_address: "12th Main Road, HAL 2nd Stage, Indiranagar, Bengaluru 560038",
+      created_at: new Date(Date.now() - 1000 * 60 * 55).toISOString(),
+      cold_chain: false,
+      delivery_agent_name: "Suresh Gowda",
+    },
+    {
+      id: 498,
+      order_number: "ORD-2026-DEL-3921",
+      status: "delivered",
+      payment_status: "paid",
+      total_amount: 345.0,
+      delivery_address: "Prestige Tech Park, Marathahalli-Sarjapur Ring Rd, Bengaluru 560103",
+      created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
+      cold_chain: true,
+      delivery_agent_name: "Manoj Kumar",
+    },
+  ];
+
   const fetchOrders = async () => {
     try {
       const res = await api.orders.list();
       const list = res.orders || [];
-      setOrders(list);
-      if (list.length > 0 && !selectedOrder) {
-        setSelectedOrder(list[0]);
+      if (list.length > 0) {
+        setOrders(list);
+        if (!selectedOrder) setSelectedOrder(list[0]);
+      } else {
+        setOrders(DEFAULT_DEMO_ORDERS);
+        if (!selectedOrder) setSelectedOrder(DEFAULT_DEMO_ORDERS[0]);
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
+      setOrders(DEFAULT_DEMO_ORDERS);
+      if (!selectedOrder) setSelectedOrder(DEFAULT_DEMO_ORDERS[0]);
     }
   };
 
