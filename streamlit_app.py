@@ -89,9 +89,9 @@ with tab_catalogue:
         params.extend([term, term, term])
         
     if rx_filter == "OTC Only (No Rx)":
-        query_sql += " AND requires_prescription = 0"
+        query_sql += " AND prescription_required = 0"
     elif rx_filter == "Prescription Required (Rx)":
-        query_sql += " AND requires_prescription = 1"
+        query_sql += " AND prescription_required = 1"
         
     query_sql += " ORDER BY name ASC LIMIT 30"
     medicines = query_db(query_sql, tuple(params))
@@ -102,17 +102,17 @@ with tab_catalogue:
     for idx, med in enumerate(medicines):
         with cols[idx % 3]:
             with st.container(border=True):
-                st.subheader(med["name"])
-                st.caption(f"Generic: **{med['generic_name']}** | {med['dosage_form']} ({med['strength']})")
-                st.markdown(f"**Manufacturer:** {med['manufacturer']}")
-                st.markdown(f"**Category:** `{med['category']}`")
+                st.subheader(med.get("name", "Unknown Medicine"))
+                st.caption(f"Generic: **{med.get('generic_name', '')}** | {med.get('dosage_form', 'Unit')} ({med.get('strength', '')})")
+                st.markdown(f"**Manufacturer:** {med.get('manufacturer', 'Standard')}")
+                st.markdown(f"**Category:** `{med.get('category', 'General')}`")
                 
-                if med["requires_prescription"]:
+                if med.get("prescription_required"):
                     st.error("📄 Prescription (Rx) Required")
                 else:
                     st.success("🟢 OTC - No Prescription Needed")
                     
-                st.markdown(f"### ₹{med['price']:.2f}")
+                st.markdown(f"### ₹{med.get('mrp', 0.0):.2f}")
 
 # ==========================================
 # TAB 2: LIVE ORDERS & TRACKING
