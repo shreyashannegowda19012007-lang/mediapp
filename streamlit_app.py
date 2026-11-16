@@ -29,6 +29,75 @@ init_backend()
 
 from app.database import query_db
 
+# Custom Theme & Visual Overhaul Injection
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Inter', -apple-system, sans-serif;
+}
+
+h1, h2, h3, h4 {
+    font-family: 'Outfit', sans-serif !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em;
+}
+
+/* Gradient Header */
+.main-title-gradient {
+    background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 2.3rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 0.2rem !important;
+}
+
+/* Container Cards */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    border-radius: 12px !important;
+    transition: all 0.25s ease !important;
+    background: rgba(255, 255, 255, 0.02) !important;
+}
+
+[data-testid="stVerticalBlockBorderWrapper"]:hover {
+    border-color: #0284c7 !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.15) !important;
+}
+
+/* Styled Metric Cards */
+[data-testid="stMetric"] {
+    background: linear-gradient(135deg, rgba(2, 132, 199, 0.06) 0%, rgba(79, 70, 229, 0.06) 100%);
+    border: 1px solid rgba(2, 132, 199, 0.25);
+    border-radius: 14px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+/* Styled Tabs */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 8px;
+    border-bottom: 2px solid rgba(2, 132, 199, 0.15);
+    padding-bottom: 4px;
+}
+
+.stTabs [data-baseweb="tab"] {
+    border-radius: 20px !important;
+    padding: 8px 18px !important;
+    font-weight: 600 !important;
+    transition: all 0.2s ease !important;
+}
+
+.stTabs [aria-selected="true"] {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3) !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # 2. Sidebar Navigation & System Information
 with st.sidebar:
     st.image("https://img.icons8.com/color/96/caduceus.png", width=64)

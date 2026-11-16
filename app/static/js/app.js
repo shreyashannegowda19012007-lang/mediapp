@@ -74,36 +74,81 @@ const App = {
   },
 
   initTheme() {
-    const savedTheme = localStorage.getItem("mediapp_theme") || "light";
-    this.applyTheme(savedTheme);
+    // 3-Mode Theme Manager: light | dark | system
+    const savedMode = localStorage.getItem("mediapp_theme_mode") || localStorage.getItem("mediapp_theme") || "system";
+    this.setThemeMode(savedMode, false);
 
+    // Watch OS system preference in real time
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleSystemChange = (e) => {
+      const currentMode = localStorage.getItem("mediapp_theme_mode") || "system";
+      if (currentMode === "system") {
+        this.applyEffectiveTheme(e.matches ? "dark" : "light");
+      }
+    };
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleSystemChange);
+    } else if (mediaQuery.addListener) {
+      mediaQuery.addListener(handleSystemChange);
+    }
+
+    // Bind 3-mode segmented pill buttons
+    document.querySelectorAll(".theme-mode-pill").forEach(pill => {
+      pill.addEventListener("click", () => {
+        const mode = pill.dataset.mode;
+        this.setThemeMode(mode, true);
+      });
+    });
+
+    // Compatibility support for any legacy toggle buttons
     const toggleBtn = document.getElementById("btn-theme-toggle");
     if (toggleBtn) {
       toggleBtn.addEventListener("click", () => {
-        const isDark = document.body.classList.contains("theme-dark");
-        const nextTheme = isDark ? "light" : "dark";
-        this.applyTheme(nextTheme);
-        localStorage.setItem("mediapp_theme", nextTheme);
-        Components.toast(`Switched to ${nextTheme === 'dark' ? 'Dark' : 'Light'} theme`, "info", 2000);
+        const currentMode = localStorage.getItem("mediapp_theme_mode") || "system";
+        const nextMode = currentMode === "light" ? "dark" : (currentMode === "dark" ? "system" : "light");
+        this.setThemeMode(nextMode, true);
       });
     }
   },
 
-  applyTheme(theme) {
-    const sunIcon = document.getElementById("theme-icon-sun");
-    const moonIcon = document.getElementById("theme-icon-moon");
+  setThemeMode(mode, showToast = false) {
+    if (!["light", "dark", "system"].includes(mode)) mode = "system";
+    localStorage.setItem("mediapp_theme_mode", mode);
+    localStorage.setItem("mediapp_theme", mode); // backward compatibility
 
-    if (theme === "dark") {
+    // Update active state on segmented pills
+    document.querySelectorAll(".theme-mode-pill").forEach(pill => {
+      pill.classList.toggle("active", pill.dataset.mode === mode);
+    });
+
+    let effectiveTheme = mode;
+    if (mode === "system") {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      effectiveTheme = prefersDark ? "dark" : "light";
+    }
+
+    this.applyEffectiveTheme(effectiveTheme);
+
+    if (showToast) {
+      const label = mode === "system" 
+        ? `System Default (${effectiveTheme === 'dark' ? 'Dark' : 'Light'})` 
+        : `${mode.charAt(0).toUpperCase() + mode.slice(1)} Mode`;
+      Components.toast(`Theme set to ${label}`, "info", 2000);
+    }
+  },
+
+  applyEffectiveTheme(effectiveTheme) {
+    if (effectiveTheme === "dark") {
       document.body.classList.remove("theme-light");
       document.body.classList.add("theme-dark");
-      if (sunIcon) sunIcon.style.display = "block";
-      if (moonIcon) moonIcon.style.display = "none";
     } else {
       document.body.classList.remove("theme-dark");
       document.body.classList.add("theme-light");
-      if (sunIcon) sunIcon.style.display = "none";
-      if (moonIcon) moonIcon.style.display = "block";
     }
+
+    // Dispatch global theme change event
+    window.dispatchEvent(new CustomEvent("themechange", { detail: { theme: effectiveTheme } }));
   },
 
   bindHeaderEvents() {
