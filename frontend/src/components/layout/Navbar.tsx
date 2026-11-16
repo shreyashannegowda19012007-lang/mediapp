@@ -18,6 +18,8 @@ import {
 import { useAuthStore, RoleType } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { ROLE_DEFINITIONS } from "@/lib/rbac";
+import { RoleLimitsModal } from "@/components/auth/RoleLimitsModal";
 import { clsx } from "clsx";
 
 interface NavbarProps {
@@ -29,25 +31,15 @@ interface NavbarProps {
 export function Navbar({ onOpenUploadRx, onNavigateTab, activeTab = "catalogue" }: NavbarProps) {
   const { user, activeRole, switchRole, isLoading } = useAuthStore();
   const { cart, setIsOpen } = useCartStore();
-  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const [showRoleLimitsModal, setShowRoleLimitsModal] = useState(false);
 
   const cartItemCount = cart?.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+  const currentRoleDef = ROLE_DEFINITIONS[activeRole] || ROLE_DEFINITIONS.customer;
 
-  const roles: Array<{ id: RoleType; label: string; desc: string; icon: React.ReactNode }> = [
-    { id: "customer", label: "Customer", desc: "Browse catalogue, cart & order tracking", icon: <User className="h-4 w-4" /> },
-    { id: "pharmacy", label: "Pharmacist Desk", desc: "Split-screen Rx review & dispensary pack", icon: <Building className="h-4 w-4" /> },
-    { id: "delivery", label: "Delivery Fleet", desc: "Cold-chain transit & OTP verification", icon: <Truck className="h-4 w-4" /> },
-    { id: "admin", label: "Admin HQ", desc: "System analytics, hospital fulfillment rates", icon: <Activity className="h-4 w-4" /> },
-  ];
-
-  const handleRoleSelect = async (role: RoleType) => {
-    await switchRole(role);
-    setShowRoleDropdown(false);
-    if (onNavigateTab) {
-      if (role === "pharmacy") onNavigateTab("pharmacist-desk");
-      else if (role === "delivery") onNavigateTab("logistics");
-      else if (role === "admin") onNavigateTab("admin-dashboard");
-      else onNavigateTab("catalogue");
+  const handleRoleSwitched = (role: RoleType) => {
+    const targetDef = ROLE_DEFINITIONS[role];
+    if (onNavigateTab && targetDef) {
+      onNavigateTab(targetDef.defaultTab);
     }
   };
 
@@ -104,52 +96,22 @@ export function Navbar({ onOpenUploadRx, onNavigateTab, activeTab = "catalogue" 
           </button>
         </div>
 
-        {/* Central Navigation Tabs */}
+        {/* Central Navigation Tabs (RBAC Filtered) */}
         <nav className="hidden md:flex items-center gap-1 bg-slate-100/70 dark:bg-slate-900/70 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
-          <button
-            onClick={() => onNavigateTab && onNavigateTab("catalogue")}
-            className={clsx(
-              "px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer",
-              activeTab === "catalogue"
-                ? "bg-white dark:bg-slate-800 text-sky-600 dark:text-sky-400 shadow-xs"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
-            )}
-          >
-            Medicine Catalogue
-          </button>
-          <button
-            onClick={() => onNavigateTab && onNavigateTab("pharmacist-desk")}
-            className={clsx(
-              "px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer",
-              activeTab === "pharmacist-desk"
-                ? "bg-white dark:bg-slate-800 text-sky-600 dark:text-sky-400 shadow-xs"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
-            )}
-          >
-            Pharmacist Desk
-          </button>
-          <button
-            onClick={() => onNavigateTab && onNavigateTab("logistics")}
-            className={clsx(
-              "px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer",
-              activeTab === "logistics"
-                ? "bg-white dark:bg-slate-800 text-sky-600 dark:text-sky-400 shadow-xs"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
-            )}
-          >
-            Logistics & Orders
-          </button>
-          <button
-            onClick={() => onNavigateTab && onNavigateTab("admin-dashboard")}
-            className={clsx(
-              "px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer",
-              activeTab === "admin-dashboard"
-                ? "bg-white dark:bg-slate-800 text-sky-600 dark:text-sky-400 shadow-xs"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
-            )}
-          >
-            Hospital Analytics
-          </button>
+          {currentRoleDef.allowedTabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => onNavigateTab && onNavigateTab(tab.id)}
+              className={clsx(
+                "px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer",
+                activeTab === tab.id
+                  ? "bg-white dark:bg-slate-800 text-sky-600 dark:text-sky-400 shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
         </nav>
 
         {/* Right Action Cluster */}
@@ -157,8 +119,8 @@ export function Navbar({ onOpenUploadRx, onNavigateTab, activeTab = "catalogue" 
           {/* Theme Switcher */}
           <ThemeToggle />
 
-          {/* Rx Quick Upload Button */}
-          {onOpenUploadRx && (
+          {/* Rx Quick Upload Button (Customer Only) */}
+          {currentRoleDef.canUploadRx && onOpenUploadRx && (
             <button
               onClick={onOpenUploadRx}
               type="button"
@@ -169,66 +131,44 @@ export function Navbar({ onOpenUploadRx, onNavigateTab, activeTab = "catalogue" 
             </button>
           )}
 
-          {/* Cart Trigger */}
-          <button
-            onClick={() => setIsOpen(true)}
-            type="button"
-            className="relative p-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 transition-all cursor-pointer"
-            title="Open prescription cart"
-          >
-            <ShoppingBag className="h-5 w-5" />
-            {cartItemCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-sky-600 text-[10px] font-bold text-white shadow-xs">
-                {cartItemCount}
-              </span>
-            )}
-          </button>
-
-          {/* Role Switcher Menu */}
-          <div className="relative">
+          {/* Cart Trigger (Customer Only) */}
+          {currentRoleDef.canAccessCart && (
             <button
-              onClick={() => setShowRoleDropdown(!showRoleDropdown)}
+              onClick={() => setIsOpen(true)}
               type="button"
-              disabled={isLoading}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-700 text-xs font-medium shadow-xs transition-all cursor-pointer"
+              className="relative p-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 transition-all cursor-pointer"
+              title="Open prescription cart"
             >
-              <KeyRound className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />
-              <span className="capitalize font-semibold">{activeRole}</span>
-              <ChevronDown className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
+              <ShoppingBag className="h-5 w-5" />
+              {cartItemCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-sky-600 text-[10px] font-bold text-white shadow-xs">
+                  {cartItemCount}
+                </span>
+              )}
             </button>
+          )}
 
-            {showRoleDropdown && (
-              <div className="absolute right-0 mt-2 w-72 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-2 z-50 animate-in fade-in duration-150">
-                <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                  Switch Active Role Workspace
-                </div>
-                <div className="space-y-1 mt-1">
-                  {roles.map((r) => (
-                    <button
-                      key={r.id}
-                      onClick={() => handleRoleSelect(r.id)}
-                      className={clsx(
-                        "w-full flex items-start gap-2.5 p-2 rounded-xl text-left transition-all cursor-pointer",
-                        activeRole === r.id
-                          ? "bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 font-semibold"
-                          : "hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300"
-                      )}
-                    >
-                      <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 mt-0.5">
-                        {r.icon}
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold">{r.label}</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">{r.desc}</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Role Identity & Limits Trigger */}
+          <button
+            onClick={() => setShowRoleLimitsModal(true)}
+            type="button"
+            disabled={isLoading}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-700 text-xs font-medium shadow-xs transition-all cursor-pointer"
+            title="View Auth0 Role Limits & Permissions"
+          >
+            <KeyRound className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />
+            <span className="capitalize font-semibold">{currentRoleDef.label}</span>
+            <ChevronDown className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
+          </button>
         </div>
       </div>
+
+      {/* Role Limits & RBAC Modal */}
+      <RoleLimitsModal
+        isOpen={showRoleLimitsModal}
+        onClose={() => setShowRoleLimitsModal(false)}
+        onRoleSwitched={handleRoleSwitched}
+      />
     </header>
   );
 }

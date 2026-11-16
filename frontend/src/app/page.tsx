@@ -12,24 +12,31 @@ import { CartDrawer } from "@/components/cart/CartDrawer";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
 import { ShieldCheck, HeartHandshake, Phone, Mail, MapPin } from "lucide-react";
+import { ROLE_DEFINITIONS, isTabAllowedForRole } from "@/lib/rbac";
+import { AccessRestricted } from "@/components/auth/AccessRestricted";
+import { RoleLimitsModal } from "@/components/auth/RoleLimitsModal";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("catalogue");
   const [isRxModalOpen, setIsRxModalOpen] = useState(false);
+  const [isRoleLimitsModalOpen, setIsRoleLimitsModalOpen] = useState(false);
   const { fetchSession, activeRole } = useAuthStore();
   const { fetchCart } = useCartStore();
+
+  const currentRoleDef = ROLE_DEFINITIONS[activeRole] || ROLE_DEFINITIONS.customer;
 
   useEffect(() => {
     fetchSession();
     fetchCart();
   }, [fetchSession, fetchCart]);
 
-  // Synchronize tab if user changes role via header dropdown
+  // Synchronize tab if user changes role or if current tab is not allowed
   useEffect(() => {
-    if (activeRole === "pharmacy") setActiveTab("pharmacist-desk");
-    else if (activeRole === "delivery") setActiveTab("logistics");
-    else if (activeRole === "admin") setActiveTab("admin-dashboard");
-  }, [activeRole]);
+    const targetDef = ROLE_DEFINITIONS[activeRole];
+    if (targetDef && !isTabAllowedForRole(activeTab, activeRole)) {
+      setActiveTab(targetDef.defaultTab);
+    }
+  }, [activeRole, activeTab]);
 
   const handleExploreCatalogue = () => {
     setActiveTab("catalogue");
@@ -45,6 +52,8 @@ export default function Home() {
     }, 50);
   };
 
+  const isCurrentTabAllowed = isTabAllowedForRole(activeTab, activeRole);
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Top Command Bar */}
@@ -56,30 +65,56 @@ export default function Home() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
-        {/* Render Hero Section only on Catalogue view for clean executive focus */}
-        {activeTab === "catalogue" && (
-          <HeroSection
-            onOpenUploadRx={() => setIsRxModalOpen(true)}
-            onNavigateTab={(tab) => setActiveTab(tab)}
-            onExploreCatalogue={handleExploreCatalogue}
+        {/* Zero-Trust RBAC Guard */}
+        {!isCurrentTabAllowed ? (
+          <AccessRestricted
+            attemptedTab={activeTab}
+            currentRole={activeRole}
+            onResetToDefault={() => setActiveTab(currentRoleDef.defaultTab)}
+            onOpenRoleModal={() => setIsRoleLimitsModalOpen(true)}
           />
-        )}
+        ) : (
+          <>
+            {/* Render Hero Section only on Catalogue view for customers */}
+            {activeTab === "catalogue" && currentRoleDef.canViewHero && (
+              <HeroSection
+                onOpenUploadRx={() => setIsRxModalOpen(true)}
+                onNavigateTab={(tab) => setActiveTab(tab)}
+                onExploreCatalogue={handleExploreCatalogue}
+              />
+            )}
 
-        {/* Tab Workspace Router */}
-        {activeTab === "catalogue" && <MedicineCatalogue />}
-        {activeTab === "pharmacist-desk" && <PharmacistReviewDesk />}
-        {activeTab === "logistics" && <OrderTrackingTimeline />}
-        {activeTab === "admin-dashboard" && <AnalyticsDashboard />}
+            {/* Tab Workspace Router */}
+            {activeTab === "catalogue" && <MedicineCatalogue />}
+            {activeTab === "pharmacist-desk" && <PharmacistReviewDesk />}
+            {activeTab === "logistics" && <OrderTrackingTimeline />}
+            {activeTab === "admin-dashboard" && <AnalyticsDashboard />}
+          </>
+        )}
       </main>
 
-      {/* Slide-over Cart Drawer */}
-      <CartDrawer onOrderPlaced={() => setActiveTab("logistics")} />
+      {/* Slide-over Cart Drawer (Customer Only) */}
+      {currentRoleDef.canAccessCart && (
+        <CartDrawer onOrderPlaced={() => setActiveTab("logistics")} />
+      )}
 
-      {/* Prescription Upload Modal */}
-      <RxUploadModal
-        isOpen={isRxModalOpen}
-        onClose={() => setIsRxModalOpen(false)}
-        onUploadSuccess={() => setActiveTab("pharmacist-desk")}
+      {/* Prescription Upload Modal (Customer Only) */}
+      {currentRoleDef.canUploadRx && (
+        <RxUploadModal
+          isOpen={isRxModalOpen}
+          onClose={() => setIsRxModalOpen(false)}
+          onUploadSuccess={() => setActiveTab("pharmacist-desk")}
+        />
+      )}
+
+      {/* Role Limits Modal (for 403 trigger fallback) */}
+      <RoleLimitsModal
+        isOpen={isRoleLimitsModalOpen}
+        onClose={() => setIsRoleLimitsModalOpen(false)}
+        onRoleSwitched={(newRole) => {
+          const targetDef = ROLE_DEFINITIONS[newRole];
+          if (targetDef) setActiveTab(targetDef.defaultTab);
+        }}
       />
 
       {/* Clinical Platform Footer */}

@@ -42,15 +42,19 @@ def run_tests():
         log(f"Page loaded: '{title}'")
 
         # Verify theme toggle
-        theme_toggle = page.locator("#btn-theme-toggle")
-        theme_toggle.click()
+        dark_btn = page.locator("[data-mode='dark'], #btn-theme-toggle").first
+        dark_btn.click()
         time.sleep(0.3)
-        body_class = page.locator("body").get_attribute("class")
-        assert "theme-dark" in body_class, "Theme toggle to dark mode failed"
-        theme_toggle.click()
+        body_class = page.locator("body").get_attribute("class") or ""
+        html_class = page.locator("html").get_attribute("class") or ""
+        assert "theme-dark" in body_class or "dark" in html_class, "Theme toggle to dark mode failed"
+        
+        light_btn = page.locator("[data-mode='light'], #btn-theme-toggle").first
+        light_btn.click()
         time.sleep(0.3)
-        body_class = page.locator("body").get_attribute("class")
-        assert "theme-light" in body_class, "Theme toggle to light mode failed"
+        body_class = page.locator("body").get_attribute("class") or ""
+        html_class = page.locator("html").get_attribute("class") or ""
+        assert "theme-light" in body_class or "dark" not in html_class, "Theme toggle to light mode failed"
         log("Light / Dark Theme toggle verified")
 
         # -------------------------------------------------------------

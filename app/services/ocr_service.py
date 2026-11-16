@@ -72,14 +72,14 @@ class OCRService:
         confidence = 0.50
 
         # Doctor pattern (Dr. John Doe, MBBS, MD)
-        dr_match = re.search(r"(?:Dr\.|Doctor)\s+([A-Z][a-zA-Z\.\s]{2,40})", text, re.IGNORECASE)
-        if dr_match:
+        dr_match = re.search(r"(?:Dr\.|Doctor)\s+([A-Za-z\.\s]{2,35}?)(?:\n|\r|,|;|\bMD\b|\bMBBS\b|\bReg\b|$)", text, re.IGNORECASE)
+        if dr_match and dr_match.group(1).strip():
             doctor_name = f"Dr. {dr_match.group(1).strip()}"
             confidence += 0.15
 
         # Patient pattern (Patient: Jane Doe, Name: ...)
-        pat_match = re.search(r"(?:Patient(?:\s+Name)?|Pt(?:\s+Name)?|Name)\s*[:\-]\s*([A-Za-z\s]{3,35})", text, re.IGNORECASE)
-        if pat_match:
+        pat_match = re.search(r"(?:Patient(?:\s+Name)?|Pt(?:\s+Name)?|Name)\s*[:\-]\s*([A-Za-z\s]{2,30}?)(?:\n|\r|,|;|\bAge\b|\bDate\b|\bPt\b|$)", text, re.IGNORECASE)
+        if pat_match and pat_match.group(1).strip():
             patient_name = pat_match.group(1).strip()
             confidence += 0.10
 
@@ -89,21 +89,44 @@ class OCRService:
             prescription_date = date_match.group(1)
             confidence += 0.10
 
-        # Match against actual database catalogue medicines
+        # Match against actual database catalogue medicines with strict proximity strength awareness
         known_meds = query_db("SELECT name, generic_name, strength FROM medicines LIMIT 400")
         for med in known_meds:
-            # Check brand name
             base_name = med["name"].split()[0].lower()
-            if len(base_name) >= 4 and re.search(rf"\b{re.escape(base_name)}\b", text, re.IGNORECASE):
-                if med["name"] not in detected_medicines:
-                    detected_medicines.append(med["name"])
-                    confidence += 0.05
+            if len(base_name) >= 4:
+                # Find occurrences of base_name and check proximate dosage/strength
+                pattern = rf"\b{re.escape(base_name)}\b[^\n\r,;]*?(\d+\s*(?:mg|ml|mcg|gm|iu|units?))\b"
+                proximate_match = re.search(pattern, text, re.IGNORECASE)
+                med_strength = re.sub(r"\s+", "", (med.get("strength") or "").lower())
+
+                if proximate_match:
+                    found_strength = re.sub(r"\s+", "", proximate_match.group(1).lower())
+                    if med_strength and med_strength != found_strength:
+                        # Dosage mismatch (e.g. prescribed 40mg vs 20mg catalogue item)
+                        continue
+
+                # If no proximate strength was found, check if base_name exists at all
+                if re.search(rf"\b{re.escape(base_name)}\b", text, re.IGNORECASE):
+                    clean_name = re.sub(r"\s*\(Strip of \d+ Tablets\)", "", med["name"]).strip()
+                    if clean_name not in detected_medicines:
+                        detected_medicines.append(clean_name)
+                        confidence += 0.05
                     
-            # Check generic name
+            # Check generic molecule name with proximity strength check
             gen_base = med["generic_name"].split()[0].lower()
             if len(gen_base) >= 5 and re.search(rf"\b{re.escape(gen_base)}\b", text, re.IGNORECASE):
-                cand = f"{med['generic_name']} ({med['strength']})"
-                if cand not in detected_medicines:
+                pattern = rf"\b{re.escape(gen_base)}\b[^\n\r,;]*?(\d+\s*(?:mg|ml|mcg|gm|iu|units?))\b"
+                proximate_match = re.search(pattern, text, re.IGNORECASE)
+                med_strength = re.sub(r"\s+", "", (med.get("strength") or "").lower())
+
+                if proximate_match:
+                    found_strength = re.sub(r"\s+", "", proximate_match.group(1).lower())
+                    if med_strength and med_strength != found_strength:
+                        continue
+
+                clean_gen = med["generic_name"].split("|")[0].strip()
+                cand = f"{clean_gen} ({med['strength']})" if med.get("strength") else clean_gen
+                if cand not in detected_medicines and clean_gen not in detected_medicines:
                     detected_medicines.append(cand)
                     confidence += 0.05
 
