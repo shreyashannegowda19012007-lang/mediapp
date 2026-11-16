@@ -1,0 +1,103 @@
+"use client";
+
+import React from "react";
+import {
+  FileText,
+  Sparkles,
+  ShieldCheck,
+  ThermometerSnowflake,
+  Truck,
+  ArrowRight,
+  Clock,
+  Pill,
+} from "lucide-react";
+
+interface HeroSectionProps {
+  onOpenUploadRx: () => void;
+  onNavigateTab: (tab: string) => void;
+}
+
+export function HeroSection({ onOpenUploadRx, onNavigateTab }: HeroSectionProps) {
+  return (
+    <div className="relative rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-800 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 text-white p-6 sm:p-10 shadow-2xl">
+      {/* Background Subtle Gradient Glow */}
+      <div className="absolute top-0 right-0 -mt-12 -mr-12 w-96 h-96 rounded-full bg-sky-500/10 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 -mb-12 -ml-12 w-80 h-80 rounded-full bg-teal-500/10 blur-3xl pointer-events-none" />
+
+      <div className="relative z-10 max-w-4xl space-y-6">
+        {/* Network Tag */}
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/10 text-sky-300 border border-white/10 backdrop-blur-md">
+          <ShieldCheck className="h-4 w-4 text-emerald-400" />
+          <span>Licensed Hyperlocal Clinical Pharmacy & Cold-Chain Network</span>
+        </div>
+
+        {/* Main Headline */}
+        <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
+          Authentic Medicines & Clinical Care,{" "}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-teal-300 to-emerald-400">
+            Delivered in 45 Minutes.
+          </span>
+        </h1>
+
+        <p className="text-sm sm:text-base text-slate-300 max-w-2xl leading-relaxed">
+          Access over 1,250+ licensed pharmaceutical drugs, cold-chain monitored biologics, and certified bioequivalent generics saving patients up to 70%. Every prescription is verified by a licensed clinical pharmacist prior to tamper-sealed dispatch.
+        </p>
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center gap-3 pt-2">
+          <button
+            onClick={onOpenUploadRx}
+            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white font-bold text-sm shadow-lg shadow-sky-500/25 transition-all hover:scale-[1.02] cursor-pointer"
+          >
+            <FileText className="h-4 w-4" />
+            <span>Upload Doctor Prescription</span>
+            <ArrowRight className="h-4 w-4" />
+          </button>
+
+          <button
+            onClick={() => onNavigateTab("catalogue")}
+            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 font-semibold text-sm border border-white/10 backdrop-blur-md transition-all cursor-pointer"
+          >
+            <Pill className="h-4 w-4 text-sky-400" />
+            <span>Explore Medicine Catalogue</span>
+          </button>
+        </div>
+
+        {/* 4 Clinical Pillars Visual Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 border-t border-white/10">
+          <div className="p-3 rounded-xl bg-white/5 border border-white/5 space-y-1">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
+              <ShieldCheck className="h-4 w-4" />
+              <span>100% Genuine</span>
+            </div>
+            <div className="text-[11px] text-slate-400">Direct from WHO-GMP manufacturers</div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-white/5 border border-white/5 space-y-1">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-sky-400">
+              <Clock className="h-4 w-4" />
+              <span>15-Min Review</span>
+            </div>
+            <div className="text-[11px] text-slate-400">Pharmacist validation on every Rx</div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-white/5 border border-white/5 space-y-1">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-400">
+              <ThermometerSnowflake className="h-4 w-4" />
+              <span>Cold-Chain Safe</span>
+            </div>
+            <div className="text-[11px] text-slate-400">2°C - 8°C IoT temperature guarantee</div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-white/5 border border-white/5 space-y-1">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
+              <Sparkles className="h-4 w-4" />
+              <span>Save up to 70%</span>
+            </div>
+            <div className="text-[11px] text-slate-400">Bioequivalent generic price match</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

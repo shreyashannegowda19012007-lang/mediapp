@@ -1,0 +1,12 @@
+{
+  "name": "mediapp-workspace",
+  "version": "2.0.0",
+  "private": true,
+  "description": "MediApp Healthcare Network — Decoupled Clinical Pharmacy & Cold-Chain Logistics Platform",
+  "scripts": {
+    "dev": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "start": "npm run start --prefix frontend",
+    "lint": "npm run lint --prefix frontend"
+  }
+}

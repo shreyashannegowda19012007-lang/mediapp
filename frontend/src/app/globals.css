@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  
+  --primary: #0284c7;
+  --primary-hover: #0369a1;
+  --primary-foreground: #ffffff;
+  
+  --clinical-navy: #0b132b;
+  --clinical-surface: #ffffff;
+  
+  --clinical-emerald: #059669;
+  --clinical-emerald-bg: #ecfdf5;
+  --clinical-emerald-border: #a7f3d0;
+  
+  --clinical-amber: #d97706;
+  --clinical-amber-bg: #fffbeb;
+  --clinical-amber-border: #fde68a;
+  
+  --clinical-cyan: #0891b2;
+  --clinical-cyan-bg: #ecfeff;
+  --clinical-cyan-border: #a5f3fc;
+  
+  --clinical-red: #dc2626;
+  --clinical-red-bg: #fef2f2;
+  --clinical-red-border: #fecaca;
+  
+  --muted: #64748b;
+  --muted-bg: #f1f5f9;
+}
+
+.dark {
+  --background: #070d1a;
+  --foreground: #f1f5f9;
+  
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+  
+  --border: #1e293b;
+  --input: #1e293b;
+  
+  --primary: #38bdf8;
+  --primary-hover: #0ea5e9;
+  --primary-foreground: #082f49;
+  
+  --clinical-navy: #040814;
+  --clinical-surface: #0f172a;
+  
+  --clinical-emerald: #34d399;
+  --clinical-emerald-bg: #064e3b33;
+  --clinical-emerald-border: #065f46;
+  
+  --clinical-amber: #fbbf24;
+  --clinical-amber-bg: #78350f33;
+  --clinical-amber-border: #92400e;
+  
+  --clinical-cyan: #22d3ee;
+  --clinical-cyan-bg: #164e6333;
+  --clinical-cyan-border: #155e75;
+  
+  --clinical-red: #f87171;
+  --clinical-red-bg: #7f1d1d33;
+  --clinical-red-border: #991b1b;
+  
+  --muted: #94a3b8;
+  --muted-bg: #1e293b;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+/* Clinical Glassmorphism & Accent Utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.dark .glass-panel {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(30, 41, 59, 0.8);
+}
+
+.clinical-shadow {
+  box-shadow: 0 4px 20px -2px rgba(11, 19, 43, 0.05), 0 2px 6px -1px rgba(11, 19, 43, 0.03);
+}
+
+.dark .clinical-shadow {
+  box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.4), 0 2px 8px -1px rgba(0, 0, 0, 0.2);
+}
+
+/* Custom scrollbars for high-density desks */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}

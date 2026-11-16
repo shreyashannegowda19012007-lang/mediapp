@@ -5,7 +5,7 @@ and configures global error handlers and SPA routing.
 """
 import os
 import logging
-from flask import Flask, render_template, send_from_directory, jsonify, request
+from flask import Flask, render_template, send_from_directory, jsonify, request, redirect
 from app.config import get_config, Config
 from app.database import close_db, init_db
 
@@ -111,6 +111,9 @@ def create_app(config_class=None) -> Flask:
     # 6. Single Page Application (SPA) Root Route
     @app.route("/", methods=["GET"])
     def index():
-        return render_template("index.html")
+        # Decoupled architecture: forward client directly to Next.js clinical frontend
+        if request.query_string:
+            return redirect(f"http://localhost:3000/?{request.query_string.decode('utf-8')}")
+        return redirect("http://localhost:3000")
 
     return app
