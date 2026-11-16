@@ -14,6 +14,16 @@ interface GenericPriceMatchModalProps {
 export function GenericPriceMatchModal({ isOpen, onClose, data }: GenericPriceMatchModalProps) {
   const addItem = useCartStore((s) => s.addItem);
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !data) {
     return null;
   }

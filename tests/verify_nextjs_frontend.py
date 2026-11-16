@@ -93,13 +93,14 @@ def test_overhauled_frontend():
         btn_generic_match = page.locator('button:has-text("Generic Price Match")').first
         if btn_generic_match.is_visible():
             btn_generic_match.click()
-            time.sleep(0.8)
+            time.sleep(1)
             modal = page.locator('h2:has-text("Generic")')
             assert modal.is_visible(), "Generic Price Match modal did not open"
             print("  - Generic Price Match modal opened successfully with bioequivalent savings comparison")
-            # Close modal
-            page.keyboard.press("Escape")
-            time.sleep(0.3)
+            
+            # Click the close button inside the modal dialog and wait for detachment
+            page.locator("div.fixed.inset-0 button").first.click()
+            time.sleep(1)
             print("[5/6] Verified: Generic Price Match visual modal.")
 
         # -------------------------------------------------------------
