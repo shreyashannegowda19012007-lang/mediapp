@@ -60,7 +60,7 @@ const PharmacyPortal = {
       const queue = res.active_queue || [];
 
       if (metaEl) {
-        metaEl.innerHTML = `<strong>${Components.escapeHtml(p.name)}</strong> • License: <code>${Components.escapeHtml(p.license_number)}</code> • ${Components.escapeHtml(p.address)} • Rating: ⭐ ${p.rating}`;
+        metaEl.innerHTML = `<strong>${Components.escapeHtml(p.name)}</strong> • License: <code>${Components.escapeHtml(p.license_number)}</code> • ${Components.escapeHtml(p.address)} • Rating: ${p.rating} / 5.0`;
       }
 
       statsGrid.innerHTML = `

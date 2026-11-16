@@ -114,7 +114,7 @@ const DeliveryPortal = {
               <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Step 1: Pickup Location</div>
               <div style="font-size:1.1rem; font-weight:700; color:var(--text-primary); margin:4px 0;">${Components.escapeHtml(ord.pharmacy_name)}</div>
               <div style="font-size:0.85rem; color:var(--text-secondary);">${Components.escapeHtml(ord.pharmacy_address)}</div>
-              <div style="font-size:0.85rem; color:var(--primary); margin-top:4px;">📞 Pharmacy: ${Components.escapeHtml(ord.pharmacy_phone)}</div>
+              <div style="font-size:0.85rem; color:var(--primary); margin-top:4px;">Pharmacy Contact: ${Components.escapeHtml(ord.pharmacy_phone)}</div>
             </div>
 
             <!-- Customer Destination -->
@@ -125,7 +125,7 @@ const DeliveryPortal = {
                 ${Components.escapeHtml(addr.line1 || '')}, ${Components.escapeHtml(addr.line2 || '')}<br>
                 ${Components.escapeHtml(addr.city || '')}, ${Components.escapeHtml(addr.state || '')} - ${Components.escapeHtml(addr.pincode || '')}
               </div>
-              <div style="font-size:0.85rem; color:var(--emerald); margin-top:4px;">📞 Customer: ${Components.escapeHtml(addr.recipient_phone || ord.customer_phone)}</div>
+              <div style="font-size:0.85rem; color:var(--emerald); margin-top:4px;">Customer Contact: ${Components.escapeHtml(addr.recipient_phone || ord.customer_phone)}</div>
             </div>
           </div>
 
@@ -135,22 +135,22 @@ const DeliveryPortal = {
             <div style="display:flex; gap:12px; flex-wrap:wrap;">
               ${st === "DELIVERY_ASSIGNED" ? `
                 <button type="button" class="btn-checkout-primary" id="btn-do-pickup" style="width:auto; margin:0; padding:12px 24px; background:var(--primary);">
-                  📦 Confirm Pickup from Pharmacy
+                  Confirm Pickup from Pharmacy
                 </button>
               ` : ''}
 
               ${st === "PICKED_UP" ? `
                 <button type="button" class="btn-checkout-primary" id="btn-do-transit" style="width:auto; margin:0; padding:12px 24px; background:#0284c7;">
-                  🛵 Mark Out for Delivery (In Transit)
+                  Mark Out for Delivery (In Transit)
                 </button>
               ` : ''}
 
               ${st === "IN_TRANSIT" ? `
                 <button type="button" class="btn-checkout-primary" id="btn-do-complete" style="width:auto; margin:0; padding:12px 24px; background:var(--emerald);">
-                  ✅ Confirm Handover & Complete Delivery
+                  Confirm Handover & Complete Delivery
                 </button>
                 <button type="button" class="btn-alt-pill" id="btn-do-fail" style="color:var(--rose); border-color:var(--rose); padding:10px 18px;">
-                  ⚠️ Report Delivery Failure
+                  Report Delivery Failure
                 </button>
               ` : ''}
 
@@ -325,7 +325,7 @@ const DeliveryPortal = {
                 Destination: ${Components.escapeHtml(addr.line1 || '')}, ${Components.escapeHtml(addr.city || '')} (Phone: ${Components.escapeHtml(addr.recipient_phone || 'N/A')})
               </div>
               <button type="button" class="btn-checkout-primary btn-claim-order" data-id="${Components.escapeHtml(ord.id)}" style="width:auto; margin:0; padding:10px 22px;">
-                ⚡ Claim This Delivery
+                Claim This Delivery
               </button>
             </div>
           </div>

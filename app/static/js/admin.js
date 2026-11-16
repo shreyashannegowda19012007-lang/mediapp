@@ -275,7 +275,7 @@ const AdminPortal = {
                   <td><code>${Components.escapeHtml(p.license_number)}</code></td>
                   <td>${Components.escapeHtml(p.city)} (${Components.escapeHtml(p.address)})</td>
                   <td>${Components.escapeHtml(p.phone)}</td>
-                  <td>⭐ ${p.rating}</td>
+                  <td>${p.rating} / 5.0</td>
                   <td><span class="badge ${p.status === 'approved' ? 'badge-otc' : (p.status === 'suspended' ? 'badge-rx' : 'badge-pulse')}">${p.status.toUpperCase()}</span></td>
                   <td>
                     <div style="display:flex; gap:6px;">
@@ -395,7 +395,7 @@ const AdminPortal = {
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:20px; margin-bottom:28px;">
           <div class="stat-card ${(res.database_ready || res.database_connected) ? 'stat-success' : 'stat-warning'}">
             <div class="stat-label">SQLite Relational Database</div>
-            <div class="stat-val" style="font-size:1.4rem;">${(res.database_ready || res.database_connected) ? '✅ Connected & Enforcing FKs' : '❌ Disconnected'}</div>
+            <div class="stat-val" style="font-size:1.4rem;">${(res.database_ready || res.database_connected) ? 'Connected & Enforcing FKs' : 'Disconnected'}</div>
             <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">Journal Mode: WAL • Foreign Keys: ON</div>
           </div>
 
@@ -407,7 +407,7 @@ const AdminPortal = {
 
           <div class="stat-card ${validation.is_valid ? 'stat-success' : 'stat-warning'}">
             <div class="stat-label">Configuration Validation</div>
-            <div class="stat-val" style="font-size:1.4rem;">${validation.is_valid ? '✅ Valid' : '⚠️ Warnings Found'}</div>
+            <div class="stat-val" style="font-size:1.4rem;">${validation.is_valid ? 'Valid' : 'Warnings Found'}</div>
             <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">${validation.issues.length} operational issues flagged</div>
           </div>
         </div>

@@ -165,9 +165,9 @@ const CustomerPortal = {
           <div class="selector-group">
             <label class="selector-label" for="pharmacy-select">Fulfilling Store:</label>
             <select id="pharmacy-select" class="select-styled">
-              <option value="1">Apollo Pharmacy — Indiranagar (⚡ 35-45 mins)</option>
-              <option value="2">MedPlus Pharmacy — Koramangala (⚡ 40-50 mins)</option>
-              <option value="3">Fortis Health Care Chemist — Bannerghatta (⚡ 45-60 mins)</option>
+              <option value="1">Apollo Pharmacy — Indiranagar (35-45 mins)</option>
+              <option value="2">MedPlus Pharmacy — Koramangala (40-50 mins)</option>
+              <option value="3">Fortis Health Care Chemist — Bannerghatta (45-60 mins)</option>
             </select>
           </div>
 
@@ -376,7 +376,7 @@ const CustomerPortal = {
                   <span class="price-mrp">₹${mrp}</span>
                   <span class="price-discount">${discountPct}</span>
                 </div>
-                <span class="stock-val ${stockClass}">● ${stockText}</span>
+                <span class="stock-val ${stockClass}">${stockText}</span>
               </div>
 
               <div class="card-actions">
@@ -582,7 +582,7 @@ const CustomerPortal = {
                   <div style="font-weight:700; color:var(--text-primary); font-size:1rem;">${a.name}</div>
                   <div style="font-size:0.8rem; color:var(--text-muted);">Manufacturer: ${a.manufacturer}</div>
                   <div style="font-size:0.8rem; color:var(--emerald); font-weight:700; margin-top:3px;">
-                    ✓ Save ${a.savings_pct}% (${Components.formatCurrency(a.savings_amount)} per pack)
+                    Save ${a.savings_pct}% (${Components.formatCurrency(a.savings_amount)} per pack)
                   </div>
                 </div>
                 <div style="text-align:right;">
@@ -995,7 +995,7 @@ const CustomerPortal = {
           return `
             <div style="display:flex; flex-direction:column; align-items:center; z-index:2; flex:1;">
               <div style="width:26px; height:26px; border-radius:50%; background:${isCompleted ? 'var(--primary)' : (isActive ? 'var(--primary-light)' : 'var(--bg-canvas)')}; border:2px solid ${color}; color:${isCompleted ? '#fff' : (isActive ? 'var(--primary)' : 'var(--text-muted)')}; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700;">
-                ${isCompleted ? '✓' : idx + 1}
+                ${isCompleted ? 'Done' : idx + 1}
               </div>
               <span style="font-size:0.725rem; font-weight:600; color:${isActive ? 'var(--primary)' : 'var(--text-muted)'}; margin-top:4px; text-align:center;">
                 ${st.label}

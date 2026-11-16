@@ -11,7 +11,7 @@ import json
 # Set Streamlit Page Configuration
 st.set_page_config(
     page_title="MediApp - Licensed Healthcare Network",
-    page_icon="💊",
+    page_icon="https://img.icons8.com/color/96/caduceus.png",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -106,35 +106,35 @@ with st.sidebar:
     st.divider()
 
     st.subheader("System Status")
-    st.success("🟢 Database & API Online")
-    st.info("⚡ Environment: Production / Showcase")
+    st.success("Database & API Online")
+    st.info("Environment: Production / Showcase")
 
     st.divider()
-    st.subheader("🔐 4-Portal Credentials")
+    st.subheader("Portal Credentials")
     with st.expander("Show Demo Login Accounts", expanded=True):
         st.markdown("""
         **Standard Password**: `Role@123`
         
-        - 🛒 **Customer**:  
+        - **Customer**:  
           `customer@mediapp.local` / `Customer@123`
-        - 💊 **Pharmacy**:  
+        - **Pharmacy**:  
           `pharmacy@mediapp.local` / `Pharmacy@123`
-        - 🚴 **Delivery**:  
+        - **Delivery**:  
           `delivery@mediapp.local` / `Delivery@123`
-        - 🛡️ **Admin**:  
+        - **Admin**:  
           `admin@mediapp.local` / `Admin@123`
         """)
 
 # 3. Main Header
-st.title("💊 MediApp Healthcare Network")
+st.title("MediApp Healthcare Network")
 st.markdown("Automated clinical dispensary, pharmacy fulfillment, delivery logistics, and administrative oversight.")
 
 tab_catalogue, tab_orders, tab_pharmacies, tab_delivery, tab_metrics = st.tabs([
-    "🛒 Medicine Catalogue",
-    "📋 Live Orders & Tracking",
-    "🏪 Partner Pharmacies",
-    "🚴 Delivery Fleets",
-    "📊 System Analytics"
+    "Medicine Catalogue",
+    "Live Orders & Tracking",
+    "Partner Pharmacies",
+    "Delivery Fleets",
+    "System Analytics"
 ])
 
 # ==========================================
@@ -145,7 +145,7 @@ with tab_catalogue:
     
     col1, col2 = st.columns([3, 1])
     with col1:
-        search_query = st.text_input("🔍 Search medicine name, generic composition, or manufacturer", placeholder="e.g. Paracetamol, Dolo, Metformin, Augmentin")
+        search_query = st.text_input("Search medicine name, generic composition, or manufacturer", placeholder="e.g. Paracetamol, Dolo, Metformin, Augmentin")
     with col2:
         rx_filter = st.selectbox("Prescription Filter", ["All Items", "OTC Only (No Rx)", "Prescription Required (Rx)"])
         
@@ -177,9 +177,9 @@ with tab_catalogue:
                 st.markdown(f"**Category:** `{med.get('category', 'General')}`")
                 
                 if med.get("prescription_required"):
-                    st.error("📄 Prescription (Rx) Required")
+                    st.error("Prescription (Rx) Required")
                 else:
-                    st.success("🟢 OTC - No Prescription Needed")
+                    st.success("OTC - No Prescription Needed")
                     
                 st.markdown(f"### ₹{med.get('mrp', 0.0):.2f}")
 
@@ -205,7 +205,7 @@ with tab_orders:
         st.info("No orders found matching this filter.")
     else:
         for ord_row in orders:
-            with st.expander(f"📦 Order {ord_row['id']} — Status: {ord_row['order_status']} — Total: ₹{ord_row['total_amount']:.2f}"):
+            with st.expander(f"Order {ord_row['id']} — Status: {ord_row['order_status']} — Total: ₹{ord_row['total_amount']:.2f}"):
                 c1, c2, c3 = st.columns(3)
                 with c1:
                     st.markdown(f"**Status:** `{ord_row['order_status']}`")
@@ -228,12 +228,11 @@ with tab_pharmacies:
             col_a, col_b = st.columns([3, 1])
             with col_a:
                 st.subheader(p["name"])
-                st.write(f"📍 {p['address']}, {p['city']} - {p['pincode']}")
+                st.write(f"Address: {p['address']}, {p['city']} - {p['pincode']}")
                 st.caption(f"License Number: `{p['license_number']}` | Contact: {p['phone']}")
             with col_b:
-                st.metric("Rating", f"⭐ {p['rating']}")
-                status_color = "🟢" if p["status"] == "approved" else "🟡"
-                st.write(f"{status_color} Status: **{p['status'].upper()}**")
+                st.metric("Rating", f"{p['rating']} / 5.0")
+                st.write(f"Status: **{p['status'].upper()}**")
 
 # ==========================================
 # TAB 4: DELIVERY FLEETS
@@ -253,8 +252,8 @@ with tab_delivery:
                 st.write(f"Vehicle: **{c['vehicle_type']}** (`{c['vehicle_number']}`)")
                 st.caption(f"Driving License: `{c['driving_license']}` | Phone: {c['phone']}")
             with col_y:
-                st.metric("Driver Rating", f"⭐ {c['rating']}")
-                avail = "🟢 Available" if c["is_available"] else "🔴 On Delivery"
+                st.metric("Driver Rating", f"{c['rating']} / 5.0")
+                avail = "Available" if c["is_available"] else "On Delivery"
                 st.write(f"Status: **{avail}**")
 
 # ==========================================

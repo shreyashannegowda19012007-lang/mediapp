@@ -15,7 +15,7 @@ from playwright.sync_api import sync_playwright
 BASE_URL = "http://127.0.0.1:5000"
 
 def log(msg, success=True):
-    symbol = "✅" if success else "❌"
+    symbol = "[PASS]" if success else "[FAIL]"
     print(f"{symbol} {msg}")
 
 def run_tests():

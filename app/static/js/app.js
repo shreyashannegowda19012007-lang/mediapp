@@ -171,7 +171,7 @@ const App = {
       const pin = await Components.promptDialog("Change Delivery Location", "Enter delivery pincode or area (e.g. 560038, Indiranagar):", "Bengaluru 560038");
       if (pin && pin.trim()) {
         const valEl = document.querySelector("#header-location-picker .location-val");
-        if (valEl) valEl.textContent = `${Components.escapeHtml(pin.trim())} ▾`;
+        if (valEl) valEl.textContent = `${Components.escapeHtml(pin.trim())}`;
         Components.toast(`Delivery address updated to ${pin.trim()}`, "success");
       }
     });
@@ -326,10 +326,10 @@ const App = {
     const caps = State.get("capabilities") || {};
     if (googleNotice) {
       if (caps.google_oauth_mode === "demo") {
-        googleNotice.textContent = "⚡ Simulated 1-Click Google OAuth active (Demo Environment)";
+        googleNotice.textContent = "Simulated 1-Click Google OAuth active (Demo Environment)";
         googleNotice.style.color = "var(--primary)";
       } else if (caps.google_oauth_configured) {
-        googleNotice.textContent = "🔒 Official Google Cloud OAuth 2.0 active";
+        googleNotice.textContent = "Official Google Cloud OAuth 2.0 active";
         googleNotice.style.color = "var(--primary)";
       } else {
         googleNotice.textContent = "Google OAuth credentials not configured (.env).";
@@ -610,7 +610,7 @@ const App = {
           if (r.is_emergency) {
             placeholder.innerHTML = `
               <div style="background:var(--rose-bg); border:1px solid var(--rose); padding:10px; border-radius:var(--radius-sm); color:var(--rose); font-weight:700;">
-                🚨 EMERGENCY ALERT: ${Components.escapeHtml(r.response)}
+                EMERGENCY ALERT: ${Components.escapeHtml(r.response)}
               </div>
             `;
           } else {
