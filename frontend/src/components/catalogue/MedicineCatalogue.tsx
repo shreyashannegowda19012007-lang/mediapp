@@ -59,7 +59,7 @@ export function MedicineCatalogue() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div id="medicine-catalogue" className="space-y-6 scroll-mt-24">
       {/* Omni-Search Hero Bar */}
       <div className="relative rounded-3xl border border-sky-100 dark:border-slate-800 bg-gradient-to-b from-sky-500/10 via-sky-500/5 to-transparent p-6 sm:p-8 backdrop-blur-xs">
         <div className="max-w-3xl mx-auto space-y-4">
@@ -82,6 +82,7 @@ export function MedicineCatalogue() {
               <Search className="h-5 w-5" />
             </div>
             <input
+              id="search-medicines-input"
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

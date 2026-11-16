@@ -15,9 +15,31 @@ import {
 interface HeroSectionProps {
   onOpenUploadRx: () => void;
   onNavigateTab: (tab: string) => void;
+  onExploreCatalogue?: () => void;
 }
 
-export function HeroSection({ onOpenUploadRx, onNavigateTab }: HeroSectionProps) {
+export function HeroSection({
+  onOpenUploadRx,
+  onNavigateTab,
+  onExploreCatalogue,
+}: HeroSectionProps) {
+  const handleExplore = () => {
+    if (onExploreCatalogue) {
+      onExploreCatalogue();
+    } else {
+      onNavigateTab("catalogue");
+      setTimeout(() => {
+        const el = document.getElementById("medicine-catalogue");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+        const searchInput = document.getElementById("search-medicines-input");
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }, 50);
+    }
+  };
   return (
     <div className="relative rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-800 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 text-white p-6 sm:p-10 shadow-2xl">
       {/* Background Subtle Gradient Glow */}
@@ -55,8 +77,9 @@ export function HeroSection({ onOpenUploadRx, onNavigateTab }: HeroSectionProps)
           </button>
 
           <button
-            onClick={() => onNavigateTab("catalogue")}
-            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 font-semibold text-sm border border-white/10 backdrop-blur-md transition-all cursor-pointer"
+            onClick={handleExplore}
+            id="btn-explore-catalogue"
+            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 active:scale-[0.98] text-slate-200 font-semibold text-sm border border-white/10 backdrop-blur-md transition-all cursor-pointer hover:border-sky-400/50 hover:text-white shadow-md hover:shadow-sky-500/10"
           >
             <Pill className="h-4 w-4 text-sky-400" />
             <span>Explore Medicine Catalogue</span>

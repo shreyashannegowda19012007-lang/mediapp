@@ -254,7 +254,7 @@ clinical_html = f"""
               <span>Upload Doctor Prescription</span>
               <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </button>
-            <button onclick="document.getElementById('search-input').focus()" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 font-semibold text-sm border border-white/10">
+            <button onclick="exploreCatalogue()" id="btn-explore-catalogue" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 active:scale-[0.98] text-slate-200 font-semibold text-sm border border-white/10 cursor-pointer transition-all hover:border-sky-400/50 hover:text-white">
               <i data-lucide="pill" class="w-4 h-4 text-sky-400"></i>
               <span>Explore Medicine Catalogue</span>
             </button>
@@ -281,7 +281,7 @@ clinical_html = f"""
       </div>
 
       <!-- OMNI-SEARCH HERO BAR -->
-      <div class="relative rounded-3xl border border-slate-800 bg-gradient-to-b from-sky-500/10 via-sky-500/5 to-transparent p-6 sm:p-8 backdrop-blur-xs">
+      <div id="catalogue-section" class="relative rounded-3xl border border-slate-800 scroll-mt-24 bg-gradient-to-b from-sky-500/10 via-sky-500/5 to-transparent p-6 sm:p-8 backdrop-blur-xs">
         <div class="max-w-3xl mx-auto space-y-4">
           <div class="text-center space-y-2">
             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-sky-500/15 text-sky-300 border border-sky-500/20">
@@ -758,6 +758,20 @@ clinical_html = f"""
         }}
       }});
       lucide.createIcons();
+    }}
+
+    function exploreCatalogue() {{
+      setTab('catalogue');
+      setTimeout(() => {{
+        const section = document.getElementById('catalogue-section');
+        const input = document.getElementById('search-input');
+        if (section) {{
+          section.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+        }}
+        if (input) {{
+          input.focus();
+        }}
+      }}, 50);
     }}
 
     function setTheme(mode) {{

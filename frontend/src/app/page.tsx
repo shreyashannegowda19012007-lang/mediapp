@@ -31,6 +31,20 @@ export default function Home() {
     else if (activeRole === "admin") setActiveTab("admin-dashboard");
   }, [activeRole]);
 
+  const handleExploreCatalogue = () => {
+    setActiveTab("catalogue");
+    setTimeout(() => {
+      const section = document.getElementById("medicine-catalogue");
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      const searchInput = document.getElementById("search-medicines-input");
+      if (searchInput) {
+        searchInput.focus();
+      }
+    }, 50);
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Top Command Bar */}
@@ -47,6 +61,7 @@ export default function Home() {
           <HeroSection
             onOpenUploadRx={() => setIsRxModalOpen(true)}
             onNavigateTab={(tab) => setActiveTab(tab)}
+            onExploreCatalogue={handleExploreCatalogue}
           />
         )}
 
