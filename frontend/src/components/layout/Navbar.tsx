@@ -54,25 +54,25 @@ export function Navbar({ onOpenUploadRx, onNavigateTab, activeTab = "catalogue" 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md">
       {/* Top Clinical Trust Bar */}
-      <div className="hidden lg:flex items-center justify-between px-6 py-1.5 bg-slate-900 text-slate-300 text-xs tracking-tight">
+      <div className="hidden lg:flex items-center justify-between px-6 py-1.5 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 text-xs tracking-tight">
         <div className="flex items-center gap-6">
-          <span className="flex items-center gap-1.5 font-medium text-slate-200">
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+          <span className="flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200">
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
             Licensed Partner Pharmacies & WHO-GMP Manufacturers
           </span>
-          <span className="flex items-center gap-1.5 text-slate-400">
-            <ThermometerSnowflake className="h-3.5 w-3.5 text-cyan-400" />
+          <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+            <ThermometerSnowflake className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
             Guaranteed Cold-Chain Logistics (2°C - 8°C Monitored)
           </span>
         </div>
 
         <div className="flex items-center gap-4 text-xs">
-          <span className="flex items-center gap-1 text-slate-300">
-            <MapPin className="h-3.5 w-3.5 text-sky-400" />
+          <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">
+            <MapPin className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />
             Express Dispatch: <strong>Bengaluru 560038</strong> (45 Min)
           </span>
-          <span className="text-slate-500">|</span>
-          <span className="text-slate-400">Clinical Helpline: 1800-200-MEDI (24/7)</span>
+          <span className="text-slate-300 dark:text-slate-600">|</span>
+          <span className="text-slate-600 dark:text-slate-400">Clinical Helpline: 1800-200-MEDI (24/7)</span>
         </div>
       </div>
 
@@ -189,11 +189,11 @@ export function Navbar({ onOpenUploadRx, onNavigateTab, activeTab = "catalogue" 
               onClick={() => setShowRoleDropdown(!showRoleDropdown)}
               type="button"
               disabled={isLoading}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-medium shadow-xs transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-700 text-xs font-medium shadow-xs transition-all cursor-pointer"
             >
-              <KeyRound className="h-3.5 w-3.5 text-sky-400" />
+              <KeyRound className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />
               <span className="capitalize font-semibold">{activeRole}</span>
-              <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+              <ChevronDown className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
             </button>
 
             {showRoleDropdown && (

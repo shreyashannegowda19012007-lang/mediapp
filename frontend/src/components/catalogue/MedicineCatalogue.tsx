@@ -109,8 +109,8 @@ export function MedicineCatalogue() {
               className={clsx(
                 "px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer",
                 rxFilter === undefined && !coldChainOnly
-                  ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-transparent shadow-xs"
-                  : "bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                  ? "bg-sky-600 text-white border-sky-600 shadow-xs"
+                  : "bg-white dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-sky-300"
               )}
             >
               All Items ({totalCount})

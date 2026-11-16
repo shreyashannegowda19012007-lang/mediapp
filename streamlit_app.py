@@ -128,32 +128,32 @@ clinical_html = f"""
     }}
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col transition-colors duration-150">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-150">
 
   <!-- TOP CLINICAL TRUST BAR -->
-  <div class="hidden lg:flex items-center justify-between px-6 py-1.5 bg-slate-900 border-b border-slate-800 text-xs tracking-tight text-slate-300">
+  <div class="hidden lg:flex items-center justify-between px-6 py-1.5 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-xs tracking-tight text-slate-600 dark:text-slate-300">
     <div class="flex items-center gap-6">
-      <span class="flex items-center gap-1.5 font-medium text-slate-200">
-        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+      <span class="flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200">
+        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
         Licensed Partner Pharmacies & WHO-GMP Manufacturers
       </span>
-      <span class="flex items-center gap-1.5 text-slate-400">
-        <i data-lucide="thermometer-snowflake" class="w-3.5 h-3.5 text-cyan-400"></i>
+      <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+        <i data-lucide="thermometer-snowflake" class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400"></i>
         Guaranteed Cold-Chain Logistics (2°C - 8°C Monitored)
       </span>
     </div>
     <div class="flex items-center gap-4 text-xs">
-      <span class="flex items-center gap-1 text-slate-300">
-        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-sky-400"></i>
+      <span class="flex items-center gap-1 text-slate-700 dark:text-slate-300">
+        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-sky-600 dark:text-sky-400"></i>
         Express Dispatch: <strong>Bengaluru 560038</strong> (45 Min)
       </span>
-      <span class="text-slate-600">|</span>
-      <span class="text-slate-400">Clinical Helpline: 1800-200-MEDI (24/7)</span>
+      <span class="text-slate-300 dark:text-slate-600">|</span>
+      <span class="text-slate-600 dark:text-slate-400">Clinical Helpline: 1800-200-MEDI (24/7)</span>
     </div>
   </div>
 
   <!-- COMMAND BAR -->
-  <header class="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md">
+  <header class="sticky top-0 z-40 w-full border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
       
       <!-- Brand Logo -->
@@ -163,31 +163,31 @@ clinical_html = f"""
         </div>
         <div>
           <div class="flex items-center gap-1.5">
-            <span class="text-lg font-black tracking-tight text-slate-100">
-              Medi<span class="text-sky-400">App</span>
+            <span class="text-lg font-black tracking-tight text-slate-900 dark:text-slate-100">
+              Medi<span class="text-sky-600 dark:text-sky-400">App</span>
             </span>
-            <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sky-500/10 text-sky-300 border border-sky-500/20">
+            <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-500/20">
               Clinical
             </span>
           </div>
-          <span class="text-[10px] text-slate-400 block -mt-0.5 font-medium">
+          <span class="text-[10px] text-slate-500 dark:text-slate-400 block -mt-0.5 font-medium">
             Licensed Healthcare Network
           </span>
         </div>
       </div>
 
       <!-- Navigation Tabs -->
-      <nav class="hidden md:flex items-center gap-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
-        <button id="tab-btn-catalogue" onclick="setTab('catalogue')" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all bg-slate-800 text-sky-400 shadow-xs">
+      <nav class="hidden md:flex items-center gap-1 bg-slate-100/70 dark:bg-slate-900/80 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+        <button id="tab-btn-catalogue" onclick="setTab('catalogue')" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all bg-white dark:bg-slate-800 text-sky-600 dark:text-sky-400 shadow-xs">
           Medicine Catalogue
         </button>
-        <button id="tab-btn-pharmacist-desk" onclick="setTab('pharmacist-desk')" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-slate-100">
+        <button id="tab-btn-pharmacist-desk" onclick="setTab('pharmacist-desk')" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
           Pharmacist Desk
         </button>
-        <button id="tab-btn-logistics" onclick="setTab('logistics')" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-slate-100">
+        <button id="tab-btn-logistics" onclick="setTab('logistics')" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
           Logistics & Orders
         </button>
-        <button id="tab-btn-admin-dashboard" onclick="setTab('admin-dashboard')" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-slate-100">
+        <button id="tab-btn-admin-dashboard" onclick="setTab('admin-dashboard')" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
           Hospital Analytics
         </button>
       </nav>
@@ -195,25 +195,25 @@ clinical_html = f"""
       <!-- Right Action Cluster -->
       <div class="flex items-center gap-2.5">
         <!-- 3-Mode Theme Switcher -->
-        <div class="inline-flex items-center rounded-lg border border-slate-800 p-0.5 bg-slate-900 shadow-xs">
-          <button onclick="setTheme('light')" class="px-2 py-1 text-xs text-slate-400 hover:text-slate-100 rounded-md transition-all flex items-center gap-1">
+        <div class="inline-flex items-center rounded-lg border border-slate-200 dark:border-slate-800 p-0.5 bg-slate-100/70 dark:bg-slate-900 shadow-xs">
+          <button id="theme-btn-light" onclick="setTheme('light')" class="px-2 py-1 text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 rounded-md transition-all flex items-center gap-1">
             <i data-lucide="sun" class="w-3.5 h-3.5"></i>
             <span class="hidden sm:inline">Light</span>
           </button>
-          <button onclick="setTheme('dark')" class="px-2 py-1 text-xs bg-slate-800 text-sky-400 font-semibold rounded-md shadow-xs transition-all flex items-center gap-1">
+          <button id="theme-btn-dark" onclick="setTheme('dark')" class="px-2 py-1 text-xs bg-slate-800 text-sky-400 font-semibold rounded-md shadow-xs transition-all flex items-center gap-1">
             <i data-lucide="moon" class="w-3.5 h-3.5"></i>
             <span class="hidden sm:inline">Dark</span>
           </button>
         </div>
 
         <!-- Upload Rx Button -->
-        <button onclick="openRxModal()" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-sky-800/80 bg-sky-950/40 text-sky-300 text-xs font-semibold hover:bg-sky-900/60 transition-all cursor-pointer">
-          <i data-lucide="file-text" class="w-4 h-4 text-sky-400"></i>
+        <button onclick="openRxModal()" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-sky-300 dark:border-sky-800/80 bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 text-xs font-semibold hover:bg-sky-100 dark:hover:bg-sky-900/60 transition-all cursor-pointer">
+          <i data-lucide="file-text" class="w-4 h-4 text-sky-500"></i>
           <span>Upload Rx</span>
         </button>
 
         <!-- Cart Button -->
-        <button onclick="openCart()" class="relative p-2 rounded-xl border border-slate-800 hover:bg-slate-900 text-slate-300 transition-all cursor-pointer" title="Open prescription cart">
+        <button onclick="openCart()" class="relative p-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 transition-all cursor-pointer" title="Open prescription cart">
           <i data-lucide="shopping-bag" class="w-5 h-5"></i>
           <span id="cart-counter" class="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-sky-600 text-[10px] font-bold text-white shadow-xs">
             0
@@ -221,8 +221,8 @@ clinical_html = f"""
         </button>
 
         <!-- Role Badge -->
-        <div class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 text-white text-xs font-semibold shadow-xs">
-          <i data-lucide="key-round" class="w-3.5 h-3.5 text-sky-400"></i>
+        <div class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-700 text-xs font-semibold shadow-xs">
+          <i data-lucide="key-round" class="w-3.5 h-3.5 text-sky-600 dark:text-sky-400"></i>
           <span id="current-role-label">Customer</span>
         </div>
       </div>
@@ -236,16 +236,16 @@ clinical_html = f"""
     <div id="view-catalogue" class="space-y-6">
       
       <!-- HERO BANNER -->
-      <div class="relative rounded-3xl overflow-hidden border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 text-white p-6 sm:p-10 shadow-2xl">
+      <div class="relative rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-sky-50/70 via-white to-slate-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-white p-6 sm:p-10 shadow-lg dark:shadow-2xl">
         <div class="relative z-10 max-w-4xl space-y-6">
-          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/10 text-sky-300 border border-white/10">
-            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-sky-100/80 dark:bg-white/10 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-white/10">
+            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
             <span>Licensed Hyperlocal Clinical Pharmacy & Cold-Chain Network</span>
           </div>
-          <h1 class="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
-            Authentic Medicines & Clinical Care, <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-teal-300 to-emerald-400">Delivered in 45 Minutes.</span>
+          <h1 class="text-3xl sm:text-5xl font-black tracking-tight leading-tight text-slate-900 dark:text-white">
+            Authentic Medicines & Clinical Care, <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 via-teal-600 to-emerald-600 dark:from-sky-400 dark:via-teal-300 dark:to-emerald-400">Delivered in 45 Minutes.</span>
           </h1>
-          <p class="text-sm sm:text-base text-slate-300 max-w-2xl leading-relaxed">
+          <p class="text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
             Access over 1,250+ licensed pharmaceutical drugs, cold-chain monitored biologics, and certified bioequivalent generics saving patients up to 70%. Every prescription is verified by a licensed clinical pharmacist prior to tamper-sealed dispatch.
           </p>
           <div class="flex flex-wrap items-center gap-3 pt-2">
@@ -254,43 +254,43 @@ clinical_html = f"""
               <span>Upload Doctor Prescription</span>
               <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </button>
-            <button onclick="exploreCatalogue()" id="btn-explore-catalogue" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 active:scale-[0.98] text-slate-200 font-semibold text-sm border border-white/10 cursor-pointer transition-all hover:border-sky-400/50 hover:text-white">
-              <i data-lucide="pill" class="w-4 h-4 text-sky-400"></i>
+            <button onclick="exploreCatalogue()" id="btn-explore-catalogue" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white dark:bg-white/10 hover:bg-slate-50 dark:hover:bg-white/15 active:scale-[0.98] text-slate-800 dark:text-slate-200 font-semibold text-sm border border-slate-200 dark:border-white/10 cursor-pointer transition-all hover:border-sky-400/50 hover:text-sky-600 dark:hover:text-white shadow-xs">
+              <i data-lucide="pill" class="w-4 h-4 text-sky-500 dark:text-sky-400"></i>
               <span>Explore Medicine Catalogue</span>
             </button>
           </div>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 border-t border-white/10">
-            <div class="p-3 rounded-xl bg-white/5 border border-white/5">
-              <div class="flex items-center gap-1.5 text-xs font-bold text-emerald-400"><i data-lucide="shield-check" class="w-4 h-4"></i>100% Genuine</div>
-              <div class="text-[11px] text-slate-400">Direct from WHO-GMP manufacturers</div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 border-t border-slate-200 dark:border-white/10">
+            <div class="p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/5 shadow-xs">
+              <div class="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400"><i data-lucide="shield-check" class="w-4 h-4"></i>100% Genuine</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">Direct from WHO-GMP manufacturers</div>
             </div>
-            <div class="p-3 rounded-xl bg-white/5 border border-white/5">
-              <div class="flex items-center gap-1.5 text-xs font-bold text-sky-400"><i data-lucide="clock" class="w-4 h-4"></i>15-Min Review</div>
-              <div class="text-[11px] text-slate-400">Pharmacist validation on every Rx</div>
+            <div class="p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/5 shadow-xs">
+              <div class="flex items-center gap-1.5 text-xs font-bold text-sky-700 dark:text-sky-400"><i data-lucide="clock" class="w-4 h-4"></i>15-Min Review</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">Pharmacist validation on every Rx</div>
             </div>
-            <div class="p-3 rounded-xl bg-white/5 border border-white/5">
-              <div class="flex items-center gap-1.5 text-xs font-bold text-cyan-400"><i data-lucide="thermometer-snowflake" class="w-4 h-4"></i>Cold-Chain Safe</div>
-              <div class="text-[11px] text-slate-400">2°C - 8°C IoT temperature guarantee</div>
+            <div class="p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/5 shadow-xs">
+              <div class="flex items-center gap-1.5 text-xs font-bold text-cyan-700 dark:text-cyan-400"><i data-lucide="thermometer-snowflake" class="w-4 h-4"></i>Cold-Chain Safe</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">2°C - 8°C IoT temperature guarantee</div>
             </div>
-            <div class="p-3 rounded-xl bg-white/5 border border-white/5">
-              <div class="flex items-center gap-1.5 text-xs font-bold text-amber-400"><i data-lucide="sparkles" class="w-4 h-4"></i>Save up to 70%</div>
-              <div class="text-[11px] text-slate-400">Bioequivalent generic price match</div>
+            <div class="p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/5 shadow-xs">
+              <div class="flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400"><i data-lucide="sparkles" class="w-4 h-4"></i>Save up to 70%</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">Bioequivalent generic price match</div>
             </div>
           </div>
         </div>
       </div>
 
       <!-- OMNI-SEARCH HERO BAR -->
-      <div id="catalogue-section" class="relative rounded-3xl border border-slate-800 scroll-mt-24 bg-gradient-to-b from-sky-500/10 via-sky-500/5 to-transparent p-6 sm:p-8 backdrop-blur-xs">
+      <div id="catalogue-section" class="relative rounded-3xl border border-sky-100 dark:border-slate-800 scroll-mt-24 bg-gradient-to-b from-sky-500/10 via-sky-500/5 to-transparent p-6 sm:p-8 backdrop-blur-xs">
         <div class="max-w-3xl mx-auto space-y-4">
           <div class="text-center space-y-2">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-sky-500/15 text-sky-300 border border-sky-500/20">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-500/20">
               <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Verified Dispensary Network & Bioequivalent Price Match
             </span>
-            <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-100">
+            <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
               Clinical Medicine Catalogue
             </h2>
-            <p class="text-xs sm:text-sm text-slate-400">
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
               Search by brand name, active generic molecule (e.g. <em>Ranitidine, Paracetamol, Metformin</em>), or clinical indication.
             </p>
           </div>
@@ -304,21 +304,21 @@ clinical_html = f"""
               type="text"
               oninput="filterMedicines()"
               placeholder="Search 1,250+ medicines, generic molecules, ailments..."
-              class="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-slate-700 bg-slate-900 text-slate-100 placeholder-slate-400 shadow-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition-all"
+              class="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 shadow-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition-all"
             />
           </div>
           <!-- Filters -->
           <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
-            <button id="filter-all" onclick="setFilter('all')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-900 border border-transparent shadow-xs">
+            <button id="filter-all" onclick="setFilter('all')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-sky-600 text-white shadow-xs">
               All Items (<span id="total-count">0</span>)
             </button>
-            <button id="filter-otc" onclick="setFilter('otc')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-900/80 border border-slate-800 text-emerald-400">
+            <button id="filter-otc" onclick="setFilter('otc')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-emerald-600 dark:text-emerald-400 shadow-xs">
               OTC Only
             </button>
-            <button id="filter-rx" onclick="setFilter('rx')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-900/80 border border-slate-800 text-amber-400">
+            <button id="filter-rx" onclick="setFilter('rx')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-amber-600 dark:text-amber-400 shadow-xs">
               Prescription (Rx)
             </button>
-            <button id="filter-coldchain" onclick="setFilter('coldchain')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-900/80 border border-slate-800 text-cyan-400">
+            <button id="filter-coldchain" onclick="setFilter('coldchain')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-cyan-600 dark:text-cyan-400 shadow-xs">
               <i data-lucide="thermometer-snowflake" class="w-3 h-3"></i>
               Cold-Chain Monitored
             </button>
@@ -334,19 +334,19 @@ clinical_html = f"""
 
     <!-- VIEW: PHARMACIST DESK -->
     <div id="view-pharmacist-desk" class="hidden space-y-4">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border border-slate-800 bg-slate-900 shadow-xs">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
         <div class="flex items-center gap-3">
-          <div class="p-2.5 rounded-xl bg-amber-500/10 text-amber-400">
+          <div class="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
             <i data-lucide="building" class="w-6 h-6"></i>
           </div>
           <div>
-            <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+            <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               Clinical Pharmacist Verification Desk
-              <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
                 Active Station #04
               </span>
             </h2>
-            <p class="text-xs text-slate-400">
+            <p class="text-xs text-slate-500 dark:text-slate-400">
               Split-screen high-resolution Rx forensic inspection, AI-assisted molecule detection, and 1-click clinical approval.
             </p>
           </div>
@@ -359,67 +359,67 @@ clinical_html = f"""
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[640px]">
         <!-- Inspection Viewport -->
-        <div class="lg:col-span-7 flex flex-col rounded-2xl border border-slate-800 bg-slate-900 shadow-xs overflow-hidden">
-          <div class="flex items-center justify-between p-3 border-b border-slate-800 bg-slate-950/70 text-xs">
-            <div class="flex items-center gap-2 font-semibold text-slate-300">
+        <div class="lg:col-span-7 flex flex-col rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden">
+          <div class="flex items-center justify-between p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/70 text-xs">
+            <div class="flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-300">
               <i data-lucide="file-text" class="w-4 h-4 text-sky-500"></i>
               <span>Inspection Viewport</span>
               <span class="text-slate-400">(Dr_Mukherjee_Apollo_Cardio_Rx.png)</span>
             </div>
             <div class="flex items-center gap-1">
-              <button onclick="adjustZoom(-0.2)" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-800"><i data-lucide="zoom-out" class="w-4 h-4"></i></button>
+              <button onclick="adjustZoom(-0.2)" class="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="zoom-out" class="w-4 h-4"></i></button>
               <span id="zoom-label" class="text-[11px] font-mono w-12 text-center text-slate-500">100%</span>
-              <button onclick="adjustZoom(0.2)" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-800"><i data-lucide="zoom-in" class="w-4 h-4"></i></button>
-              <button onclick="toggleInvert()" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-800" title="Toggle Forensic Color Inversion"><i data-lucide="eye" class="w-4 h-4"></i></button>
+              <button onclick="adjustZoom(0.2)" class="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="zoom-in" class="w-4 h-4"></i></button>
+              <button onclick="toggleInvert()" class="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" title="Toggle Forensic Color Inversion"><i data-lucide="eye" class="w-4 h-4"></i></button>
             </div>
           </div>
-          <div class="flex-1 bg-slate-950 flex items-center justify-center p-6 overflow-auto">
+          <div class="flex-1 bg-slate-100 dark:bg-slate-950 flex items-center justify-center p-6 overflow-auto">
             <img id="rx-inspect-img" src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800&auto=format&fit=crop&q=60" alt="Rx Document" class="max-h-[500px] object-contain rounded-xl shadow-lg transition-transform duration-150" />
           </div>
         </div>
 
         <!-- Checklist & Actions -->
-        <div class="lg:col-span-5 flex flex-col justify-between rounded-2xl border border-slate-800 bg-slate-900 shadow-xs p-5 space-y-4">
+        <div class="lg:col-span-5 flex flex-col justify-between rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs p-5 space-y-4">
           <div class="space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
               <div>
-                <h3 class="font-extrabold text-slate-100 text-base">Verification Audit • Rx #104</h3>
-                <p class="text-xs text-slate-400">Uploaded by Anita Sharma (Patient #9482)</p>
+                <h3 class="font-extrabold text-slate-900 dark:text-slate-100 text-base">Verification Audit • Rx #104</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Uploaded by Anita Sharma (Patient #9482)</p>
               </div>
-              <span class="px-2.5 py-1 text-xs font-semibold rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400">
+              <span class="px-2.5 py-1 text-xs font-semibold rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400">
                 PENDING AUDIT
               </span>
             </div>
-            <div class="p-3.5 rounded-xl border border-sky-900/60 bg-sky-950/20 space-y-2">
-              <div class="flex items-center justify-between text-xs font-bold text-sky-300">
-                <span class="flex items-center gap-1.5"><i data-lucide="sparkles" class="w-4 h-4 text-sky-400"></i>OCR AI Extraction</span>
-                <span class="text-sky-400">Confidence: 96.4%</span>
+            <div class="p-3.5 rounded-xl border border-sky-200 dark:border-sky-900/60 bg-sky-50 dark:bg-sky-950/20 space-y-2">
+              <div class="flex items-center justify-between text-xs font-bold text-sky-800 dark:text-sky-300">
+                <span class="flex items-center gap-1.5"><i data-lucide="sparkles" class="w-4 h-4 text-sky-500"></i>OCR AI Extraction</span>
+                <span class="text-sky-600 dark:text-sky-400">Confidence: 96.4%</span>
               </div>
               <div class="flex flex-wrap gap-1.5 pt-1">
-                <span class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-200 flex items-center gap-1">
-                  <i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-400"></i> Amlodipine 5mg
+                <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1 shadow-xs">
+                  <i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-600 dark:text-emerald-400"></i> Amlodipine 5mg
                 </span>
-                <span class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-200 flex items-center gap-1">
-                  <i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-400"></i> Atorvastatin 20mg
+                <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1 shadow-xs">
+                  <i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-600 dark:text-emerald-400"></i> Atorvastatin 20mg
                 </span>
               </div>
             </div>
-            <div class="space-y-2 text-xs text-slate-400">
-              <div class="font-bold text-slate-300 uppercase tracking-wider">Mandatory Checklist</div>
+            <div class="space-y-2 text-xs text-slate-600 dark:text-slate-400">
+              <div class="font-bold text-slate-800 dark:text-slate-300 uppercase tracking-wider">Mandatory Checklist</div>
               <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600" /><span>Doctor Council Registration #49281 Verified</span></label>
               <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600" /><span>Prescription Date within validity window</span></label>
               <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked class="rounded text-sky-600" /><span>Dosage duration and frequency verified</span></label>
             </div>
             <div>
-              <label class="text-xs font-bold text-slate-300 block mb-1">Pharmacist Clinical Notes</label>
-              <textarea rows="2" class="w-full text-xs rounded-xl border border-slate-800 bg-slate-950 p-2.5 text-slate-200">Verified against national registry. Batches allocated from central stock.</textarea>
+              <label class="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Pharmacist Clinical Notes</label>
+              <textarea rows="2" class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-slate-800 dark:text-slate-200">Verified against national registry. Batches allocated from central stock.</textarea>
             </div>
           </div>
-          <div class="pt-4 border-t border-slate-800 flex items-center gap-3">
+          <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3">
             <button onclick="approveRx()" class="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-md transition-all">
               Certify & Approve Rx
             </button>
-            <button onclick="alert('Prescription rejected and sent back to patient with clinical notes.')" class="px-4 py-3 rounded-xl border border-rose-900/60 bg-rose-950/30 text-rose-400 hover:bg-rose-900/50 text-xs font-semibold">
+            <button onclick="alert('Prescription rejected and sent back to patient with clinical notes.')" class="px-4 py-3 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-xs font-semibold">
               Reject
             </button>
           </div>
@@ -429,15 +429,15 @@ clinical_html = f"""
 
     <!-- VIEW: LOGISTICS TIMELINE -->
     <div id="view-logistics" class="hidden space-y-5">
-      <div class="p-5 rounded-2xl border border-cyan-900/60 bg-gradient-to-r from-cyan-500/10 via-sky-500/5 to-transparent">
+      <div class="p-5 rounded-2xl border border-cyan-200 dark:border-cyan-900/60 bg-gradient-to-r from-cyan-500/10 via-sky-500/5 to-transparent">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div class="flex items-center gap-3">
-            <div class="p-3 rounded-xl bg-cyan-500/20 text-cyan-400">
+            <div class="p-3 rounded-xl bg-cyan-500/20 text-cyan-600 dark:text-cyan-400">
               <i data-lucide="thermometer-snowflake" class="w-6 h-6"></i>
             </div>
             <div>
-              <div class="text-xs font-bold uppercase tracking-wider text-cyan-400">Cold-Chain Active Guarantee</div>
-              <div class="text-base font-extrabold text-slate-100">Insulated Thermal Case #CC-842 • 4.2°C Nominal</div>
+              <div class="text-xs font-bold uppercase tracking-wider text-cyan-700 dark:text-cyan-400">Cold-Chain Active Guarantee</div>
+              <div class="text-base font-extrabold text-slate-900 dark:text-slate-100">Insulated Thermal Case #CC-842 • 4.2°C Nominal</div>
               <div class="text-xs text-slate-400">Safe Operating Range: 2.0°C to 8.0°C. Continuous Bluetooth IoT telemetry.</div>
             </div>
           </div>
@@ -513,16 +513,16 @@ clinical_html = f"""
           </div>
 
           <!-- Courier Card & OTP Box -->
-          <div class="pt-4 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="pt-4 border-t border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Assigned Fleet Courier</div>
-              <div class="font-bold text-sm text-slate-100">Manoj Kumar (Certified Cold-Chain Fleet)</div>
-              <div class="text-xs text-slate-400 mt-0.5">+91 98450 12849 • Thermal Van KA-05-MH-2914</div>
+              <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Assigned Fleet Courier</div>
+              <div class="font-bold text-sm text-slate-900 dark:text-slate-100">Manoj Kumar (Certified Cold-Chain Fleet)</div>
+              <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">+91 98450 12849 • Thermal Van KA-05-MH-2914</div>
             </div>
-            <div class="p-3 rounded-xl border border-slate-800 bg-slate-950 space-y-2">
-              <div class="text-xs font-bold text-slate-200">Patient Handover OTP Verification</div>
+            <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-2">
+              <div class="text-xs font-bold text-slate-800 dark:text-slate-200">Patient Handover OTP Verification</div>
               <div class="flex gap-2">
-                <input id="otp-input" type="text" placeholder="Enter OTP (4821)" class="flex-1 text-xs rounded-lg border border-slate-800 px-3 py-1.5 bg-slate-900 text-center font-mono" />
+                <input id="otp-input" type="text" placeholder="Enter OTP (4821)" class="flex-1 text-xs rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-1.5 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-center font-mono" />
                 <button onclick="verifyOtp()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold">Verify</button>
               </div>
             </div>
@@ -533,33 +533,33 @@ clinical_html = f"""
 
     <!-- VIEW: HOSPITAL ANALYTICS -->
     <div id="view-admin-dashboard" class="hidden space-y-6">
-      <div class="p-5 rounded-2xl border border-slate-800 bg-slate-900 flex justify-between items-center">
+      <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center shadow-xs">
         <div>
-          <h2 class="text-xl font-black text-slate-100">Hospital Command & Logistics Oversight</h2>
-          <p class="text-xs text-slate-400">Aggregated KPI monitoring, cold-chain regulatory compliance, and generic savings impact.</p>
+          <h2 class="text-xl font-black text-slate-900 dark:text-slate-100">Hospital Command & Logistics Oversight</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Aggregated KPI monitoring, cold-chain regulatory compliance, and generic savings impact.</p>
         </div>
-        <div class="text-xs font-semibold text-slate-400 bg-slate-800 px-3 py-1.5 rounded-xl">Real-time: Last 24 Hours</div>
+        <div class="text-xs font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl">Real-time: Last 24 Hours</div>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="p-5 rounded-2xl border border-slate-800 bg-slate-900 space-y-1">
-          <div class="text-xs font-semibold text-slate-400">Avg. Clinical Dispatch Time</div>
-          <div class="text-2xl font-black text-slate-100">14.2 min</div>
-          <div class="text-[11px] font-bold text-emerald-400">18% faster than benchmark target</div>
+        <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-1 shadow-xs">
+          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">Avg. Clinical Dispatch Time</div>
+          <div class="text-2xl font-black text-slate-900 dark:text-slate-100">14.2 min</div>
+          <div class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">18% faster than benchmark target</div>
         </div>
-        <div class="p-5 rounded-2xl border border-slate-800 bg-slate-900 space-y-1">
-          <div class="text-xs font-semibold text-slate-400">Cold-Chain IoT Compliance</div>
-          <div class="text-2xl font-black text-slate-100">99.8%</div>
-          <div class="text-[11px] font-bold text-emerald-400">Zero thermal excursions logged</div>
+        <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-1 shadow-xs">
+          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">Cold-Chain IoT Compliance</div>
+          <div class="text-2xl font-black text-slate-900 dark:text-slate-100">99.8%</div>
+          <div class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">Zero thermal excursions logged</div>
         </div>
-        <div class="p-5 rounded-2xl border border-slate-800 bg-slate-900 space-y-1">
-          <div class="text-xs font-semibold text-slate-400">Generic Switch Savings</div>
-          <div class="text-2xl font-black text-slate-100">₹48,920</div>
+        <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-1 shadow-xs">
+          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">Generic Switch Savings</div>
+          <div class="text-2xl font-black text-slate-900 dark:text-slate-100">₹48,920</div>
           <div class="text-[11px] text-slate-500">Saved by patients choosing generics</div>
         </div>
-        <div class="p-5 rounded-2xl border border-slate-800 bg-slate-900 space-y-1">
-          <div class="text-xs font-semibold text-slate-400">Total Fulfilled Orders</div>
-          <div class="text-2xl font-black text-slate-100">842 Orders</div>
+        <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-1 shadow-xs">
+          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Fulfilled Orders</div>
+          <div class="text-2xl font-black text-slate-900 dark:text-slate-100">842 Orders</div>
           <div class="text-[11px] text-slate-500">100% verified by pharmacists</div>
         </div>
       </div>
@@ -569,29 +569,29 @@ clinical_html = f"""
 
   <!-- GENERIC PRICE MATCH MODAL -->
   <div id="generic-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
-    <div class="relative w-full max-w-lg rounded-2xl border border-sky-900 bg-slate-900 shadow-2xl p-6 overflow-hidden">
+    <div class="relative w-full max-w-lg rounded-2xl border border-sky-200 dark:border-sky-900 bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-hidden">
       <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-sky-500 via-emerald-500 to-teal-400"></div>
-      <button onclick="closeGenericModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
+      <button onclick="closeGenericModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
       
-      <div class="text-sky-400 font-semibold text-xs tracking-wider uppercase mb-1">Bioequivalent Generic Price-Match</div>
-      <h3 id="modal-headline" class="text-xl font-bold text-slate-100">Save 62% with Certified Generic</h3>
-      <p id="modal-subtext" class="text-xs text-slate-400 mt-1 mb-5">Both formulations contain the identical active pharmaceutical molecule and clinical bioavailability.</p>
+      <div class="text-sky-600 dark:text-sky-400 font-semibold text-xs tracking-wider uppercase mb-1">Bioequivalent Generic Price-Match</div>
+      <h3 id="modal-headline" class="text-xl font-bold text-slate-900 dark:text-slate-100">Save 62% with Certified Generic</h3>
+      <p id="modal-subtext" class="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-5">Both formulations contain the identical active pharmaceutical molecule and clinical bioavailability.</p>
 
-      <div class="grid grid-cols-2 gap-3 p-4 rounded-xl border border-slate-800 bg-slate-950/50 mb-5">
-        <div class="p-3 rounded-lg border border-slate-800 bg-slate-900">
-          <span class="text-xs font-semibold text-slate-400 block mb-1">Prescribed Brand</span>
-          <div id="modal-brand-name" class="font-bold text-slate-200">Crocin Advance 500mg</div>
-          <div class="mt-3 text-lg font-bold text-slate-300" id="modal-brand-price">₹25.50</div>
+      <div class="grid grid-cols-2 gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 mb-5">
+        <div class="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Prescribed Brand</span>
+          <div id="modal-brand-name" class="font-bold text-slate-900 dark:text-slate-200">Crocin Advance 500mg</div>
+          <div class="mt-3 text-lg font-bold text-slate-700 dark:text-slate-300" id="modal-brand-price">₹25.50</div>
         </div>
-        <div class="p-3 rounded-lg border border-emerald-800 bg-emerald-950/20">
-          <span class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full mb-1 inline-block">Save ₹16.00</span>
-          <div id="modal-generic-name" class="font-bold text-slate-100">Generic Paracetamol 500mg</div>
-          <div class="mt-3 text-lg font-extrabold text-emerald-400" id="modal-generic-price">₹9.50</div>
+        <div class="p-3 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/20">
+          <span class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full mb-1 inline-block">Save ₹16.00</span>
+          <div id="modal-generic-name" class="font-bold text-slate-900 dark:text-slate-100">Generic Paracetamol 500mg</div>
+          <div class="mt-3 text-lg font-extrabold text-emerald-600 dark:text-emerald-400" id="modal-generic-price">₹9.50</div>
         </div>
       </div>
 
-      <div class="p-3 rounded-lg bg-sky-950/30 border border-sky-900/40 text-xs text-sky-300 mb-6 flex items-start gap-2">
-        <i data-lucide="shield-check" class="w-4 h-4 shrink-0 mt-0.5"></i>
+      <div class="p-3 rounded-lg bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-900/40 text-xs text-sky-800 dark:text-sky-300 mb-6 flex items-start gap-2">
+        <i data-lucide="shield-check" class="w-4 h-4 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400"></i>
         <span><strong>Pharmacist Guarantee:</strong> Identical clinical potency and dissolution rate under WHO-GMP standards.</span>
       </div>
 
@@ -599,7 +599,7 @@ clinical_html = f"""
         <button onclick="addGenericToCart()" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-md">
           Switch to Generic (₹9.50)
         </button>
-        <button onclick="closeGenericModal()" class="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 font-medium text-xs">
+        <button onclick="closeGenericModal()" class="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium text-xs">
           Keep Original
         </button>
       </div>
@@ -610,24 +610,24 @@ clinical_html = f"""
   <div id="cart-drawer" class="fixed inset-0 z-50 hidden overflow-hidden">
     <div onclick="closeCart()" class="absolute inset-0 bg-slate-950/60 backdrop-blur-xs"></div>
     <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
-      <div class="w-screen max-w-md bg-slate-900 border-l border-slate-800 shadow-2xl flex flex-col justify-between p-6">
+      <div class="w-screen max-w-md bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between p-6">
         <div>
-          <div class="flex items-center justify-between pb-4 border-b border-slate-800">
-            <div class="font-bold text-base text-slate-100 flex items-center gap-2">
-              <i data-lucide="shopping-bag" class="w-5 h-5 text-sky-400"></i>
+          <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+            <div class="font-bold text-base text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <i data-lucide="shopping-bag" class="w-5 h-5 text-sky-500"></i>
               <span>Prescription Cart</span>
             </div>
-            <button onclick="closeCart()" class="text-slate-400 hover:text-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button onclick="closeCart()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
           </div>
           <div id="cart-items-list" class="space-y-3 py-4 max-h-[460px] overflow-y-auto">
             <!-- Populated via JS -->
           </div>
         </div>
-        <div class="pt-4 border-t border-slate-800 space-y-3">
-          <div class="space-y-1 text-xs text-slate-400">
-            <div class="flex justify-between"><span>Subtotal</span><span id="cart-subtotal" class="font-semibold text-slate-200">₹0.00</span></div>
-            <div class="flex justify-between"><span>Cold-Chain Express Delivery</span><span class="font-semibold text-slate-200">₹40.00</span></div>
-            <div class="flex justify-between text-sm font-extrabold text-slate-100 pt-2 border-t border-slate-800">
+        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
+          <div class="space-y-1 text-xs text-slate-500 dark:text-slate-400">
+            <div class="flex justify-between"><span>Subtotal</span><span id="cart-subtotal" class="font-semibold text-slate-900 dark:text-slate-200">₹0.00</span></div>
+            <div class="flex justify-between"><span>Cold-Chain Express Delivery</span><span class="font-semibold text-slate-900 dark:text-slate-200">₹40.00</span></div>
+            <div class="flex justify-between text-sm font-extrabold text-slate-900 dark:text-slate-100 pt-2 border-t border-slate-200 dark:border-slate-800">
               <span>Total Amount</span>
               <span id="cart-total">₹40.00</span>
             </div>
@@ -642,15 +642,15 @@ clinical_html = f"""
 
   <!-- RX UPLOAD MODAL -->
   <div id="rx-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
-    <div class="relative w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl p-6">
-      <button onclick="closeRxModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
-      <div class="text-sky-400 font-bold text-xs uppercase tracking-wider">Clinical Dispensary Gateway</div>
-      <h3 class="text-xl font-bold text-slate-100 mt-1">Upload Doctor's Prescription</h3>
-      <p class="text-xs text-slate-400 mt-0.5 mb-4">Our AI optical scanner extracts formulations within seconds for licensed pharmacist verification.</p>
+    <div class="relative w-full max-w-lg rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-6">
+      <button onclick="closeRxModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
+      <div class="text-sky-600 dark:text-sky-400 font-bold text-xs uppercase tracking-wider">Clinical Dispensary Gateway</div>
+      <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">Upload Doctor's Prescription</h3>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 mb-4">Our AI optical scanner extracts formulations within seconds for licensed pharmacist verification.</p>
       
-      <div class="border-2 border-dashed border-slate-700 hover:border-sky-500 rounded-2xl p-8 text-center cursor-pointer bg-slate-950/40">
+      <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-sky-500 rounded-2xl p-8 text-center cursor-pointer bg-slate-50 dark:bg-slate-950/40">
         <i data-lucide="upload-cloud" class="w-10 h-10 text-slate-400 mx-auto mb-2"></i>
-        <div class="text-xs font-semibold text-slate-300">Drag & drop your Rx document, or <span class="text-sky-400 underline">browse files</span></div>
+        <div class="text-xs font-semibold text-slate-700 dark:text-slate-300">Drag & drop your Rx document, or <span class="text-sky-600 dark:text-sky-400 underline">browse files</span></div>
         <p class="text-[11px] text-slate-500 mt-1">Supports JPG, PNG, WebP, PDF up to 16MB.</p>
       </div>
 
@@ -682,31 +682,31 @@ clinical_html = f"""
         const price = (m.mrp * 0.9).toFixed(2);
         
         return `
-          <div class="flex flex-col justify-between rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xs hover:border-sky-700/60 transition-all">
+          <div class="flex flex-col justify-between rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-5 shadow-xs hover:border-sky-300 dark:hover:border-sky-700/60 transition-all">
             <div>
               <div class="flex flex-wrap items-center gap-1.5 mb-3">
-                ${{m.prescription_required ? '<span class="px-2 py-0.5 text-xs font-semibold rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400">Rx Required</span>' : '<span class="px-2 py-0.5 text-xs font-medium rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">OTC Approved</span>'}}
-                ${{isCold ? '<span class="px-2 py-0.5 text-xs font-medium rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 flex items-center gap-1"><i data-lucide="thermometer-snowflake" class="w-3 h-3"></i>Cold-Chain</span>' : ''}}
+                ${{m.prescription_required ? '<span class="px-2 py-0.5 text-xs font-semibold rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400">Rx Required</span>' : '<span class="px-2 py-0.5 text-xs font-medium rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">OTC Approved</span>'}}
+                ${{isCold ? '<span class="px-2 py-0.5 text-xs font-medium rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 flex items-center gap-1"><i data-lucide="thermometer-snowflake" class="w-3 h-3"></i>Cold-Chain</span>' : ''}}
               </div>
-              <h3 class="font-bold text-base text-slate-100">${{m.name}}</h3>
-              <p class="text-xs font-medium text-slate-400 flex items-center gap-1 mt-0.5 truncate">
-                <i data-lucide="pill" class="w-3 h-3 text-sky-400"></i> ${{m.generic_name}}
+              <h3 class="font-bold text-base text-slate-900 dark:text-slate-100">${{m.name}}</h3>
+              <p class="text-xs font-medium text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-0.5 truncate">
+                <i data-lucide="pill" class="w-3 h-3 text-sky-500 dark:text-sky-400"></i> ${{m.generic_name}}
               </p>
-              <div class="grid grid-cols-2 gap-2 text-xs py-2 my-2 border-y border-slate-800 text-slate-400">
-                <div><span class="text-[10px] text-slate-500 uppercase block">Form</span>${{m.dosage_form}} • ${{m.strength}}</div>
-                <div><span class="text-[10px] text-slate-500 uppercase block">Maker</span>${{m.manufacturer}}</div>
+              <div class="grid grid-cols-2 gap-2 text-xs py-2 my-2 border-y border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400">
+                <div><span class="text-[10px] text-slate-400 uppercase block">Form</span>${{m.dosage_form}} • ${{m.strength}}</div>
+                <div><span class="text-[10px] text-slate-400 uppercase block">Maker</span>${{m.manufacturer}}</div>
               </div>
-              <button onclick="openGenericModal('${{m.name}}', ${{m.mrp}})" class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-sky-900/60 bg-sky-950/20 text-sky-300 text-xs font-semibold hover:bg-sky-900/40 transition-all mb-4">
-                <span class="flex items-center gap-1"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-sky-400"></i>Generic Price Match</span>
+              <button onclick="openGenericModal('${{m.name}}', ${{m.mrp}})" class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-sky-200 dark:border-sky-900/60 bg-sky-50 dark:bg-sky-950/20 text-sky-700 dark:text-sky-300 text-xs font-semibold hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-all mb-4 cursor-pointer">
+                <span class="flex items-center gap-1"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-sky-500 dark:text-sky-400"></i>Generic Price Match</span>
                 <span class="text-[11px] underline">Save 60%+</span>
               </button>
             </div>
-            <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+            <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
               <div>
-                <span class="text-lg font-extrabold text-slate-100">₹${{price}}</span>
+                <span class="text-lg font-extrabold text-slate-900 dark:text-slate-100">₹${{price}}</span>
                 <span class="text-xs text-slate-400 line-through ml-1">₹${{m.mrp.toFixed(2)}}</span>
               </div>
-              <button onclick="addToCart('${{m.name}}', ${{price}})" class="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold shadow-xs">
+              <button onclick="addToCart('${{m.name}}', ${{price}})" class="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold shadow-xs cursor-pointer">
                 Add to Cart
               </button>
             </div>
@@ -775,12 +775,18 @@ clinical_html = f"""
     }}
 
     function setTheme(mode) {{
+      const lightBtn = document.getElementById('theme-btn-light');
+      const darkBtn = document.getElementById('theme-btn-dark');
       if (mode === 'light') {{
         document.documentElement.classList.remove('dark');
-        document.body.className = 'bg-slate-50 text-slate-900 min-h-screen flex flex-col';
+        document.body.className = 'bg-slate-50 text-slate-900 min-h-screen flex flex-col transition-colors duration-150';
+        if (lightBtn) lightBtn.className = 'px-2 py-1 text-xs bg-white text-sky-600 font-semibold rounded-md shadow-xs transition-all flex items-center gap-1';
+        if (darkBtn) darkBtn.className = 'px-2 py-1 text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 rounded-md transition-all flex items-center gap-1';
       }} else {{
         document.documentElement.classList.add('dark');
-        document.body.className = 'bg-slate-950 text-slate-100 min-h-screen flex flex-col';
+        document.body.className = 'bg-slate-950 text-slate-100 min-h-screen flex flex-col transition-colors duration-150';
+        if (darkBtn) darkBtn.className = 'px-2 py-1 text-xs bg-slate-800 text-sky-400 font-semibold rounded-md shadow-xs transition-all flex items-center gap-1';
+        if (lightBtn) lightBtn.className = 'px-2 py-1 text-xs text-slate-400 hover:text-slate-100 rounded-md transition-all flex items-center gap-1';
       }}
     }}
 

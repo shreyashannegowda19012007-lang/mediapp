@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import {
   Activity,
   TrendingUp,
@@ -27,6 +28,9 @@ import {
 } from "recharts";
 
 export function AnalyticsDashboard() {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   const [metrics, setMetrics] = useState({
     total_revenue: 124850,
     total_orders: 842,
@@ -189,11 +193,12 @@ export function AnalyticsDashboard() {
                 <YAxis stroke="#64748b" fontSize={11} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#0f172a",
-                    borderColor: "#1e293b",
+                    backgroundColor: isDark ? "#0f172a" : "#ffffff",
+                    borderColor: isDark ? "#1e293b" : "#e2e8f0",
                     borderRadius: "0.75rem",
-                    color: "#f8fafc",
+                    color: isDark ? "#f8fafc" : "#0f172a",
                     fontSize: "12px",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                   }}
                 />
                 <Area type="monotone" dataKey="orders" stroke="#0284c7" strokeWidth={2.5} fill="url(#orderGrad)" />
@@ -221,11 +226,12 @@ export function AnalyticsDashboard() {
                 <YAxis dataKey="category" type="category" width={110} stroke="#64748b" fontSize={10} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#0f172a",
-                    borderColor: "#1e293b",
+                    backgroundColor: isDark ? "#0f172a" : "#ffffff",
+                    borderColor: isDark ? "#1e293b" : "#e2e8f0",
                     borderRadius: "0.75rem",
-                    color: "#f8fafc",
+                    color: isDark ? "#f8fafc" : "#0f172a",
                     fontSize: "12px",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                   }}
                 />
                 <Bar dataKey="savingsPct" name="% Cost Saved" fill="#059669" radius={[0, 6, 6, 0]} />
