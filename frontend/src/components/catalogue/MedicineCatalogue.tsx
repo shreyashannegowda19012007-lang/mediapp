@@ -63,16 +63,12 @@ export function MedicineCatalogue() {
       {/* Omni-Search Hero Bar */}
       <div className="relative rounded-3xl border border-sky-100 dark:border-slate-800 bg-gradient-to-b from-sky-500/10 via-sky-500/5 to-transparent p-6 sm:p-8 backdrop-blur-xs">
         <div className="max-w-3xl mx-auto space-y-4">
-          <div className="text-center space-y-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-sky-500/15 text-sky-800 dark:text-sky-300 border border-sky-500/20">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              Verified Dispensary Network & Bioequivalent Price Match
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-              Clinical Medicine Catalogue
-            </h1>
+          <div className="text-center space-y-1.5">
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+              Medicine Catalogue
+            </h2>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-              Search by brand name, active generic molecule (e.g. <em>Ranitidine, Paracetamol, Metformin</em>), or clinical indication.
+              Search by medicine brand, active generic molecule, or ailment.
             </p>
           </div>
 
@@ -86,7 +82,7 @@ export function MedicineCatalogue() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search 1,250+ medicines, generic molecules, ailments..."
+              placeholder="Search medicines, active molecules, ailments..."
               className="w-full pl-12 pr-10 py-3.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 shadow-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition-all"
             />
             {searchQuery && (

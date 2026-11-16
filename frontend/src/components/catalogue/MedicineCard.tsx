@@ -26,6 +26,7 @@ export function MedicineCard({ medicine }: MedicineCardProps) {
 
   const price = medicine.unit_price ?? medicine.mrp;
   const hasDiscount = medicine.mrp > price;
+  const cleanGenericName = medicine.generic_name ? medicine.generic_name.split("|")[0].trim() : "";
 
   const handleAddToCart = async () => {
     try {
@@ -73,7 +74,7 @@ export function MedicineCard({ medicine }: MedicineCardProps) {
             </h3>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
               <Pill className="h-3 w-3 text-sky-500 shrink-0" />
-              <span className="truncate">{medicine.generic_name}</span>
+              <span className="truncate">{cleanGenericName || medicine.generic_name}</span>
             </p>
           </div>
 

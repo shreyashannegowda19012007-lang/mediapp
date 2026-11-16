@@ -50,19 +50,19 @@ export function HeroSection({
         {/* Network Tag */}
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-sky-100/80 dark:bg-white/10 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-white/10 backdrop-blur-md">
           <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-          <span>Licensed Hyperlocal Clinical Pharmacy & Cold-Chain Network</span>
+          <span>Licensed Healthcare Delivery Network</span>
         </div>
 
         {/* Main Headline */}
         <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight text-slate-900 dark:text-white">
           Authentic Medicines & Clinical Care,{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 via-teal-600 to-emerald-600 dark:from-sky-400 dark:via-teal-300 dark:to-emerald-400">
-            Delivered in 45 Minutes.
+            Delivered Fast.
           </span>
         </h1>
 
         <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
-          Access over 1,250+ licensed pharmaceutical drugs, cold-chain monitored biologics, and certified bioequivalent generics saving patients up to 70%. Every prescription is verified by a licensed clinical pharmacist prior to tamper-sealed dispatch.
+          Order authentic prescription medicines and healthcare essentials with licensed pharmacist verification, cold-chain tracking, and generic savings.
         </p>
 
         {/* Action Buttons */}
@@ -72,7 +72,7 @@ export function HeroSection({
             className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white font-bold text-sm shadow-lg shadow-sky-500/25 transition-all hover:scale-[1.02] cursor-pointer"
           >
             <FileText className="h-4 w-4" />
-            <span>Upload Doctor Prescription</span>
+            <span>Upload Prescription</span>
             <ArrowRight className="h-4 w-4" />
           </button>
 
@@ -82,7 +82,7 @@ export function HeroSection({
             className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white dark:bg-white/10 hover:bg-slate-50 dark:hover:bg-white/15 active:scale-[0.98] text-slate-800 dark:text-slate-200 font-semibold text-sm border border-slate-200 dark:border-white/10 backdrop-blur-md transition-all cursor-pointer hover:border-sky-400/50 hover:text-sky-600 dark:hover:text-white shadow-xs"
           >
             <Pill className="h-4 w-4 text-sky-500 dark:text-sky-400" />
-            <span>Explore Medicine Catalogue</span>
+            <span>Explore Medicines</span>
           </button>
         </div>
 
@@ -93,15 +93,15 @@ export function HeroSection({
               <ShieldCheck className="h-4 w-4" />
               <span>100% Genuine</span>
             </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400">Direct from WHO-GMP manufacturers</div>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400">Verified manufacturers</div>
           </div>
 
           <div className="p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/5 space-y-1 shadow-xs">
             <div className="flex items-center gap-1.5 text-xs font-bold text-sky-700 dark:text-sky-400">
               <Clock className="h-4 w-4" />
-              <span>15-Min Review</span>
+              <span>Fast Review</span>
             </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400">Pharmacist validation on every Rx</div>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400">Pharmacist validated</div>
           </div>
 
           <div className="p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/5 space-y-1 shadow-xs">
@@ -109,15 +109,15 @@ export function HeroSection({
               <ThermometerSnowflake className="h-4 w-4" />
               <span>Cold-Chain Safe</span>
             </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400">2°C - 8°C IoT temperature guarantee</div>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400">2°C - 8°C monitored</div>
           </div>
 
           <div className="p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/5 space-y-1 shadow-xs">
             <div className="flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400">
               <Sparkles className="h-4 w-4" />
-              <span>Save up to 70%</span>
+              <span>Generic Savings</span>
             </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400">Bioequivalent generic price match</div>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400">Save up to 70%</div>
           </div>
         </div>
       </div>

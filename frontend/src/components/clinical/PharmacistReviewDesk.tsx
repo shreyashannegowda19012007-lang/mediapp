@@ -136,13 +136,13 @@ export function PharmacistReviewDesk() {
           </div>
           <div>
             <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              Clinical Pharmacist Verification Desk
+              Pharmacist Verification Desk
               <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                Active Station #04
+                Active
               </span>
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Split-screen high-resolution Rx forensic inspection, AI-assisted molecule detection, and 1-click clinical approval.
+              Review patient prescriptions, verify detected medicines, and approve for dispensary dispatch.
             </p>
           </div>
         </div>

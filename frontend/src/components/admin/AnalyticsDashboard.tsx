@@ -90,20 +90,20 @@ export function AnalyticsDashboard() {
           </div>
           <div>
             <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              Hospital Command & Logistics Oversight
+              Hospital Analytics & Logistics
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-500/20">
-                Live Telemetry
+                Live
               </span>
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Aggregated KPI monitoring, cold-chain regulatory compliance, generic cost-savings impact, and fulfillment speed.
+              Key operational metrics, fulfillment speed, and patient generic savings.
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl">
           <Calendar className="h-4 w-4" />
-          <span>Real-time Window: Last 24 Hours</span>
+          <span>Last 24 Hours</span>
         </div>
       </div>
 
@@ -112,56 +112,56 @@ export function AnalyticsDashboard() {
         {/* Metric 1 */}
         <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-2">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>Avg. Clinical Dispatch Time</span>
+            <span>Avg. Dispatch Time</span>
             <Clock className="h-4 w-4 text-sky-500" />
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-slate-100">
             {metrics.avg_fulfillment_time_mins} min
           </div>
           <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-            <TrendingUp className="h-3 w-3" /> 18% faster than benchmark target
+            <TrendingUp className="h-3 w-3" /> 18% faster than target
           </span>
         </div>
 
         {/* Metric 2 */}
         <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-2">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>Cold-Chain IoT Compliance</span>
+            <span>Cold-Chain Compliance</span>
             <ThermometerSnowflake className="h-4 w-4 text-cyan-500" />
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-slate-100">
             {metrics.cold_chain_compliance_rate}%
           </div>
           <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-            <ShieldCheck className="h-3 w-3" /> Zero thermal excursions logged
+            <ShieldCheck className="h-3 w-3" /> 2°C - 8°C maintained
           </span>
         </div>
 
         {/* Metric 3 */}
         <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-2">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>Generic Switch Savings</span>
+            <span>Generic Savings</span>
             <Sparkles className="h-4 w-4 text-emerald-500" />
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-slate-100">
             ₹{metrics.generic_savings_total.toLocaleString()}
           </div>
           <span className="text-[11px] font-medium text-slate-500">
-            Saved by patients choosing bioequivalent drugs
+            Patient savings on generics
           </span>
         </div>
 
         {/* Metric 4 */}
         <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-2">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>Total Fulfilled Orders</span>
+            <span>Fulfilled Orders</span>
             <BarChart3 className="h-4 w-4 text-indigo-500" />
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-slate-100">
             {metrics.total_orders} Orders
           </div>
           <span className="text-[11px] font-medium text-slate-500">
-            100% verified by licensed clinical pharmacists
+            100% pharmacist verified
           </span>
         </div>
       </div>

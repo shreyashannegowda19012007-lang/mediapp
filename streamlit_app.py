@@ -132,23 +132,24 @@ clinical_html = f"""
 
   <!-- TOP CLINICAL TRUST BAR -->
   <div class="hidden lg:flex items-center justify-between px-6 py-1.5 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-xs tracking-tight text-slate-600 dark:text-slate-300">
-    <div class="flex items-center gap-6">
+    <div class="flex items-center gap-4">
       <span class="flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200">
         <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
-        Licensed Partner Pharmacies & WHO-GMP Manufacturers
+        Licensed Pharmacy Network
       </span>
-      <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+      <span class="text-slate-300 dark:text-slate-700">•</span>
+      <span class="flex items-center gap-1 text-slate-600 dark:text-slate-400">
         <i data-lucide="thermometer-snowflake" class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400"></i>
-        Guaranteed Cold-Chain Logistics (2°C - 8°C Monitored)
+        Cold-Chain Monitored
+      </span>
+      <span class="text-slate-300 dark:text-slate-700">•</span>
+      <span class="flex items-center gap-1 text-slate-600 dark:text-slate-400">
+        <i data-lucide="truck" class="w-3.5 h-3.5 text-sky-600 dark:text-sky-400"></i>
+        45-Min Express Delivery
       </span>
     </div>
-    <div class="flex items-center gap-4 text-xs">
-      <span class="flex items-center gap-1 text-slate-700 dark:text-slate-300">
-        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-sky-600 dark:text-sky-400"></i>
-        Express Dispatch: <strong>Bengaluru 560038</strong> (45 Min)
-      </span>
-      <span class="text-slate-300 dark:text-slate-600">|</span>
-      <span class="text-slate-600 dark:text-slate-400">Clinical Helpline: 1800-200-MEDI (24/7)</span>
+    <div class="flex items-center gap-3 text-xs">
+      <span class="text-slate-600 dark:text-slate-400">Helpline: <strong class="text-slate-800 dark:text-slate-200">1800-200-MEDI</strong></span>
     </div>
   </div>
 
@@ -240,41 +241,41 @@ clinical_html = f"""
         <div class="relative z-10 max-w-4xl space-y-6">
           <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-sky-100/80 dark:bg-white/10 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-white/10">
             <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
-            <span>Licensed Hyperlocal Clinical Pharmacy & Cold-Chain Network</span>
+            <span>Licensed Healthcare Delivery Network</span>
           </div>
           <h1 class="text-3xl sm:text-5xl font-black tracking-tight leading-tight text-slate-900 dark:text-white">
-            Authentic Medicines & Clinical Care, <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 via-teal-600 to-emerald-600 dark:from-sky-400 dark:via-teal-300 dark:to-emerald-400">Delivered in 45 Minutes.</span>
+            Authentic Medicines & Clinical Care, <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 via-teal-600 to-emerald-600 dark:from-sky-400 dark:via-teal-300 dark:to-emerald-400">Delivered Fast.</span>
           </h1>
           <p class="text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
-            Access over 1,250+ licensed pharmaceutical drugs, cold-chain monitored biologics, and certified bioequivalent generics saving patients up to 70%. Every prescription is verified by a licensed clinical pharmacist prior to tamper-sealed dispatch.
+            Order authentic prescription medicines and healthcare essentials with licensed pharmacist verification, cold-chain tracking, and generic savings.
           </p>
           <div class="flex flex-wrap items-center gap-3 pt-2">
-            <button onclick="openRxModal()" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white font-bold text-sm shadow-lg shadow-sky-500/25 transition-all">
+            <button onclick="openRxModal()" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white font-bold text-sm shadow-lg shadow-sky-500/25 transition-all cursor-pointer">
               <i data-lucide="file-text" class="w-4 h-4"></i>
-              <span>Upload Doctor Prescription</span>
+              <span>Upload Prescription</span>
               <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </button>
             <button onclick="exploreCatalogue()" id="btn-explore-catalogue" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white dark:bg-white/10 hover:bg-slate-50 dark:hover:bg-white/15 active:scale-[0.98] text-slate-800 dark:text-slate-200 font-semibold text-sm border border-slate-200 dark:border-white/10 cursor-pointer transition-all hover:border-sky-400/50 hover:text-sky-600 dark:hover:text-white shadow-xs">
               <i data-lucide="pill" class="w-4 h-4 text-sky-500 dark:text-sky-400"></i>
-              <span>Explore Medicine Catalogue</span>
+              <span>Explore Medicines</span>
             </button>
           </div>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 border-t border-slate-200 dark:border-white/10">
-            <div class="p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/5 shadow-xs">
+            <div class="p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/5 space-y-1 shadow-xs">
               <div class="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400"><i data-lucide="shield-check" class="w-4 h-4"></i>100% Genuine</div>
-              <div class="text-[11px] text-slate-500 dark:text-slate-400">Direct from WHO-GMP manufacturers</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">Verified manufacturers</div>
             </div>
-            <div class="p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/5 shadow-xs">
-              <div class="flex items-center gap-1.5 text-xs font-bold text-sky-700 dark:text-sky-400"><i data-lucide="clock" class="w-4 h-4"></i>15-Min Review</div>
-              <div class="text-[11px] text-slate-500 dark:text-slate-400">Pharmacist validation on every Rx</div>
+            <div class="p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/5 space-y-1 shadow-xs">
+              <div class="flex items-center gap-1.5 text-xs font-bold text-sky-700 dark:text-sky-400"><i data-lucide="clock" class="w-4 h-4"></i>Fast Review</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">Pharmacist validated</div>
             </div>
-            <div class="p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/5 shadow-xs">
+            <div class="p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/5 space-y-1 shadow-xs">
               <div class="flex items-center gap-1.5 text-xs font-bold text-cyan-700 dark:text-cyan-400"><i data-lucide="thermometer-snowflake" class="w-4 h-4"></i>Cold-Chain Safe</div>
-              <div class="text-[11px] text-slate-500 dark:text-slate-400">2°C - 8°C IoT temperature guarantee</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">2°C - 8°C monitored</div>
             </div>
-            <div class="p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/5 shadow-xs">
-              <div class="flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400"><i data-lucide="sparkles" class="w-4 h-4"></i>Save up to 70%</div>
-              <div class="text-[11px] text-slate-500 dark:text-slate-400">Bioequivalent generic price match</div>
+            <div class="p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/5 space-y-1 shadow-xs">
+              <div class="flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400"><i data-lucide="sparkles" class="w-4 h-4"></i>Generic Savings</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">Save up to 70%</div>
             </div>
           </div>
         </div>
@@ -283,15 +284,12 @@ clinical_html = f"""
       <!-- OMNI-SEARCH HERO BAR -->
       <div id="catalogue-section" class="relative rounded-3xl border border-sky-100 dark:border-slate-800 scroll-mt-24 bg-gradient-to-b from-sky-500/10 via-sky-500/5 to-transparent p-6 sm:p-8 backdrop-blur-xs">
         <div class="max-w-3xl mx-auto space-y-4">
-          <div class="text-center space-y-2">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-500/20">
-              <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Verified Dispensary Network & Bioequivalent Price Match
-            </span>
+          <div class="text-center space-y-1.5">
             <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-              Clinical Medicine Catalogue
+              Medicine Catalogue
             </h2>
-            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-              Search by brand name, active generic molecule (e.g. <em>Ranitidine, Paracetamol, Metformin</em>), or clinical indication.
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              Search by medicine brand, active generic molecule, or ailment.
             </p>
           </div>
           <!-- Input -->
@@ -303,7 +301,7 @@ clinical_html = f"""
               id="search-input"
               type="text"
               oninput="filterMedicines()"
-              placeholder="Search 1,250+ medicines, generic molecules, ailments..."
+              placeholder="Search medicines, active molecules, ailments..."
               class="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 shadow-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition-all"
             />
           </div>
@@ -341,13 +339,13 @@ clinical_html = f"""
           </div>
           <div>
             <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              Clinical Pharmacist Verification Desk
+              Pharmacist Verification Desk
               <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                Active Station #04
+                Active
               </span>
             </h2>
             <p class="text-xs text-slate-500 dark:text-slate-400">
-              Split-screen high-resolution Rx forensic inspection, AI-assisted molecule detection, and 1-click clinical approval.
+              Review patient prescriptions, verify detected medicines, and approve for dispensary dispatch.
             </p>
           </div>
         </div>
@@ -429,20 +427,23 @@ clinical_html = f"""
 
     <!-- VIEW: LOGISTICS TIMELINE -->
     <div id="view-logistics" class="hidden space-y-5">
-      <div class="p-5 rounded-2xl border border-cyan-200 dark:border-cyan-900/60 bg-gradient-to-r from-cyan-500/10 via-sky-500/5 to-transparent">
+      <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div class="flex items-center gap-3">
-            <div class="p-3 rounded-xl bg-cyan-500/20 text-cyan-600 dark:text-cyan-400">
-              <i data-lucide="thermometer-snowflake" class="w-6 h-6"></i>
+            <div class="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+              <i data-lucide="truck" class="w-6 h-6"></i>
             </div>
             <div>
-              <div class="text-xs font-bold uppercase tracking-wider text-cyan-700 dark:text-cyan-400">Cold-Chain Active Guarantee</div>
-              <div class="text-base font-extrabold text-slate-900 dark:text-slate-100">Insulated Thermal Case #CC-842 • 4.2°C Nominal</div>
-              <div class="text-xs text-slate-400">Safe Operating Range: 2.0°C to 8.0°C. Continuous Bluetooth IoT telemetry.</div>
+              <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                Order Tracking & Logistics
+                <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-500/20">
+                  Live
+                </span>
+              </h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                Real-time delivery progress, cold-chain temperature status, and OTP verification.
+              </p>
             </div>
-          </div>
-          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold">
-            <i data-lucide="shield-check" class="w-4 h-4"></i> Integrity Verified
           </div>
         </div>
       </div>
@@ -535,32 +536,35 @@ clinical_html = f"""
     <div id="view-admin-dashboard" class="hidden space-y-6">
       <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center shadow-xs">
         <div>
-          <h2 class="text-xl font-black text-slate-900 dark:text-slate-100">Hospital Command & Logistics Oversight</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Aggregated KPI monitoring, cold-chain regulatory compliance, and generic savings impact.</p>
+          <h2 class="text-xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            Hospital Analytics & Logistics
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-500/20">Live</span>
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Key operational metrics, fulfillment speed, and generic savings.</p>
         </div>
-        <div class="text-xs font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl">Real-time: Last 24 Hours</div>
+        <div class="text-xs font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl">Last 24 Hours</div>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-1 shadow-xs">
-          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">Avg. Clinical Dispatch Time</div>
+          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">Avg. Dispatch Time</div>
           <div class="text-2xl font-black text-slate-900 dark:text-slate-100">14.2 min</div>
-          <div class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">18% faster than benchmark target</div>
+          <div class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">18% faster than target</div>
         </div>
         <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-1 shadow-xs">
-          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">Cold-Chain IoT Compliance</div>
+          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">Cold-Chain Compliance</div>
           <div class="text-2xl font-black text-slate-900 dark:text-slate-100">99.8%</div>
-          <div class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">Zero thermal excursions logged</div>
+          <div class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">2°C - 8°C maintained</div>
         </div>
         <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-1 shadow-xs">
-          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">Generic Switch Savings</div>
+          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">Generic Savings</div>
           <div class="text-2xl font-black text-slate-900 dark:text-slate-100">₹48,920</div>
-          <div class="text-[11px] text-slate-500">Saved by patients choosing generics</div>
+          <div class="text-[11px] text-slate-500">Patient savings on generics</div>
         </div>
         <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-1 shadow-xs">
-          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Fulfilled Orders</div>
+          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">Fulfilled Orders</div>
           <div class="text-2xl font-black text-slate-900 dark:text-slate-100">842 Orders</div>
-          <div class="text-[11px] text-slate-500">100% verified by pharmacists</div>
+          <div class="text-[11px] text-slate-500">100% pharmacist verified</div>
         </div>
       </div>
     </div>
@@ -680,6 +684,7 @@ clinical_html = f"""
       grid.innerHTML = items.map(m => {{
         const isCold = m.category.toLowerCase().includes('insulin') || m.category.toLowerCase().includes('vaccine') || m.name.toLowerCase().includes('insulin');
         const price = (m.mrp * 0.9).toFixed(2);
+        const cleanGeneric = m.generic_name ? m.generic_name.split('|')[0].trim() : '';
         
         return `
           <div class="flex flex-col justify-between rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-5 shadow-xs hover:border-sky-300 dark:hover:border-sky-700/60 transition-all">
@@ -690,7 +695,7 @@ clinical_html = f"""
               </div>
               <h3 class="font-bold text-base text-slate-900 dark:text-slate-100">${{m.name}}</h3>
               <p class="text-xs font-medium text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-0.5 truncate">
-                <i data-lucide="pill" class="w-3 h-3 text-sky-500 dark:text-sky-400"></i> ${{m.generic_name}}
+                <i data-lucide="pill" class="w-3 h-3 text-sky-500 dark:text-sky-400"></i> ${{cleanGeneric || m.generic_name}}
               </p>
               <div class="grid grid-cols-2 gap-2 text-xs py-2 my-2 border-y border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400">
                 <div><span class="text-[10px] text-slate-400 uppercase block">Form</span>${{m.dosage_form}} • ${{m.strength}}</div>

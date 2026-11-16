@@ -147,13 +147,13 @@ export function OrderTrackingTimeline() {
           </div>
           <div>
             <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              Logistics & Cold-Chain Live Tracking
+              Order Tracking & Logistics
               <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-500/20">
-                IoT Sensor Active
+                Live
               </span>
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Real-time milestone progression, temperature telemetry compliance, and secure delivery OTP handoff.
+              Real-time delivery progress, cold-chain temperature status, and OTP verification.
             </p>
           </div>
         </div>
