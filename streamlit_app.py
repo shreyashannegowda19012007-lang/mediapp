@@ -64,7 +64,6 @@ raw_medicines = query_db("""
     SELECT id, name, generic_name, dosage_form, strength, category, manufacturer, mrp, prescription_required, uses
     FROM medicines
     ORDER BY name ASC
-    LIMIT 120
 """)
 
 medicines_data = [dict(m) for m in raw_medicines]

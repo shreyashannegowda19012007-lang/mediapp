@@ -25,19 +25,12 @@ export function MedicineCatalogue() {
         q: searchQuery,
         category: selectedCategory,
         rx: rxFilter,
+        cold_chain: coldChainOnly ? 1 : undefined,
         page,
         limit: 24,
       });
 
-      let items = res.medicines || [];
-      if (coldChainOnly) {
-        items = items.filter(
-          (m) =>
-            m.category.toLowerCase().includes("insulin") ||
-            m.category.toLowerCase().includes("vaccine") ||
-            m.name.toLowerCase().includes("insulin")
-        );
-      }
+      const items = res.medicines || [];
       setMedicines(items);
       setTotalCount(res.pagination?.total_count || items.length);
       setTotalPages(res.pagination?.total_pages || 1);

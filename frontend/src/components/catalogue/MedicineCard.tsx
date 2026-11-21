@@ -28,6 +28,7 @@ export function MedicineCard({ medicine }: MedicineCardProps) {
 
   const price = medicine.unit_price ?? medicine.mrp;
   const hasDiscount = medicine.mrp > price;
+  const isOutOfStock = (medicine.stock_quantity ?? 10) <= 0 || medicine.is_available === 0;
   const cleanGenericName = medicine.generic_name ? medicine.generic_name.split("|")[0].trim() : "";
 
   const handleAddToCart = async () => {
@@ -118,6 +119,7 @@ export function MedicineCard({ medicine }: MedicineCardProps) {
             type="button"
             onClick={handleInspectGenericMatch}
             disabled={checkingGeneric}
+            aria-label={`Check generic bioequivalent alternatives for ${medicine.name}`}
             className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-sky-200 dark:border-sky-900/60 bg-sky-50/70 dark:bg-sky-950/20 text-sky-700 dark:text-sky-300 text-xs font-semibold hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-all cursor-pointer mb-4"
           >
             <span className="flex items-center gap-1.5">
@@ -139,19 +141,30 @@ export function MedicineCard({ medicine }: MedicineCardProps) {
                 <span className="text-xs text-slate-400 line-through">₹{medicine.mrp.toFixed(2)}</span>
               )}
             </div>
-            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold block">
-              In Stock & Ready
-            </span>
+            {isOutOfStock ? (
+              <span className="text-[10px] text-rose-600 dark:text-rose-400 font-semibold block">
+                Out of Stock
+              </span>
+            ) : (
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold block">
+                In Stock & Ready
+              </span>
+            )}
           </div>
 
           <button
             type="button"
             onClick={handleAddToCart}
-            disabled={isAdding}
-            className="inline-flex items-center gap-1 px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 active:scale-95 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all cursor-pointer disabled:opacity-50"
+            disabled={isAdding || isOutOfStock}
+            aria-label={isOutOfStock ? `${medicine.name} is currently out of stock` : `Add ${medicine.name} to cart`}
+            className={`inline-flex items-center gap-1 px-3.5 py-2 rounded-xl text-xs font-semibold shadow-xs transition-all ${
+              isOutOfStock
+                ? "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
+                : "bg-sky-600 hover:bg-sky-700 active:scale-95 text-white hover:shadow-md cursor-pointer disabled:opacity-50"
+            }`}
           >
-            {isAdding ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            <span>{isAdding ? "Added" : "Add to Cart"}</span>
+            {isAdding ? <Check className="h-4 w-4" /> : isOutOfStock ? null : <Plus className="h-4 w-4" />}
+            <span>{isAdding ? "Added" : isOutOfStock ? "Unavailable" : "Add to Cart"}</span>
           </button>
         </div>
 

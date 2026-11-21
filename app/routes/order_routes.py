@@ -37,12 +37,21 @@ def create_order():
     """
     data = request.get_json() or {}
     user_id = session["user_id"]
-    delivery_address = data.get("delivery_address")
+    raw_addr = data.get("delivery_address")
+    if isinstance(raw_addr, dict):
+        delivery_address = raw_addr
+        addr_str = " ".join(str(v) for v in raw_addr.values() if v).strip()
+        if not addr_str or len(addr_str) < 10:
+            return jsonify({"error": "A valid delivery address of at least 10 characters is required."}), 400
+    elif isinstance(raw_addr, str):
+        delivery_address = raw_addr.strip()
+        if not delivery_address or len(delivery_address) < 10:
+            return jsonify({"error": "A valid delivery address of at least 10 characters is required."}), 400
+    else:
+        return jsonify({"error": "Delivery address is required."}), 400
+
     prescription_id = data.get("prescription_id")
     delivery_notes = data.get("delivery_notes")
-
-    if not delivery_address:
-        return jsonify({"error": "Delivery address is required."}), 400
 
     # Retrieve items from user's current cart
     cart = query_db("SELECT * FROM carts WHERE user_id = ?", (user_id,), one=True)

@@ -37,7 +37,7 @@ export const useCartStore = create<CartState>((set, get) => ({
           pharmacy_id: 1,
           pharmacy_name: "Apollo Clinical Hub (Central)",
           items: [],
-          pricing: { subtotal: 0, delivery_fee: 30, tax: 0, discount: 0, total: 30 },
+          pricing: { subtotal: 0, delivery_fee: 0, tax: 0, discount: 0, total: 0 },
           has_prescription_items: false,
         },
       });
@@ -103,7 +103,7 @@ export const useCartStore = create<CartState>((set, get) => ({
           pharmacy_id: 1,
           pharmacy_name: "Apollo Clinical Hub (Central)",
           items: [],
-          pricing: { subtotal: 0, delivery_fee: 30, tax: 0, discount: 0, total: 30 },
+          pricing: { subtotal: 0, delivery_fee: 0, tax: 0, discount: 0, total: 0 },
           has_prescription_items: false,
         },
       });

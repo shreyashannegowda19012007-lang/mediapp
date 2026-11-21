@@ -80,6 +80,7 @@ export function RxUploadModal({ isOpen, onClose, onUploadSuccess }: RxUploadModa
         {/* Close Button */}
         <button
           onClick={onClose}
+          aria-label="Close prescription upload modal"
           className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
         >
           <X className="h-5 w-5" />

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Sparkles, ArrowRight, ShieldCheck, Check, X, AlertCircle } from "lucide-react";
 import { GenericAlternative } from "@/lib/api";
 import { useCartStore } from "@/store/useCartStore";
@@ -55,17 +55,30 @@ export function GenericPriceMatchModal({ isOpen, onClose, data }: GenericPriceMa
       : null);
 
   const hasSavings = Boolean(cheaperAlternative);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const handleSelectGeneric = async () => {
     if (cheaperAlternative) {
-      await addItem(cheaperAlternative.id, 1);
-      onClose();
+      try {
+        setActionError(null);
+        await addItem(cheaperAlternative.id, 1);
+        onClose();
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Failed to add generic formulation to cart";
+        setActionError(msg);
+      }
     }
   };
 
   const handleKeepBrand = async () => {
-    await addItem(target.id, 1);
-    onClose();
+    try {
+      setActionError(null);
+      await addItem(target.id, 1);
+      onClose();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to add brand medicine to cart";
+      setActionError(msg);
+    }
   };
 
   return (
@@ -77,10 +90,17 @@ export function GenericPriceMatchModal({ isOpen, onClose, data }: GenericPriceMa
         {/* Close Button */}
         <button
           onClick={onClose}
+          aria-label="Close generic price-match modal"
           className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
         >
           <X className="h-5 w-5" />
         </button>
+
+        {actionError && (
+          <div className="mb-3 p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs font-semibold text-rose-700 dark:text-rose-400">
+            {actionError}
+          </div>
+        )}
 
         {/* Header */}
         <div className="flex items-center gap-2 text-sky-600 dark:text-sky-400 font-semibold text-xs tracking-wider uppercase mb-1">

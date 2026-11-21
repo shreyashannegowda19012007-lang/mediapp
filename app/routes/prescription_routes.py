@@ -197,6 +197,8 @@ def verify_prescription(rx_id: int):
     data = request.get_json() or {}
     decision = data.get("decision", "verified") # 'verified' or 'rejected'
     rejection_reason = data.get("rejection_reason") or data.get("reason")
+    approved_medicines = data.get("approved_medicines")
+    clinical_notes = data.get("clinical_notes") or data.get("notes")
     user_id = session["user_id"]
 
     if decision not in ("verified", "rejected"):
@@ -209,9 +211,18 @@ def verify_prescription(rx_id: int):
         SET status = ?,
             reviewed_by = ?,
             rejection_reason = ?,
+            approved_medicines = ?,
+            pharmacist_notes = ?,
             verified_at = CURRENT_TIMESTAMP
         WHERE id = ?
-    """, (decision, user_id, rejection_reason if decision == "rejected" else None, rx_id))
+    """, (
+        decision,
+        user_id,
+        rejection_reason if decision == "rejected" else None,
+        json.dumps(approved_medicines) if approved_medicines is not None else None,
+        clinical_notes,
+        rx_id
+    ))
     if cur.rowcount == 0:
         return jsonify({"error": f"Prescription ID {rx_id} not found."}), 404
     conn.commit()

@@ -217,14 +217,15 @@ class OrderService:
             # 5. Insert order record
             order_id = cls.generate_order_id()
             initial_status = "AWAITING_PRESCRIPTION" if (rx_required_found and rx_check["status"] != "verified") else "PLACED"
+            delivery_otp = f"{secrets.randbelow(900000) + 100000}"
             
             cur = managed_conn.cursor()
             cur.execute("""
                 INSERT INTO orders (
                     id, customer_id, pharmacy_id, prescription_id, delivery_address_json,
                     subtotal, tax, delivery_fee, discount, total_amount, currency,
-                    payment_status, order_status, delivery_notes, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'INR', 'pending', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                    payment_status, order_status, delivery_notes, delivery_otp, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'INR', 'pending', ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             """, (
                 order_id,
                 customer_id,
@@ -237,7 +238,8 @@ class OrderService:
                 totals["discount"],
                 totals["total"],
                 initial_status,
-                delivery_notes
+                delivery_notes,
+                delivery_otp
             ))
 
             # 6. Insert order items snapshot

@@ -26,9 +26,28 @@ export function OrderTrackingTimeline() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [otpInput, setOtpInput] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
   const { activeRole } = useAuthStore();
+
+  const handleCancelOrder = async () => {
+    if (!selectedOrder) return;
+    if (!confirm("Are you sure you wish to cancel this clinical order? Reserved pharmacy stock will be released.")) {
+      return;
+    }
+    try {
+      setIsCancelling(true);
+      await api.orders.cancel(selectedOrder.id, "Customer requested cancellation");
+      setActionSuccess("Order has been cancelled and pharmacy stock restored.");
+      await reloadOrders();
+      setTimeout(() => setActionSuccess(null), 4000);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to cancel order");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   const reloadOrders = async () => {
     try {
@@ -235,6 +254,30 @@ export function OrderTrackingTimeline() {
                 </div>
               </div>
 
+              {/* Patient Delivery Handover OTP Card */}
+              {selectedOrder.delivery_otp && (
+                <div className="p-4 rounded-2xl border border-sky-200 dark:border-sky-900 bg-sky-50/70 dark:bg-sky-950/30 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-sky-500/20 text-sky-600 dark:text-sky-300">
+                      <KeyRound className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold uppercase tracking-wider text-sky-800 dark:text-sky-300">
+                        Patient Handover Security OTP
+                      </div>
+                      <div className="text-xs text-slate-600 dark:text-slate-400">
+                        Provide this 6-digit verification code to your courier upon doorstep arrival to complete handoff.
+                      </div>
+                    </div>
+                  </div>
+                  <div className="px-5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-sky-300 dark:border-sky-800 shadow-xs text-center">
+                    <span className="font-mono text-xl font-extrabold tracking-widest text-sky-600 dark:text-sky-400">
+                      {selectedOrder.delivery_otp}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Step-by-Step Visual Timeline */}
               <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-6">
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
@@ -246,9 +289,24 @@ export function OrderTrackingTimeline() {
                       Tracking order: <strong>{selectedOrder.order_number}</strong>
                     </p>
                   </div>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                    Est. Delivery: 45 Min Doorstep
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      Est. Delivery: 45 Min Doorstep
+                    </span>
+                    {["PLACED", "AWAITING_PRESCRIPTION"].includes(
+                      (selectedOrder.status || selectedOrder.order_status || "").toUpperCase()
+                    ) && (
+                      <button
+                        type="button"
+                        onClick={handleCancelOrder}
+                        disabled={isCancelling}
+                        aria-label="Cancel this order"
+                        className="px-3 py-1.5 rounded-xl border border-rose-300 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {isCancelling ? "Cancelling..." : "Cancel Order"}
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Milestone Stepper */}

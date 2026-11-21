@@ -15,6 +15,7 @@ import {
   Sparkles,
   PackageCheck,
   Building,
+  ArrowRight,
 } from "lucide-react";
 import { Prescription, api } from "@/lib/api";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -199,10 +200,26 @@ export function PharmacistReviewDesk() {
                 className="max-w-full max-h-[500px] flex items-center justify-center shadow-lg rounded-xl overflow-hidden bg-white"
               >
                 {selectedRx.file_path && selectedRx.file_path.endsWith(".pdf") ? (
-                  <div className="p-12 text-center space-y-2">
-                    <FileText className="h-16 w-16 text-sky-500 mx-auto" />
-                    <div className="text-sm font-bold text-slate-800">{selectedRx.original_filename}</div>
-                    <div className="text-xs text-slate-500">Multi-page PDF Document (OCR Processed)</div>
+                  <div className="flex flex-col items-center justify-center p-2 bg-slate-50 dark:bg-slate-900 rounded-xl w-full h-[480px]">
+                    <iframe
+                      src={`/api/prescriptions/${selectedRx.id}/file`}
+                      title={`Prescription ${selectedRx.original_filename}`}
+                      className="w-full h-full border-0 rounded-lg shadow-inner bg-white"
+                    />
+                    <div className="pt-2 flex items-center justify-between w-full px-2 text-xs text-slate-500">
+                      <span className="font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[280px]">
+                        {selectedRx.original_filename}
+                      </span>
+                      <a
+                        href={`/api/prescriptions/${selectedRx.id}/file`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-sky-600 hover:text-sky-700 font-semibold"
+                      >
+                        <span>Open Document Tab</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </a>
+                    </div>
                   </div>
                 ) : (
                   <img

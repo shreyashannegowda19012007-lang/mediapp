@@ -12,6 +12,7 @@ interface AuthState {
   // Actions
   fetchSession: () => Promise<void>;
   switchRole: (role: RoleType) => Promise<void>;
+  setActiveRole: (role: RoleType) => void;
   login: (email: string, password?: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -54,6 +55,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } finally {
       set({ isLoading: false });
     }
+  },
+
+  setActiveRole: (role: RoleType) => {
+    set({ activeRole: role });
   },
 
   login: async (email: string, password?: string) => {

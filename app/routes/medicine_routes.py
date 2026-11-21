@@ -20,6 +20,7 @@ def search_medicines():
     dosage_form = request.args.get("dosage_form", "").strip()
     rx = request.args.get("rx")
     pharmacy_id = request.args.get("pharmacy_id", type=int)
+    cold_chain = request.args.get("cold_chain") or request.args.get("requires_cold_chain")
     
     page = max(1, request.args.get("page", 1, type=int))
     limit = min(100, max(1, request.args.get("limit", 20, type=int)))
@@ -44,6 +45,9 @@ def search_medicines():
     if rx is not None and rx != "":
         conditions.append("m.prescription_required = ?")
         params.append(int(rx))
+
+    if cold_chain is not None and str(cold_chain).lower() in ("1", "true", "yes"):
+        conditions.append("m.requires_cold_chain = 1")
 
     where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
 

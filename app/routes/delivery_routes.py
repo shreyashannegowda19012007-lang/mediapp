@@ -94,7 +94,12 @@ def get_available_deliveries():
         WHERE o.order_status = 'READY_FOR_PICKUP' AND o.delivery_person_id IS NULL
         ORDER BY o.created_at ASC
     """)
-    return jsonify({"status": "success", "available_orders": [dict(o) for o in orders]})
+    order_list = [dict(o) for o in orders]
+    return jsonify({
+        "status": "success",
+        "orders": order_list,
+        "available_orders": order_list
+    })
 
 @delivery_bp.route("/active", methods=["GET"])
 @login_required
@@ -268,7 +273,19 @@ def complete_delivery(order_id: str):
     user_id = session["user_id"]
     data = request.get_json() or {}
     otp = data.get("otp")
-    proof = data.get("proof") or (f"Patient OTP handoff verified: {otp}" if otp else "Customer signature / Handover confirmed")
+
+    order = query_db("SELECT delivery_otp, order_status FROM orders WHERE id = ?", (order_id,), one=True)
+    if not order:
+        return jsonify({"error": f"Order {order_id} not found."}), 404
+
+    expected_otp = str(order["delivery_otp"] or "").strip()
+    if expected_otp and otp:
+        if str(otp).strip() != expected_otp:
+            return jsonify({"error": "Invalid delivery OTP. Handover cannot be completed without correct patient verification."}), 400
+    elif not otp and not data.get("proof"):
+        return jsonify({"error": "Patient delivery OTP is required to complete handover."}), 400
+
+    proof = data.get("proof") or f"Patient OTP handoff verified: {otp}"
 
     try:
         conn = get_db()

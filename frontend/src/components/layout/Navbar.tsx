@@ -16,12 +16,15 @@ import {
   KeyRound,
   Menu,
   X,
+  HeartPulse,
 } from "lucide-react";
 import { useAuthStore, RoleType } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { ROLE_DEFINITIONS } from "@/lib/rbac";
 import { RoleLimitsModal } from "@/components/auth/RoleLimitsModal";
+import { AITriageModal } from "@/components/clinical/AITriageModal";
+import { AuthModal } from "@/components/auth/AuthModal";
 import { clsx } from "clsx";
 
 interface NavbarProps {
@@ -34,6 +37,8 @@ export function Navbar({ onOpenUploadRx, onNavigateTab, activeTab = "catalogue" 
   const { user, activeRole, switchRole, isLoading } = useAuthStore();
   const { cart, setIsOpen } = useCartStore();
   const [showRoleLimitsModal, setShowRoleLimitsModal] = useState(false);
+  const [showAITriageModal, setShowAITriageModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const cartItemCount = cart?.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
@@ -121,6 +126,28 @@ export function Navbar({ onOpenUploadRx, onNavigateTab, activeTab = "catalogue" 
         <div className="flex items-center gap-2.5">
           {/* Theme Switcher */}
           <ThemeToggle />
+
+          {/* AI Clinical Assistant Trigger */}
+          <button
+            onClick={() => setShowAITriageModal(true)}
+            type="button"
+            aria-label="Open AI Clinical Health Assistant"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-900 bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-xs font-semibold hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-all cursor-pointer"
+          >
+            <HeartPulse className="h-4 w-4 text-indigo-500" />
+            <span>AI Triage</span>
+          </button>
+
+          {/* Patient Account Sign In / Register Trigger */}
+          <button
+            onClick={() => setShowAuthModal(true)}
+            type="button"
+            aria-label="Sign in or register customer account"
+            className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-all cursor-pointer"
+          >
+            <User className="h-4 w-4 text-slate-500" />
+            <span>Sign In</span>
+          </button>
 
           {/* Rx Quick Upload Button (Customer Only) */}
           {currentRoleDef.canUploadRx && onOpenUploadRx && (
@@ -229,6 +256,18 @@ export function Navbar({ onOpenUploadRx, onNavigateTab, activeTab = "catalogue" 
         isOpen={showRoleLimitsModal}
         onClose={() => setShowRoleLimitsModal(false)}
         onRoleSwitched={handleRoleSwitched}
+      />
+
+      {/* AI Clinical Triage Modal */}
+      <AITriageModal
+        isOpen={showAITriageModal}
+        onClose={() => setShowAITriageModal(false)}
+      />
+
+      {/* Patient Auth0/Credential Sign In & Register Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
       />
     </header>
   );

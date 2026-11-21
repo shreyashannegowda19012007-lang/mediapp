@@ -89,6 +89,7 @@ CREATE TABLE IF NOT EXISTS medicines (
     pack_size TEXT,
     uses TEXT,
     side_effects TEXT,
+    requires_cold_chain INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -125,6 +126,8 @@ CREATE TABLE IF NOT EXISTS prescriptions (
     status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'under_review', 'verified', 'rejected')),
     reviewed_by INTEGER REFERENCES users(id),
     rejection_reason TEXT,
+    approved_medicines TEXT,
+    pharmacist_notes TEXT,
     verified_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -179,6 +182,7 @@ CREATE TABLE IF NOT EXISTS orders (
     )),
     cancellation_reason TEXT,
     delivery_notes TEXT,
+    delivery_otp TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

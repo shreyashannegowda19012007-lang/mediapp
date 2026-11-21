@@ -116,6 +116,7 @@ export interface Order {
   delivery_agent_name?: string;
   delivery_agent_phone?: string;
   otp?: string;
+  delivery_otp?: string;
   items?: Array<{
     id: number;
     medicine_name: string;
@@ -186,6 +187,13 @@ export const api = {
   // Authentication & Session
   auth: {
     getSession: () => apiFetch<{ status: string; authenticated: boolean; user?: UserSession }>("/api/auth/session"),
+    getCurrentUser: () =>
+      apiFetch<{ status: string; authenticated: boolean; user?: UserSession & { address?: string } }>("/api/auth/me"),
+    register: (payload: { email: string; password: string; full_name: string; phone: string; address?: string }) =>
+      apiFetch<{ status: string; message: string; user: UserSession }>("/api/auth/register", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
     login: (credentials: { email: string; password?: string; role?: string }) =>
       apiFetch<{ status: string; user: UserSession }>("/api/auth/login", {
         method: "POST",
@@ -205,12 +213,13 @@ export const api = {
 
   // Medicines & Discovery
   medicines: {
-    search: (params: { q?: string; category?: string; dosage_form?: string; rx?: number; page?: number; limit?: number }) => {
+    search: (params: { q?: string; category?: string; dosage_form?: string; rx?: number; cold_chain?: number | boolean; page?: number; limit?: number }) => {
       const query = new URLSearchParams();
       if (params.q) query.append("q", params.q);
       if (params.category) query.append("category", params.category);
       if (params.dosage_form) query.append("dosage_form", params.dosage_form);
       if (params.rx !== undefined) query.append("rx", params.rx.toString());
+      if (params.cold_chain !== undefined) query.append("cold_chain", params.cold_chain ? "1" : "0");
       if (params.page) query.append("page", params.page.toString());
       if (params.limit) query.append("limit", params.limit.toString());
       return apiFetch<{ status: string; medicines: Medicine[]; pagination: { total_count: number; total_pages: number; page: number } }>(
@@ -289,6 +298,11 @@ export const api = {
         method: "POST",
         body: JSON.stringify(payload),
       }),
+    cancel: (id: number | string, reason?: string) =>
+      apiFetch<{ status: string; message: string; order?: Order }>(`/api/orders/${id}/cancel`, {
+        method: "POST",
+        body: JSON.stringify({ reason: reason || "Cancelled by customer" }),
+      }),
   },
 
   // Pharmacy Clinical Desk
@@ -309,13 +323,40 @@ export const api = {
 
   // Delivery Logistics
   delivery: {
-    getAvailableRuns: () => apiFetch<{ status: string; orders: Order[] }>("/api/delivery/available"),
+    getAvailableRuns: async () => {
+      const res = await apiFetch<any>("/api/delivery/available");
+      const list = (res.orders || res.available_orders || []) as Order[];
+      return { status: res.status || "success", orders: list };
+    },
     acceptRun: (orderId: number) =>
       apiFetch<{ status: string }>(`/api/delivery/orders/${orderId}/accept`, { method: "POST" }),
     verifyHandoff: (orderId: number, otp: string) =>
       apiFetch<{ status: string; message: string }>(`/api/delivery/orders/${orderId}/verify-otp`, {
         method: "POST",
         body: JSON.stringify({ otp }),
+      }),
+  },
+
+  // Payment Processing & Gateways
+  payments: {
+    createOrder: (orderId: number | string) =>
+      apiFetch<{ status: string; payment_order: any }>("/api/payments/create-order", {
+        method: "POST",
+        body: JSON.stringify({ order_id: orderId }),
+      }),
+    verify: (orderId: number | string, paymentData: any) =>
+      apiFetch<{ status: string; message: string }>("/api/payments/verify", {
+        method: "POST",
+        body: JSON.stringify({ order_id: orderId, ...paymentData }),
+      }),
+  },
+
+  // AI Clinical Consultation & Emergency Triage
+  ai: {
+    consult: (query: string) =>
+      apiFetch<{ status: string; result: any }>("/api/ai/consult", {
+        method: "POST",
+        body: JSON.stringify({ query }),
       }),
   },
 
