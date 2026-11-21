@@ -18,6 +18,8 @@ export function MedicineCard({ medicine }: MedicineCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [checkingGeneric, setCheckingGeneric] = useState(false);
 
+  const [authError, setAuthError] = useState<string | null>(null);
+
   const isColdChain =
     medicine.category.toLowerCase().includes("insulin") ||
     medicine.category.toLowerCase().includes("vaccine") ||
@@ -31,9 +33,16 @@ export function MedicineCard({ medicine }: MedicineCardProps) {
   const handleAddToCart = async () => {
     try {
       setIsAdding(true);
+      setAuthError(null);
       await addItem(medicine.id, 1);
-    } catch (err) {
-      console.error(err);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to add to cart";
+      if (msg.toLowerCase().includes("auth") || msg.toLowerCase().includes("sign in") || msg.toLowerCase().includes("401")) {
+        setAuthError("Sign-in required: Please select a demo role or sign in to add medicines.");
+      } else {
+        setAuthError(msg);
+      }
+      setTimeout(() => setAuthError(null), 4000);
     } finally {
       setTimeout(() => setIsAdding(false), 500);
     }
@@ -145,6 +154,12 @@ export function MedicineCard({ medicine }: MedicineCardProps) {
             <span>{isAdding ? "Added" : "Add to Cart"}</span>
           </button>
         </div>
+
+        {authError && (
+          <div className="mt-2.5 p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-[11px] font-medium text-rose-700 dark:text-rose-400">
+            {authError}
+          </div>
+        )}
       </div>
 
       <GenericPriceMatchModal

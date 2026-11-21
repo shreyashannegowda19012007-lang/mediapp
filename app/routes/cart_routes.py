@@ -166,9 +166,9 @@ def add_to_cart():
     conn.commit()
     return jsonify({"status": "success", "message": "Medicine added to cart."})
 
-@cart_bp.route("/items/<int:medicine_id>", methods=["PUT"])
+@cart_bp.route("/items/<int:item_id>", methods=["PUT"])
 @login_required
-def update_cart_item(medicine_id: int):
+def update_cart_item(item_id: int):
     data = request.get_json() or {}
     quantity = data.get("quantity")
     
@@ -184,26 +184,30 @@ def update_cart_item(medicine_id: int):
     cur = conn.cursor()
 
     if quantity == 0:
-        cur.execute("DELETE FROM cart_items WHERE cart_id = ? AND medicine_id = ?", (cart["id"], medicine_id))
+        cur.execute("DELETE FROM cart_items WHERE cart_id = ? AND (id = ? OR medicine_id = ?)", (cart["id"], item_id, item_id))
     else:
-        # Check stock bounds
-        stock_row = query_db("SELECT stock_quantity FROM pharmacy_inventory WHERE pharmacy_id = ? AND medicine_id = ?", (cart["pharmacy_id"], medicine_id), one=True)
+        # Resolve cart_item row to check stock bounds
+        existing = query_db("SELECT id, medicine_id FROM cart_items WHERE cart_id = ? AND (id = ? OR medicine_id = ?)", (cart["id"], item_id, item_id), one=True)
+        if not existing:
+            return jsonify({"error": "Item not found in cart."}), 404
+        med_id = existing["medicine_id"]
+        stock_row = query_db("SELECT stock_quantity FROM pharmacy_inventory WHERE pharmacy_id = ? AND medicine_id = ?", (cart["pharmacy_id"], med_id), one=True)
         if stock_row and quantity > stock_row["stock_quantity"]:
             return jsonify({"error": f"Requested quantity exceeds available stock ({stock_row['stock_quantity']})."}), 400
-        cur.execute("UPDATE cart_items SET quantity = ? WHERE cart_id = ? AND medicine_id = ?", (quantity, cart["id"], medicine_id))
+        cur.execute("UPDATE cart_items SET quantity = ? WHERE id = ?", (quantity, existing["id"]))
 
     conn.commit()
     return jsonify({"status": "success", "message": "Cart updated."})
 
-@cart_bp.route("/items/<int:medicine_id>", methods=["DELETE"])
+@cart_bp.route("/items/<int:item_id>", methods=["DELETE"])
 @login_required
-def remove_cart_item(medicine_id: int):
+def remove_cart_item(item_id: int):
     user_id = session["user_id"]
     cart = query_db("SELECT id FROM carts WHERE user_id = ?", (user_id,), one=True)
     if cart:
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("DELETE FROM cart_items WHERE cart_id = ? AND medicine_id = ?", (cart["id"], medicine_id))
+        cur.execute("DELETE FROM cart_items WHERE cart_id = ? AND (id = ? OR medicine_id = ?)", (cart["id"], item_id, item_id))
         conn.commit()
     return jsonify({"status": "success", "message": "Item removed from cart."})
 

@@ -54,7 +54,8 @@ export function RxUploadModal({ isOpen, onClose, onUploadSuccess }: RxUploadModa
       setIsUploading(true);
       setError(null);
       const res = await api.prescriptions.upload(file);
-      setOcrDetected(res.detected_medicines || ["Aciloc 150mg", "Dolo 650mg"]);
+      const detected = res.detected_medicines || (res as unknown as { prescription?: { extracted_medicines?: string[] } }).prescription?.extracted_medicines || [];
+      setOcrDetected(detected);
       setUploadComplete(true);
       if (onUploadSuccess) onUploadSuccess(res.prescription_id);
       setTimeout(() => {

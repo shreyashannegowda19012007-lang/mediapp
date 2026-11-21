@@ -49,6 +49,19 @@ def get_system_stats():
     low_stock_row = query_db("SELECT COUNT(*) as c FROM pharmacy_inventory WHERE stock_quantity <= low_stock_threshold", one=True)
     low_stock_count = low_stock_row["c"] if low_stock_row else 0
 
+    # Low stock items list for replenish matrix
+    low_stock_items = query_db("""
+        SELECT pi.medicine_id as id, m.name, m.generic_name, pi.stock_quantity as stock,
+               pi.low_stock_threshold as minThreshold, p.name as pharmacy,
+               CASE WHEN pi.stock_quantity <= 5 THEN 'Critical' ELSE 'Low' END as status
+        FROM pharmacy_inventory pi
+        JOIN medicines m ON pi.medicine_id = m.id
+        JOIN pharmacies p ON pi.pharmacy_id = p.id
+        WHERE pi.stock_quantity <= pi.low_stock_threshold
+        ORDER BY pi.stock_quantity ASC
+        LIMIT 10
+    """)
+
     # Recent 8 orders
     recent_orders = query_db("""
         SELECT o.id, o.total_amount, o.order_status, o.payment_status, o.created_at,
@@ -87,7 +100,8 @@ def get_system_stats():
             "low_stock_alerts": low_stock_count
         },
         "recent_orders": [dict(o) for o in recent_orders],
-        "recent_activity": recent_activity
+        "recent_activity": recent_activity,
+        "low_stock": [dict(r) for r in low_stock_items]
     })
 
 @admin_bp.route("/users", methods=["GET"])

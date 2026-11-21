@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Search, Filter, AlertCircle, RefreshCw, X, Pill, ShieldCheck, ThermometerSnowflake, Sparkles } from "lucide-react";
+import { Search, Filter, AlertCircle, RefreshCw, X, Pill, ShieldCheck, ThermometerSnowflake, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { Medicine, api } from "@/lib/api";
 import { MedicineCard } from "./MedicineCard";
 import { clsx } from "clsx";
@@ -15,6 +15,8 @@ export function MedicineCatalogue() {
   const [coldChainOnly, setColdChainOnly] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const fetchMedicines = useCallback(async () => {
     try {
@@ -23,7 +25,8 @@ export function MedicineCatalogue() {
         q: searchQuery,
         category: selectedCategory,
         rx: rxFilter,
-        limit: 36,
+        page,
+        limit: 24,
       });
 
       let items = res.medicines || [];
@@ -37,12 +40,13 @@ export function MedicineCatalogue() {
       }
       setMedicines(items);
       setTotalCount(res.pagination?.total_count || items.length);
+      setTotalPages(res.pagination?.total_pages || 1);
     } catch (err) {
       console.error("Failed to load medicines:", err);
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, selectedCategory, rxFilter, coldChainOnly]);
+  }, [searchQuery, selectedCategory, rxFilter, coldChainOnly, page]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -81,7 +85,10 @@ export function MedicineCatalogue() {
               id="search-medicines-input"
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(1);
+              }}
               placeholder="Search medicines, active molecules, ailments..."
               className="w-full pl-12 pr-10 py-3.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 shadow-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition-all"
             />
@@ -228,10 +235,48 @@ export function MedicineCatalogue() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {medicines.map((med) => (
-            <MedicineCard key={med.id} medicine={med} />
-          ))}
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {medicines.map((med) => (
+              <MedicineCard key={med.id} medicine={med} />
+            ))}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  setPage((p) => Math.max(1, p - 1));
+                  document.getElementById("medicine-catalogue")?.scrollIntoView({ behavior: "smooth" });
+                }}
+                disabled={page <= 1 || isLoading}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 transition-all cursor-pointer"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span>Previous</span>
+              </button>
+
+              <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                Page <span className="font-bold text-slate-900 dark:text-slate-100">{page}</span> of{" "}
+                <span className="font-bold text-slate-900 dark:text-slate-100">{totalPages}</span> ({totalCount} items)
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setPage((p) => Math.min(totalPages, p + 1));
+                  document.getElementById("medicine-catalogue")?.scrollIntoView({ behavior: "smooth" });
+                }}
+                disabled={page >= totalPages || isLoading}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 transition-all cursor-pointer"
+              >
+                <span>Next</span>
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

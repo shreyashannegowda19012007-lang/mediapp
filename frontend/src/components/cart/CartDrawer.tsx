@@ -54,9 +54,11 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
         payment_method: paymentMethod,
         prescription_id: hasRx && selectedRxId ? selectedRxId : undefined,
       });
-      setOrderSuccess(res.order_number);
+      const orderNum = res.order_number || res.order?.order_number || `ORD-${res.order_id || res.order?.id}`;
+      const orderId = res.order_id || res.order?.id || 1;
+      setOrderSuccess(orderNum);
       await clearCart();
-      if (onOrderPlaced) onOrderPlaced(res.order_id);
+      if (onOrderPlaced) onOrderPlaced(orderId);
       setTimeout(() => {
         setOrderSuccess(null);
         setIsOpen(false);
@@ -153,6 +155,29 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
                         No uploaded prescription found on this account. Please upload your doctor&apos;s prescription via the Upload Rx button before completing checkout.
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* Drug-Drug Interaction (DDI) Contraindication Banner */}
+                {cart?.drug_interactions?.has_interactions && (
+                  <div className="p-3.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-xs text-rose-800 dark:text-rose-300 space-y-2">
+                    <div className="flex items-center gap-2 font-bold text-rose-900 dark:text-rose-200">
+                      <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
+                      <span>Potential Drug Interaction Alert</span>
+                    </div>
+                    {cart.drug_interactions.interactions.map((interaction, idx) => (
+                      <div key={idx} className="p-2.5 rounded-lg bg-white/70 dark:bg-slate-900/70 border border-rose-500/20 text-[11px] space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">
+                            {interaction.drugs.join(" + ")}
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase bg-rose-500/20 text-rose-700 dark:text-rose-400">
+                            {interaction.severity}
+                          </span>
+                        </div>
+                        <p className="text-slate-600 dark:text-slate-400">{interaction.description}</p>
+                      </div>
+                    ))}
                   </div>
                 )}
 

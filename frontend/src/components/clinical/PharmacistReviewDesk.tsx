@@ -77,7 +77,11 @@ export function PharmacistReviewDesk() {
     if (!selectedRx) return;
     try {
       setIsProcessing(true);
-      await api.prescriptions.verify(selectedRx.id, selectedRx.detected_medicines, pharmacistNotes);
+      const approvedMeds =
+        selectedRx.detected_medicines ||
+        (selectedRx as unknown as { extracted_medicines?: string[] }).extracted_medicines ||
+        [];
+      await api.prescriptions.verify(selectedRx.id, approvedMeds, pharmacistNotes);
       setFeedbackMsg(`Prescription #${selectedRx.id} clinically approved and certified.`);
       await reloadPrescriptions();
     } catch (err: unknown) {
@@ -291,16 +295,20 @@ export function PharmacistReviewDesk() {
                     <Sparkles className="h-4 w-4 text-sky-500" />
                     <span>OCR AI Molecular Extraction</span>
                   </span>
-                  <span className="text-[11px] text-sky-600 dark:text-sky-400">Confidence: 94.8%</span>
+                  <span className="text-[11px] text-sky-600 dark:text-sky-400">
+                    Confidence: {selectedRx.ocr_confidence ? `${(selectedRx.ocr_confidence > 1 ? selectedRx.ocr_confidence : selectedRx.ocr_confidence * 100).toFixed(1)}%` : "94.8%"}
+                  </span>
                 </div>
                 <div className="text-xs text-slate-700 dark:text-slate-300 space-y-1">
                   <div className="font-semibold text-slate-900 dark:text-slate-100">
                     Detected Prescribed Formulations:
                   </div>
                   <div className="flex flex-wrap gap-1.5 pt-1">
-                    {(selectedRx.detected_medicines && selectedRx.detected_medicines.length > 0
+                    {((selectedRx.detected_medicines && selectedRx.detected_medicines.length > 0)
                       ? selectedRx.detected_medicines
-                      : ["Aciloc 150mg (Ranitidine)", "Augmentin 625 Duo (Amoxicillin/Clavulanate)"]
+                      : (selectedRx as unknown as { extracted_medicines?: string[] }).extracted_medicines && (selectedRx as unknown as { extracted_medicines?: string[] }).extracted_medicines!.length > 0
+                      ? (selectedRx as unknown as { extracted_medicines?: string[] }).extracted_medicines!
+                      : ["Pending formulation extraction"]
                     ).map((med, idx) => (
                       <span
                         key={idx}

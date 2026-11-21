@@ -90,7 +90,7 @@ class OCRService:
             confidence += 0.10
 
         # Match against actual database catalogue medicines with strict proximity strength awareness
-        known_meds = query_db("SELECT name, generic_name, strength FROM medicines LIMIT 400")
+        known_meds = query_db("SELECT name, generic_name, strength FROM medicines")
         for med in known_meds:
             base_name = med["name"].split()[0].lower()
             if len(base_name) >= 4:

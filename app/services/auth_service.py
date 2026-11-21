@@ -372,16 +372,45 @@ def clear_user_session():
     session.clear()
 
 
+def get_user_from_request():
+    """Extracts authenticated user from session or Authorization Bearer token header."""
+    user_id = session.get("user_id")
+    if not user_id:
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header.split(" ", 1)[1].strip()
+            if token.startswith("usr_"):
+                parts = token.split("_")
+                if len(parts) >= 2 and parts[1].isdigit():
+                    user_id = int(parts[1])
+            elif token.isdigit():
+                user_id = int(token)
+    if user_id:
+        user = query_db("SELECT id, role, email, full_name, is_active FROM users WHERE id = ?", (user_id,), one=True)
+        if user and user["is_active"]:
+            if "user_id" not in session:
+                session["user_id"] = user["id"]
+                session["role"] = user["role"]
+                session["email"] = user["email"]
+                session["full_name"] = user["full_name"]
+                if user["role"] == "pharmacy":
+                    staff_row = query_db("SELECT pharmacy_id FROM pharmacy_staff WHERE user_id = ?", (user["id"],), one=True)
+                    session["pharmacy_id"] = staff_row["pharmacy_id"] if staff_row else None
+            return user
+    return None
+
+
 def login_required(f):
-    """Decorator requiring active session and verifying user active status in database."""
+    """Decorator requiring active session or Bearer token and verifying user active status in database."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if "user_id" not in session:
+        user = get_user_from_request()
+        if not user:
+            user_id = session.get("user_id")
+            if user_id:
+                clear_user_session()
+                return jsonify({"error": "Your account has been deactivated or suspended. Please contact support."}), 403
             return jsonify({"error": "Authentication required. Please sign in."}), 401
-        user = query_db("SELECT id, role, is_active FROM users WHERE id = ?", (session["user_id"],), one=True)
-        if not user or not user["is_active"]:
-            clear_user_session()
-            return jsonify({"error": "Your account has been deactivated or suspended. Please contact support."}), 403
         g.current_user = user
         return f(*args, **kwargs)
     return decorated_function
@@ -392,15 +421,16 @@ def roles_required(*allowed_roles):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            if "user_id" not in session:
+            user = get_user_from_request()
+            if not user:
+                user_id = session.get("user_id")
+                if user_id:
+                    clear_user_session()
+                    return jsonify({"error": "Your account has been deactivated or suspended. Please contact support."}), 403
                 return jsonify({"error": "Authentication required."}), 401
-            user = query_db("SELECT id, role, is_active FROM users WHERE id = ?", (session["user_id"],), one=True)
-            if not user or not user["is_active"]:
-                clear_user_session()
-                return jsonify({"error": "Your account has been deactivated or suspended. Please contact support."}), 403
 
-            user_role = session.get("role")
-            authorized = AuthService.get_authorized_roles(session["user_id"])
+            user_role = session.get("role") or user["role"]
+            authorized = AuthService.get_authorized_roles(user["id"])
             if user_role not in allowed_roles or user_role not in authorized:
                 return jsonify({
                     "error": f"Forbidden. Role '{user_role}' does not have access to this resource.",

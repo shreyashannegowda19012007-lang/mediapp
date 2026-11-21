@@ -92,12 +92,21 @@ export interface CartData {
     total: number;
   };
   has_prescription_items: boolean;
+  drug_interactions?: {
+    has_interactions: boolean;
+    interactions: Array<{
+      severity: string;
+      description: string;
+      drugs: string[];
+    }>;
+  };
 }
 
 export interface Order {
   id: number;
   order_number: string;
   status: string;
+  order_status?: string;
   payment_status: string;
   total_amount: number;
   delivery_address: string;
@@ -276,7 +285,7 @@ export const api = {
     list: () => apiFetch<{ status: string; orders: Order[] }>("/api/orders"),
     getById: (id: number) => apiFetch<{ status: string; order: Order }>(`/api/orders/${id}`),
     create: (payload: { delivery_address: string; prescription_id?: number; payment_method?: string }) =>
-      apiFetch<{ status: string; order_id: number; order_number: string; total_amount: number }>("/api/orders", {
+      apiFetch<{ status: string; order_id: number; order_number: string; total_amount: number; order?: Order }>("/api/orders", {
         method: "POST",
         body: JSON.stringify(payload),
       }),
@@ -321,8 +330,10 @@ export const api = {
           cold_chain_compliance_rate: number;
           avg_fulfillment_time_mins: number;
           generic_savings_total: number;
+          low_stock_alerts?: number;
         };
         recent_activity: Array<{ id: number; action: string; timestamp: string; details: string }>;
+        low_stock?: Array<{ id: number; name: string; generic_name: string; stock: number; minThreshold: number; pharmacy: string; status: string }>;
       }>("/api/admin/analytics"),
   },
 };

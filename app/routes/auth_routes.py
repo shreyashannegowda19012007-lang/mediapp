@@ -79,6 +79,7 @@ def login():
         return jsonify({
             "status": "success",
             "message": "Logged in successfully.",
+            "token": f"usr_{user['id']}",
             "user": {
                 "id": user["id"],
                 "email": user["email"],
@@ -165,10 +166,12 @@ def logout():
     return jsonify({"status": "success", "message": "Logged out successfully."})
 
 @auth_bp.route("/me", methods=["GET"])
+@auth_bp.route("/session", methods=["GET"])
 def get_current_user():
     user_id = session.get("user_id")
     if not user_id:
         return jsonify({
+            "status": "success",
             "authenticated": False,
             "user": None,
             "capabilities": Config.get_public_capabilities()
@@ -177,9 +180,10 @@ def get_current_user():
     user = query_db("SELECT id, email, full_name, phone, role, profile_image, is_active FROM users WHERE id = ?", (user_id,), one=True)
     if not user or not user["is_active"]:
         clear_user_session()
-        return jsonify({"authenticated": False, "user": None, "capabilities": Config.get_public_capabilities()})
+        return jsonify({"status": "success", "authenticated": False, "user": None, "capabilities": Config.get_public_capabilities()})
         
     user_data = dict(user)
+    user_data["user_id"] = user["id"]
     user_data["active_role"] = session.get("role", user["role"])
     user_data["authorized_roles"] = AuthService.get_authorized_roles(user_id)
     user_data["pharmacy_id"] = session.get("pharmacy_id")

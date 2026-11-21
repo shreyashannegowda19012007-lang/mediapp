@@ -39,6 +39,13 @@ export function AnalyticsDashboard() {
     generic_savings_total: 48920,
   });
 
+  const [inventoryAlerts, setInventoryAlerts] = useState<Array<{ name: string; stock: number; minThreshold: number; pharmacy: string; status: string }>>([
+    { name: "Humalog KwikPen Insulin (Cold-Chain)", stock: 4, minThreshold: 15, pharmacy: "Apollo Central", status: "Critical" },
+    { name: "Augmentin 625 Duo Tablet", stock: 8, minThreshold: 30, pharmacy: "MedPlus Indiranagar", status: "Low" },
+    { name: "Thyronorm 50mcg", stock: 12, minThreshold: 25, pharmacy: "Apollo Central", status: "Low" },
+    { name: "Covishield Booster Vial", stock: 2, minThreshold: 10, pharmacy: "Fortis Clinical Hub", status: "Critical" },
+  ]);
+
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -46,6 +53,9 @@ export function AnalyticsDashboard() {
       .getAnalytics()
       .then((res) => {
         if (res.metrics) setMetrics(res.metrics);
+        if (res.low_stock && res.low_stock.length > 0) {
+          setInventoryAlerts(res.low_stock);
+        }
       })
       .catch(() => {
         // Fallback to rich telemetry demo values
@@ -70,14 +80,6 @@ export function AnalyticsDashboard() {
     { category: "Cardiovascular (Amlodipine)", savingsPct: 72, brandedPrice: 180, genericPrice: 50 },
     { category: "Diabetes (Metformin)", savingsPct: 62, brandedPrice: 140, genericPrice: 53 },
     { category: "Pain/Analgesic (Paracetamol)", savingsPct: 45, brandedPrice: 35, genericPrice: 19 },
-  ];
-
-  // Critical Low-Stock Inventory Matrix
-  const inventoryAlerts = [
-    { name: "Humalog KwikPen Insulin (Cold-Chain)", stock: 4, minThreshold: 15, pharmacy: "Apollo Central", status: "Critical" },
-    { name: "Augmentin 625 Duo Tablet", stock: 8, minThreshold: 30, pharmacy: "MedPlus Indiranagar", status: "Low" },
-    { name: "Thyronorm 50mcg", stock: 12, minThreshold: 25, pharmacy: "Apollo Central", status: "Low" },
-    { name: "Covishield Booster Vial", stock: 2, minThreshold: 10, pharmacy: "Fortis Clinical Hub", status: "Critical" },
   ];
 
   return (

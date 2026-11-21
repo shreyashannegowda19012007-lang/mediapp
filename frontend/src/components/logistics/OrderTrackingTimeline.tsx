@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { Order, api } from "@/lib/api";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { DeliveryRunsBoard } from "@/components/logistics/DeliveryRunsBoard";
+import { useAuthStore } from "@/store/useAuthStore";
 import { clsx } from "clsx";
 
 export function OrderTrackingTimeline() {
@@ -25,6 +27,8 @@ export function OrderTrackingTimeline() {
   const [otpInput, setOtpInput] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  const { activeRole } = useAuthStore();
 
   const reloadOrders = async () => {
     try {
@@ -76,8 +80,8 @@ export function OrderTrackingTimeline() {
     { key: "delivered", label: "Delivered & Verified", desc: "Handed over with patient OTP" },
   ];
 
-  const getStepIndex = (status: string) => {
-    switch (status.toLowerCase()) {
+  const getStepIndex = (status?: string) => {
+    switch ((status || "").toLowerCase()) {
       case "placed":
       case "pending":
         return 0;
@@ -95,7 +99,7 @@ export function OrderTrackingTimeline() {
       case "completed":
         return 4;
       default:
-        return 1;
+        return 0;
     }
   };
 
@@ -118,7 +122,7 @@ export function OrderTrackingTimeline() {
     }
   };
 
-  const currentStep = selectedOrder ? getStepIndex(selectedOrder.status) : 0;
+  const currentStep = selectedOrder ? getStepIndex(selectedOrder.status || selectedOrder.order_status) : 0;
 
   return (
     <div className="space-y-5">
@@ -191,7 +195,7 @@ export function OrderTrackingTimeline() {
                   <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-[11px]">
                     <span className="text-slate-400">{new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     <span className="capitalize font-semibold text-sky-600 dark:text-sky-400">
-                      {o.status.replace(/_/g, " ")}
+                      {(o.status || o.order_status || "PLACED").replace(/_/g, " ")}
                     </span>
                   </div>
                 </button>
@@ -368,6 +372,11 @@ export function OrderTrackingTimeline() {
           )}
         </div>
       </div>
+
+      {/* Rider Available Runs Board (shown for delivery riders and admins) */}
+      {(activeRole === "delivery" || activeRole === "admin") && (
+        <DeliveryRunsBoard onRunClaimed={reloadOrders} />
+      )}
     </div>
   );
 }

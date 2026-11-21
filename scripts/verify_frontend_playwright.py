@@ -1,6 +1,6 @@
 """
 Comprehensive Next.js 15 Visual Verification Script using Playwright.
-Validates all 15 defect remediations on http://localhost:3000 and captures visual artifacts.
+Validates all 16 defect remediations on http://localhost:3000 and captures visual artifacts.
 """
 import os
 import sys
@@ -55,6 +55,8 @@ def verify():
             img3 = os.path.join(ARTIFACT_DIR, "checkpoint3_search_aciloc_generics.png")
             page.screenshot(path=img3, full_page=False)
             print(f"  -> Checkpoint 3 verified. Saved: {img3}")
+            search_input.fill("")
+            page.wait_for_timeout(500)
 
         # Checkpoint 4: Rx Upload Modal
         print("[CHECK 4] Opening Prescription Upload Modal...")
@@ -76,7 +78,7 @@ def verify():
                 page.keyboard.press("Escape")
             page.wait_for_timeout(500)
 
-        # Checkpoint 5: Cart Drawer with Rx attachment and Payment Methods
+        # Checkpoint 5: Cart Drawer with Rx attachment, DDI Alerts and Payment Methods
         print("[CHECK 5] Opening Cart Drawer...")
         # Add medicine to cart
         add_btn = page.locator("button:has-text('Add to Cart')").first
@@ -120,7 +122,6 @@ def verify():
                 page.keyboard.press("Escape")
                 page.wait_for_timeout(500)
 
-        # Confirm Pharmacist Desk view
         page.wait_for_selector("h1:has-text('Pharmacist Verification Desk')", timeout=8000)
         img6 = os.path.join(ARTIFACT_DIR, "checkpoint6_pharmacist_desk.png")
         page.screenshot(path=img6, full_page=False)
@@ -148,7 +149,7 @@ def verify():
         page.screenshot(path=img7, full_page=False)
         print(f"  -> Checkpoint 7 verified. Saved: {img7}")
 
-        # Checkpoint 8: Delivery / Logistics Live Tracking
+        # Checkpoint 8: Delivery / Logistics Live Tracking & Courier Runs Board
         print("[CHECK 8] Switching to Delivery & Logistics Tracking...")
         role_btn = page.locator("button[title*='Auth0 Role Limits']").first
         if role_btn.is_visible():
@@ -170,10 +171,58 @@ def verify():
         page.screenshot(path=img8, full_page=False)
         print(f"  -> Checkpoint 8 verified. Saved: {img8}")
 
+        # Checkpoint 9: Available Courier Runs Board
+        print("[CHECK 9] Verifying Delivery Runs Board...")
+        runs_header = page.locator("h3:has-text('Available Courier Transit Runs')").first
+        assert runs_header.is_visible(), "Delivery Runs Board is not rendered"
+        img9 = os.path.join(ARTIFACT_DIR, "checkpoint9_delivery_runs_board.png")
+        page.screenshot(path=img9, full_page=False)
+        print(f"  -> Checkpoint 9 verified. Saved: {img9}")
+
+        # Checkpoint 10: Catalogue Pagination Controls
+        print("[CHECK 10] Switching back to Customer role and testing Pagination...")
+        page.evaluate("() => fetch('/api/auth/login', {method: 'POST', headers: {'Content-Type': 'application/json'}, credentials: 'include', body: JSON.stringify({email: 'customer@mediapp.local', password: 'Customer@123', role: 'customer'})})")
+        page.goto(BASE_URL, wait_until="networkidle")
+        page.wait_for_timeout(1000)
+
+        # Scroll to catalogue pagination
+        page.wait_for_selector("#medicine-catalogue", timeout=8000)
+        page.evaluate("() => { const el = document.getElementById('medicine-catalogue'); if (el) el.scrollIntoView(); }")
+        page.wait_for_timeout(800)
+        
+        # Check pagination controls
+        next_page_btn = page.locator("button:has-text('Next')").first
+        assert next_page_btn.is_visible(), "Pagination Next button not found"
+        img10 = os.path.join(ARTIFACT_DIR, "checkpoint10_catalogue_pagination.png")
+        page.screenshot(path=img10, full_page=False)
+        print(f"  -> Checkpoint 10 verified. Saved: {img10}")
+
+        # Checkpoint 11: Mobile Viewport (375x667) & Hamburger Drawer
+        print("[CHECK 11] Testing Mobile Viewport (375x667) & Hamburger Drawer...")
+        context_mobile = browser.new_context(viewport={"width": 375, "height": 667})
+        page_mobile = context_mobile.new_page()
+        page_mobile.goto(BASE_URL, wait_until="networkidle")
+        page_mobile.wait_for_timeout(1000)
+
+        menu_btn = page_mobile.locator("button[aria-label='Toggle navigation menu']").first
+        assert menu_btn.is_visible(), "Mobile hamburger toggle button not visible on 375px viewport"
+        menu_btn.click()
+        page_mobile.wait_for_timeout(500)
+
+        drawer_content = page_mobile.content()
+        assert "Navigation" in drawer_content and "Medicine Catalogue" in drawer_content, "Mobile navigation drawer missing"
+        img11 = os.path.join(ARTIFACT_DIR, "checkpoint11_mobile_drawer.png")
+        page_mobile.screenshot(path=img11, full_page=False)
+        print(f"  -> Checkpoint 11 verified. Saved: {img11}")
+
+        context_mobile.close()
         browser.close()
 
     print("=" * 60)
-    print("ALL 8 VERIFICATION CHECKPOINTS PASSED PERFECTLY!")
+    print("ALL 11 FRONTEND VERIFICATION CHECKPOINTS COMPLETED!")
+    print(f"Console errors detected during run: {len(console_errors)}")
+    if console_errors:
+        print(f"Errors: {console_errors}")
     print("=" * 60)
 
 if __name__ == "__main__":

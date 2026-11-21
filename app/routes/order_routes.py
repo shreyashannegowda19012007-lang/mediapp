@@ -3,12 +3,29 @@ Order Management Routes for MediApp.
 Operates as the single authoritative order gateway shared across Customer,
 Pharmacy, Delivery, and Admin portals.
 """
+import json
 from flask import Blueprint, request, jsonify, session
 from app.services.auth_service import login_required
 from app.services.order_service import OrderService
 from app.database import query_db, get_db
 
 order_bp = Blueprint("orders", __name__, url_prefix="/api/orders")
+
+def format_order_response(o):
+    d = dict(o)
+    d["status"] = d.get("order_status", "PLACED")
+    d["order_number"] = d.get("id")
+    addr_raw = d.get("delivery_address_json")
+    if addr_raw and not d.get("delivery_address"):
+        try:
+            parsed = json.loads(addr_raw)
+            if isinstance(parsed, dict):
+                d["delivery_address"] = f"{parsed.get('line1', '')}, {parsed.get('city', '')} {parsed.get('pincode', '')}".strip(", ")
+            else:
+                d["delivery_address"] = str(parsed)
+        except Exception:
+            d["delivery_address"] = str(addr_raw).strip('"')
+    return d
 
 @order_bp.route("", methods=["POST"])
 @login_required
@@ -59,6 +76,9 @@ def create_order():
         return jsonify({
             "status": "success",
             "message": "Order created successfully.",
+            "order_id": order.get("id"),
+            "order_number": order.get("id"),
+            "total_amount": order.get("total_amount"),
             "order": order
         }), 201
 
@@ -115,7 +135,7 @@ def list_orders():
     else:
         return jsonify({"error": "Unauthorized role."}), 403
 
-    return jsonify({"status": "success", "orders": [dict(o) for o in orders]})
+    return jsonify({"status": "success", "orders": [format_order_response(o) for o in orders]})
 
 @order_bp.route("/<string:order_id>", methods=["GET"])
 @login_required

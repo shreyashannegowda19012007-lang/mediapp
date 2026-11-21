@@ -92,9 +92,13 @@ def upload_prescription():
     conn.commit()
     rx_id = cur.lastrowid
 
+    extracted_meds = ocr_result.get("extracted_medicines", [])
     return jsonify({
         "status": "success",
         "message": "Prescription uploaded and processed.",
+        "prescription_id": rx_id,
+        "ocr_status": "pending",
+        "detected_medicines": extracted_meds,
         "prescription": {
             "id": rx_id,
             "original_filename": original_name,
@@ -103,7 +107,8 @@ def upload_prescription():
             "doctor_name": ocr_result.get("doctor_name"),
             "patient_name": ocr_result.get("patient_name"),
             "prescription_date": ocr_result.get("prescription_date"),
-            "extracted_medicines": ocr_result.get("extracted_medicines", []),
+            "extracted_medicines": extracted_meds,
+            "detected_medicines": extracted_meds,
             "ocr_confidence": ocr_result.get("confidence", 0.0),
             "ocr_provider": ocr_result.get("provider")
         }
@@ -138,6 +143,7 @@ def list_prescriptions():
             item["extracted_medicines"] = json.loads(item["extracted_medicines"]) if item["extracted_medicines"] else []
         except Exception:
             item["extracted_medicines"] = []
+        item["detected_medicines"] = item["extracted_medicines"]
         result.append(item)
 
     return jsonify({"status": "success", "prescriptions": result})
@@ -172,6 +178,7 @@ def get_prescription(rx_id: int):
         rx_dict["extracted_medicines"] = json.loads(rx_dict["extracted_medicines"]) if rx_dict["extracted_medicines"] else []
     except Exception:
         rx_dict["extracted_medicines"] = []
+    rx_dict["detected_medicines"] = rx_dict["extracted_medicines"]
 
     return jsonify({"status": "success", "prescription": rx_dict})
 

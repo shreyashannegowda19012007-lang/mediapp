@@ -14,6 +14,8 @@ import {
   Truck,
   Building,
   KeyRound,
+  Menu,
+  X,
 } from "lucide-react";
 import { useAuthStore, RoleType } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
@@ -32,6 +34,7 @@ export function Navbar({ onOpenUploadRx, onNavigateTab, activeTab = "catalogue" 
   const { user, activeRole, switchRole, isLoading } = useAuthStore();
   const { cart, setIsOpen } = useCartStore();
   const [showRoleLimitsModal, setShowRoleLimitsModal] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const cartItemCount = cart?.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
   const currentRoleDef = ROLE_DEFINITIONS[activeRole] || ROLE_DEFINITIONS.customer;
@@ -160,8 +163,66 @@ export function Navbar({ onOpenUploadRx, onNavigateTab, activeTab = "catalogue" 
             <span className="capitalize font-semibold">{currentRoleDef.label}</span>
             <ChevronDown className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
           </button>
+
+          {/* Mobile Menu Hamburger Toggle */}
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all cursor-pointer"
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Navigation Drawer */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 p-4 space-y-3 backdrop-blur-md">
+          <div className="space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Navigation</span>
+            <div className="flex flex-col gap-1">
+              {currentRoleDef.allowedTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    if (onNavigateTab) onNavigateTab(tab.id);
+                    setMobileMenuOpen(false);
+                  }}
+                  className={clsx(
+                    "flex items-center justify-between p-2.5 text-xs font-semibold rounded-xl text-left transition-all cursor-pointer",
+                    activeTab === tab.id
+                      ? "bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 font-bold"
+                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900"
+                  )}
+                >
+                  <span>{tab.label}</span>
+                  {activeTab === tab.id && <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {currentRoleDef.canUploadRx && onOpenUploadRx && (
+            <button
+              onClick={() => {
+                onOpenUploadRx();
+                setMobileMenuOpen(false);
+              }}
+              type="button"
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-sky-600 text-white text-xs font-semibold shadow-xs"
+            >
+              <FileText className="h-4 w-4" />
+              <span>Upload Doctor Prescription</span>
+            </button>
+          )}
+
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 flex justify-between items-center">
+            <span>Helpline: 1800-200-MEDI</span>
+            <span>24/7 Clinical Support</span>
+          </div>
+        </div>
+      )}
 
       {/* Role Limits & RBAC Modal */}
       <RoleLimitsModal

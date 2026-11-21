@@ -1088,6 +1088,16 @@ clinical_html = f"""
       setTimeout(() => {{ toast.style.display = 'none'; }}, 3500);
     }}
 
+    function escapeHtml(str) {{
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }}
+
     function updateCartDrawer() {{
       const list = document.getElementById('cart-items-list');
       if (cart.length === 0) {{
@@ -1102,7 +1112,7 @@ clinical_html = f"""
         return `
           <div class="flex justify-between items-center p-3 rounded-xl border border-slate-800 bg-slate-950/60 text-xs">
             <div>
-              <div class="font-bold text-slate-200">${{item.name}}</div>
+              <div class="font-bold text-slate-200">${{escapeHtml(item.name)}}</div>
               <div class="text-slate-400">₹${{item.price}}</div>
             </div>
             <button onclick="removeFromCart(${{idx}})" class="text-rose-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
