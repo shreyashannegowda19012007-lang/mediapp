@@ -31,64 +31,46 @@ export function PharmacistReviewDesk() {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
 
-  const DEFAULT_DEMO_PRESCRIPTIONS: Prescription[] = [
-    {
-      id: 104,
-      user_id: 1,
-      user_name: "Anita Sharma (Patient #9482)",
-      file_path: "rx_demo_104.png",
-      original_filename: "Dr_Mukherjee_Apollo_Cardio_Rx.png",
-      status: "pending",
-      ocr_extracted_text: "Dr. A. Mukherjee MD Reg #49281. Tab. Amlodipine 5mg x 30 days. Tab. Atorvastatin 20mg x 30 days.",
-      ocr_confidence: 96.4,
-      detected_medicines: ["Amlodipine 5mg", "Atorvastatin 20mg"],
-      created_at: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
-    },
-    {
-      id: 105,
-      user_id: 2,
-      user_name: "Rahul Verma (Patient #3821)",
-      file_path: "rx_demo_105.png",
-      original_filename: "Manipal_Hospital_Endocrinology_Rx.png",
-      status: "pending",
-      ocr_extracted_text: "Dr. S. K. Rao Reg #28194. Inj. Humalog KwikPen 100u/ml Cold-Chain 2°C - 8°C.",
-      ocr_confidence: 94.8,
-      detected_medicines: ["Humalog KwikPen Insulin (Cold-Chain)", "Metformin 500mg SR"],
-      created_at: new Date(Date.now() - 1000 * 60 * 42).toISOString(),
-    },
-    {
-      id: 102,
-      user_id: 3,
-      user_name: "Kavita Reddy (Patient #5104)",
-      file_path: "rx_demo_102.png",
-      original_filename: "Fortis_Internal_Medicine_Rx.png",
-      status: "verified",
-      ocr_extracted_text: "Dr. Priya Nair Reg #39102. Tab. Augmentin 625 Duo. Tab. Aciloc 150mg.",
-      ocr_confidence: 98.2,
-      detected_medicines: ["Augmentin 625 Duo", "Aciloc 150mg"],
-      created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-    },
-  ];
-
-  const fetchPrescriptions = async () => {
+  const reloadPrescriptions = async () => {
     try {
       const res = await api.prescriptions.list();
       const list = res.prescriptions || [];
+      setPrescriptions(list);
       if (list.length > 0) {
-        setPrescriptions(list);
-        if (!selectedRx) setSelectedRx(list[0]);
+        setSelectedRx((prev) => (prev ? list.find((r) => r.id === prev.id) || list[0] : list[0]));
       } else {
-        setPrescriptions(DEFAULT_DEMO_PRESCRIPTIONS);
-        if (!selectedRx) setSelectedRx(DEFAULT_DEMO_PRESCRIPTIONS[0]);
+        setSelectedRx(null);
       }
     } catch {
-      setPrescriptions(DEFAULT_DEMO_PRESCRIPTIONS);
-      if (!selectedRx) setSelectedRx(DEFAULT_DEMO_PRESCRIPTIONS[0]);
+      setPrescriptions([]);
+      setSelectedRx(null);
     }
   };
 
   useEffect(() => {
-    fetchPrescriptions();
+    let ignore = false;
+    api.prescriptions
+      .list()
+      .then((res) => {
+        if (!ignore) {
+          const list = res.prescriptions || [];
+          setPrescriptions(list);
+          if (list.length > 0) {
+            setSelectedRx((prev) => (prev ? list.find((r) => r.id === prev.id) || list[0] : list[0]));
+          } else {
+            setSelectedRx(null);
+          }
+        }
+      })
+      .catch(() => {
+        if (!ignore) {
+          setPrescriptions([]);
+          setSelectedRx(null);
+        }
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const handleApprove = async () => {
@@ -97,7 +79,7 @@ export function PharmacistReviewDesk() {
       setIsProcessing(true);
       await api.prescriptions.verify(selectedRx.id, selectedRx.detected_medicines, pharmacistNotes);
       setFeedbackMsg(`Prescription #${selectedRx.id} clinically approved and certified.`);
-      await fetchPrescriptions();
+      await reloadPrescriptions();
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Approval failed");
     } finally {
@@ -117,7 +99,7 @@ export function PharmacistReviewDesk() {
       setFeedbackMsg(`Prescription #${selectedRx.id} rejected. Patient notified.`);
       setShowRejectModal(false);
       setRejectionReason("");
-      await fetchPrescriptions();
+      await reloadPrescriptions();
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Rejection failed");
     } finally {
@@ -212,7 +194,7 @@ export function PharmacistReviewDesk() {
                 }}
                 className="max-w-full max-h-[500px] flex items-center justify-center shadow-lg rounded-xl overflow-hidden bg-white"
               >
-                {selectedRx.file_path.endsWith(".pdf") ? (
+                {selectedRx.file_path && selectedRx.file_path.endsWith(".pdf") ? (
                   <div className="p-12 text-center space-y-2">
                     <FileText className="h-16 w-16 text-sky-500 mx-auto" />
                     <div className="text-sm font-bold text-slate-800">{selectedRx.original_filename}</div>
@@ -220,13 +202,12 @@ export function PharmacistReviewDesk() {
                   </div>
                 ) : (
                   <img
-                    src={`/uploads/prescriptions/${selectedRx.file_path}`}
+                    src={`/api/prescriptions/${selectedRx.id}/file`}
                     alt="Prescription Document"
                     className="max-h-[500px] object-contain rounded-xl"
                     onError={(e) => {
-                      // Fallback clinical mock placeholder if local file is simulated
-                      (e.target as HTMLImageElement).src =
-                        "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800&auto=format&fit=crop&q=60";
+                      // Clinical fallback notice
+                      (e.target as HTMLImageElement).alt = "Prescription image preview unavailable";
                     }}
                   />
                 )}
@@ -234,7 +215,8 @@ export function PharmacistReviewDesk() {
             ) : (
               <div className="text-center py-20 text-slate-400">
                 <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p className="text-sm font-medium">Select a prescription from the queue to inspect</p>
+                <p className="text-sm font-medium">Prescription Review Queue is Clear</p>
+                <p className="text-xs text-slate-400 mt-1">All uploaded clinical prescriptions have been verified or resolved.</p>
               </div>
             )}
           </div>

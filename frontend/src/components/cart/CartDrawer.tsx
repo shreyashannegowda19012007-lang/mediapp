@@ -1,32 +1,58 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, Trash2, Plus, Minus, ShieldCheck, AlertTriangle, ArrowRight, ShoppingBag } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, Trash2, Plus, Minus, ShieldCheck, AlertTriangle, ArrowRight, ShoppingBag, CreditCard, Banknote, Smartphone } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
-import { api } from "@/lib/api";
+import { api, Prescription } from "@/lib/api";
 
 interface CartDrawerProps {
   onOrderPlaced?: (orderId: number) => void;
 }
 
 export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
-  const { cart, isOpen, setIsOpen, updateQuantity, removeItem, clearCart, fetchCart } = useCartStore();
+  const { cart, isOpen, setIsOpen, updateQuantity, removeItem, clearCart } = useCartStore();
   const [address, setAddress] = useState("Flat 402, Green Glen Layout, Bellandur, Bengaluru 560103");
+  const [paymentMethod, setPaymentMethod] = useState<"COD" | "UPI" | "CARD">("COD");
+  const [userPrescriptions, setUserPrescriptions] = useState<Prescription[]>([]);
+  const [selectedRxId, setSelectedRxId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
 
-  if (!isOpen) return null;
-
   const items = cart?.items || [];
-  const pricing = cart?.pricing || { subtotal: 0, delivery_fee: 40, tax: 0, discount: 0, total: 40 };
+  const pricing = cart?.pricing || { subtotal: 0, delivery_fee: 30, tax: 0, discount: 0, total: 30 };
   const hasRx = cart?.has_prescription_items || false;
 
+  useEffect(() => {
+    if (isOpen && hasRx) {
+      api.prescriptions
+        .list()
+        .then((res) => {
+          const list = res.prescriptions || [];
+          setUserPrescriptions(list);
+          if (list.length > 0 && !selectedRxId) {
+            setSelectedRxId(list[0].id);
+          }
+        })
+        .catch(() => {
+          setUserPrescriptions([]);
+        });
+    }
+  }, [isOpen, hasRx, selectedRxId]);
+
+  if (!isOpen) return null;
+
   const handleCheckout = async () => {
+    if (hasRx && !selectedRxId) {
+      alert("This order contains prescription-only (Rx) medicines. Please upload or link a prescription.");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const res = await api.orders.create({
         delivery_address: address,
-        payment_method: "COD",
+        payment_method: paymentMethod,
+        prescription_id: hasRx && selectedRxId ? selectedRxId : undefined,
       });
       setOrderSuccess(res.order_number);
       await clearCart();
@@ -94,14 +120,39 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
               </div>
             ) : (
               <>
-                {/* Rx Warning Notice */}
+                {/* Rx Warning Notice & Prescription Selection */}
                 {hasRx && (
-                  <div className="flex items-start gap-2.5 p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs text-amber-800 dark:text-amber-300">
-                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600" />
-                    <div>
-                      <strong className="block font-semibold">Prescription (Rx) Required</strong>
-                      Contains prescription medicines. A valid doctor's prescription must be uploaded or verified by our clinical pharmacist before delivery handoff.
+                  <div className="space-y-3 p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs text-amber-800 dark:text-amber-300">
+                    <div className="flex items-start gap-2.5">
+                      <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600" />
+                      <div>
+                        <strong className="block font-semibold">Prescription (Rx) Required</strong>
+                        Contains prescription medicines. A valid doctor&apos;s prescription must be attached for pharmacist verification.
+                      </div>
                     </div>
+
+                    {userPrescriptions.length > 0 ? (
+                      <div className="pt-2 border-t border-amber-500/20">
+                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          Select Uploaded Prescription:
+                        </label>
+                        <select
+                          value={selectedRxId ?? ""}
+                          onChange={(e) => setSelectedRxId(Number(e.target.value))}
+                          className="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 text-slate-800 dark:text-slate-200"
+                        >
+                          {userPrescriptions.map((rx) => (
+                            <option key={rx.id} value={rx.id}>
+                              Rx #{rx.id} - {rx.original_filename} ({rx.status.toUpperCase()})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : (
+                      <div className="p-2 rounded-lg bg-amber-500/20 text-amber-900 dark:text-amber-200 text-[11px]">
+                        No uploaded prescription found on this account. Please upload your doctor&apos;s prescription via the Upload Rx button before completing checkout.
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -162,6 +213,51 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
                     rows={2}
                     className="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
                   />
+                </div>
+
+                {/* Payment Method Selector */}
+                <div className="space-y-1.5 pt-2">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Payment Method
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("COD")}
+                      className={`flex flex-col items-center justify-center p-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                        paymentMethod === "COD"
+                          ? "border-sky-500 bg-sky-50/70 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 shadow-xs"
+                          : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                      }`}
+                    >
+                      <Banknote className="h-4 w-4 mb-1 text-sky-600 dark:text-sky-400" />
+                      <span>COD</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("UPI")}
+                      className={`flex flex-col items-center justify-center p-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                        paymentMethod === "UPI"
+                          ? "border-sky-500 bg-sky-50/70 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 shadow-xs"
+                          : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                      }`}
+                    >
+                      <Smartphone className="h-4 w-4 mb-1 text-sky-600 dark:text-sky-400" />
+                      <span>UPI</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("CARD")}
+                      className={`flex flex-col items-center justify-center p-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                        paymentMethod === "CARD"
+                          ? "border-sky-500 bg-sky-50/70 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 shadow-xs"
+                          : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                      }`}
+                    >
+                      <CreditCard className="h-4 w-4 mb-1 text-sky-600 dark:text-sky-400" />
+                      <span>Card</span>
+                    </button>
+                  </div>
                 </div>
               </>
             )}

@@ -37,7 +37,7 @@ export const useCartStore = create<CartState>((set, get) => ({
           pharmacy_id: 1,
           pharmacy_name: "Apollo Clinical Hub (Central)",
           items: [],
-          pricing: { subtotal: 0, delivery_fee: 40, tax: 0, discount: 0, total: 40 },
+          pricing: { subtotal: 0, delivery_fee: 30, tax: 0, discount: 0, total: 30 },
           has_prescription_items: false,
         },
       });
@@ -49,7 +49,8 @@ export const useCartStore = create<CartState>((set, get) => ({
   addItem: async (medicineId: number, quantity = 1) => {
     try {
       set({ isLoading: true, error: null });
-      const updated = await api.cart.addItem(medicineId, quantity);
+      await api.cart.addItem(medicineId, quantity);
+      const updated = await api.cart.get();
       set({ cart: updated, isOpen: true });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to add item to cart";
@@ -67,7 +68,8 @@ export const useCartStore = create<CartState>((set, get) => ({
         await get().removeItem(cartItemId);
         return;
       }
-      const updated = await api.cart.updateItem(cartItemId, quantity);
+      await api.cart.updateItem(cartItemId, quantity);
+      const updated = await api.cart.get();
       set({ cart: updated });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to update item";
@@ -80,7 +82,8 @@ export const useCartStore = create<CartState>((set, get) => ({
   removeItem: async (cartItemId: number) => {
     try {
       set({ isLoading: true, error: null });
-      const updated = await api.cart.removeItem(cartItemId);
+      await api.cart.removeItem(cartItemId);
+      const updated = await api.cart.get();
       set({ cart: updated });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to remove item";
@@ -100,7 +103,7 @@ export const useCartStore = create<CartState>((set, get) => ({
           pharmacy_id: 1,
           pharmacy_name: "Apollo Clinical Hub (Central)",
           items: [],
-          pricing: { subtotal: 0, delivery_fee: 40, tax: 0, discount: 0, total: 40 },
+          pricing: { subtotal: 0, delivery_fee: 30, tax: 0, discount: 0, total: 30 },
           has_prescription_items: false,
         },
       });

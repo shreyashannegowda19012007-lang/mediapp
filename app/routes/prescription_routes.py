@@ -189,7 +189,7 @@ def verify_prescription(rx_id: int):
 
     data = request.get_json() or {}
     decision = data.get("decision", "verified") # 'verified' or 'rejected'
-    rejection_reason = data.get("rejection_reason")
+    rejection_reason = data.get("rejection_reason") or data.get("reason")
     user_id = session["user_id"]
 
     if decision not in ("verified", "rejected"):
@@ -237,13 +237,68 @@ def verify_prescription(rx_id: int):
                     notes=f"Prescription rejected by pharmacist: {rejection_reason or 'Clinical documentation invalid'}",
                     conn=conn
                 )
-        except Exception as e:
-            # Continue updating remaining orders if any individual order has transition issues
+        except Exception:
             pass
 
     return jsonify({
         "status": "success",
         "message": f"Prescription has been marked as {decision}."
+    })
+
+@prescription_bp.route("/<int:rx_id>/reject", methods=["POST"])
+@login_required
+@roles_required("pharmacy", "admin")
+def reject_prescription(rx_id: int):
+    """Convenience endpoint dedicated to prescription rejection matching frontend api.ts."""
+    if session.get("role") == "pharmacy":
+        pharm_id = session.get("pharmacy_id")
+        if not pharm_id:
+            return jsonify({"error": "User is not associated with an approved pharmacy."}), 403
+        pharm = query_db("SELECT status FROM pharmacies WHERE id = ?", (pharm_id,), one=True)
+        if not pharm or pharm["status"] != "approved":
+            return jsonify({"error": "Associated pharmacy is not approved to verify prescriptions."}), 403
+
+    data = request.get_json() or {}
+    reason = data.get("reason") or data.get("rejection_reason") or "Clinical documentation invalid"
+    user_id = session["user_id"]
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE prescriptions
+        SET status = 'rejected',
+            reviewed_by = ?,
+            rejection_reason = ?,
+            verified_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+    """, (user_id, reason, rx_id))
+    if cur.rowcount == 0:
+        return jsonify({"error": f"Prescription ID {rx_id} not found."}), 404
+    conn.commit()
+
+    user_role = session.get("role", "pharmacy")
+    linked_orders = query_db(
+        "SELECT id FROM orders WHERE prescription_id = ? AND order_status = 'AWAITING_PRESCRIPTION'",
+        (rx_id,),
+        conn=conn
+    )
+    for ord_row in linked_orders:
+        oid = ord_row["id"]
+        try:
+            OrderService.transition_order_status(
+                order_id=oid,
+                target_status="CANCELLED",
+                user_id=user_id,
+                user_role=user_role,
+                notes=f"Prescription rejected by pharmacist: {reason}",
+                conn=conn
+            )
+        except Exception:
+            pass
+
+    return jsonify({
+        "status": "success",
+        "message": "Prescription has been marked as rejected."
     })
 
 @prescription_bp.route("/<int:rx_id>/file", methods=["GET"])

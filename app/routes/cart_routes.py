@@ -96,11 +96,15 @@ def get_cart():
     return jsonify({
         "status": "success",
         "cart_id": cart["id"],
+        "pharmacy_id": pharmacy_id,
+        "pharmacy_name": pharmacy["name"] if pharmacy else "Apollo Clinical Hub (Central)",
         "pharmacy": dict(pharmacy) if pharmacy else None,
         "items": items_list,
         "item_count": sum(it["quantity"] for it in items_list),
         "totals": totals,
+        "pricing": totals,
         "has_rx_required": has_rx_required,
+        "has_prescription_items": has_rx_required,
         "has_out_of_stock": has_out_of_stock,
         "drug_interactions": ddi_result
     })

@@ -26,63 +26,46 @@ export function OrderTrackingTimeline() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
-  const DEFAULT_DEMO_ORDERS: Order[] = [
-    {
-      id: 501,
-      order_number: "ORD-2026-CC-8421",
-      status: "out_for_delivery",
-      payment_status: "paid",
-      total_amount: 1480.0,
-      delivery_address: "Flat 402, Green Glen Layout, Bellandur, Bengaluru 560103",
-      created_at: new Date(Date.now() - 1000 * 60 * 32).toISOString(),
-      cold_chain: true,
-      delivery_agent_name: "Manoj Kumar (Certified Cold-Chain Fleet)",
-      delivery_agent_phone: "+91 98450 12849",
-      otp: "4821",
-    },
-    {
-      id: 502,
-      order_number: "ORD-2026-RX-9104",
-      status: "packed",
-      payment_status: "paid",
-      total_amount: 620.5,
-      delivery_address: "12th Main Road, HAL 2nd Stage, Indiranagar, Bengaluru 560038",
-      created_at: new Date(Date.now() - 1000 * 60 * 55).toISOString(),
-      cold_chain: false,
-      delivery_agent_name: "Suresh Gowda",
-    },
-    {
-      id: 498,
-      order_number: "ORD-2026-DEL-3921",
-      status: "delivered",
-      payment_status: "paid",
-      total_amount: 345.0,
-      delivery_address: "Prestige Tech Park, Marathahalli-Sarjapur Ring Rd, Bengaluru 560103",
-      created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
-      cold_chain: true,
-      delivery_agent_name: "Manoj Kumar",
-    },
-  ];
-
-  const fetchOrders = async () => {
+  const reloadOrders = async () => {
     try {
       const res = await api.orders.list();
       const list = res.orders || [];
+      setOrders(list);
       if (list.length > 0) {
-        setOrders(list);
-        if (!selectedOrder) setSelectedOrder(list[0]);
+        setSelectedOrder((prev) => (prev ? list.find((o) => o.id === prev.id) || list[0] : list[0]));
       } else {
-        setOrders(DEFAULT_DEMO_ORDERS);
-        if (!selectedOrder) setSelectedOrder(DEFAULT_DEMO_ORDERS[0]);
+        setSelectedOrder(null);
       }
     } catch {
-      setOrders(DEFAULT_DEMO_ORDERS);
-      if (!selectedOrder) setSelectedOrder(DEFAULT_DEMO_ORDERS[0]);
+      setOrders([]);
+      setSelectedOrder(null);
     }
   };
 
   useEffect(() => {
-    fetchOrders();
+    let ignore = false;
+    api.orders
+      .list()
+      .then((res) => {
+        if (!ignore) {
+          const list = res.orders || [];
+          setOrders(list);
+          if (list.length > 0) {
+            setSelectedOrder((prev) => (prev ? list.find((o) => o.id === prev.id) || list[0] : list[0]));
+          } else {
+            setSelectedOrder(null);
+          }
+        }
+      })
+      .catch(() => {
+        if (!ignore) {
+          setOrders([]);
+          setSelectedOrder(null);
+        }
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const milestones = [
@@ -126,7 +109,7 @@ export function OrderTrackingTimeline() {
       await api.delivery.verifyHandoff(selectedOrder.id, otpInput);
       setActionSuccess("Patient OTP Verified! Cold-chain delivery marked complete.");
       setOtpInput("");
-      await fetchOrders();
+      await reloadOrders();
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "OTP Verification failed");
     } finally {
@@ -176,36 +159,44 @@ export function OrderTrackingTimeline() {
           </div>
 
           <div className="space-y-2 max-h-[580px] overflow-y-auto pr-1">
-            {orders.map((o) => (
-              <button
-                key={o.id}
-                onClick={() => setSelectedOrder(o)}
-                className={clsx(
-                  "w-full p-3.5 rounded-xl border text-left transition-all cursor-pointer",
-                  selectedOrder?.id === o.id
-                    ? "border-sky-500 bg-sky-50/70 dark:bg-sky-950/40 shadow-xs"
-                    : "border-slate-200 dark:border-slate-800 hover:border-slate-300"
-                )}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm text-slate-900 dark:text-slate-100">
-                    {o.order_number}
-                  </span>
-                  <span className="font-mono text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    ₹{o.total_amount?.toFixed(2)}
-                  </span>
-                </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
-                  {o.delivery_address}
-                </div>
-                <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-[11px]">
-                  <span className="text-slate-400">{new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  <span className="capitalize font-semibold text-sky-600 dark:text-sky-400">
-                    {o.status.replace(/_/g, " ")}
-                  </span>
-                </div>
-              </button>
-            ))}
+            {orders.length === 0 ? (
+              <div className="text-center py-12 text-slate-400">
+                <Truck className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                <p className="text-xs font-medium">No active clinical orders</p>
+                <p className="text-[10px] text-slate-400 mt-1">Orders placed from the catalogue will appear here.</p>
+              </div>
+            ) : (
+              orders.map((o) => (
+                <button
+                  key={o.id}
+                  onClick={() => setSelectedOrder(o)}
+                  className={clsx(
+                    "w-full p-3.5 rounded-xl border text-left transition-all cursor-pointer",
+                    selectedOrder?.id === o.id
+                      ? "border-sky-500 bg-sky-50/70 dark:bg-sky-950/40 shadow-xs"
+                      : "border-slate-200 dark:border-slate-800 hover:border-slate-300"
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                      {o.order_number}
+                    </span>
+                    <span className="font-mono text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      ₹{o.total_amount?.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
+                    {o.delivery_address}
+                  </div>
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-[11px]">
+                    <span className="text-slate-400">{new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span className="capitalize font-semibold text-sky-600 dark:text-sky-400">
+                      {o.status.replace(/_/g, " ")}
+                    </span>
+                  </div>
+                </button>
+              ))
+            )}
           </div>
         </div>
 
@@ -371,7 +362,8 @@ export function OrderTrackingTimeline() {
           ) : (
             <div className="text-center py-24 text-slate-400 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
               <Truck className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p className="text-sm font-medium">Select an order on the left to inspect its live logistics timeline</p>
+              <p className="text-sm font-medium">No Active Deliveries Selected</p>
+              <p className="text-xs text-slate-400 mt-1">Select an order from the list or explore the medicine catalogue to place an order.</p>
             </div>
           )}
         </div>

@@ -147,6 +147,13 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
     defaultHeaders["Content-Type"] = "application/json";
   }
 
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("mediapp_token") || sessionStorage.getItem("mediapp_token");
+    if (token) {
+      (defaultHeaders as Record<string, string>)["Authorization"] = `Bearer ${token}`;
+    }
+  }
+
   const response = await fetch(endpoint, {
     ...options,
     headers: {
@@ -255,12 +262,12 @@ export const api = {
     verify: (id: number, approvedMedicines?: string[], notes?: string) =>
       apiFetch<{ status: string; message: string }>(`/api/prescriptions/${id}/verify`, {
         method: "POST",
-        body: JSON.stringify({ approved_medicines: approvedMedicines, clinical_notes: notes }),
+        body: JSON.stringify({ decision: "verified", approved_medicines: approvedMedicines, clinical_notes: notes }),
       }),
     reject: (id: number, reason: string) =>
       apiFetch<{ status: string; message: string }>(`/api/prescriptions/${id}/reject`, {
         method: "POST",
-        body: JSON.stringify({ reason }),
+        body: JSON.stringify({ decision: "rejected", reason, rejection_reason: reason }),
       }),
   },
 

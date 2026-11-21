@@ -27,6 +27,17 @@ interface RoleLimitsModalProps {
 export function RoleLimitsModal({ isOpen, onClose, onRoleSwitched }: RoleLimitsModalProps) {
   const { user, activeRole, switchRole, isLoading } = useAuthStore();
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const currentDef = ROLE_DEFINITIONS[activeRole];
@@ -171,6 +182,10 @@ export function RoleLimitsModal({ isOpen, onClose, onRoleSwitched }: RoleLimitsM
                   ) : (
                     <button
                       type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectRole(rKey);
+                      }}
                       disabled={isLoading}
                       className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer"
                     >

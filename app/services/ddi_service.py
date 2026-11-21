@@ -125,21 +125,25 @@ class DDIService:
     def get_generic_alternatives(cls, medicine_id: int) -> dict[str, Any]:
         """
         Discovers equivalent lower-cost generic medications with matching active ingredient,
-        dosage form, and strength.
+        dosage form, and strength. Supports salt-agnostic bioequivalent matching.
         """
         target = query_db("SELECT * FROM medicines WHERE id = ?", (medicine_id,), one=True)
         if not target:
             return {"target": None, "alternatives": []}
 
-        # Find medicines sharing the same generic_name and dosage_form
+        # Extract root active molecule tokens (stripping salt variations like Hydrochloride, Maleate, etc.)
+        target_tokens = normalize_substance_name(target["generic_name"])
+        primary_token = next(iter(sorted(target_tokens, key=len, reverse=True)), target["generic_name"].lower())
+
+        # Find medicines sharing the same base generic molecule and dosage_form
         candidates = query_db("""
             SELECT id, name, generic_name, strength, dosage_form, manufacturer, mrp, prescription_required
             FROM medicines
-            WHERE generic_name = ?
+            WHERE (generic_name = ? OR LOWER(generic_name) LIKE ? OR LOWER(generic_name) LIKE ?)
               AND dosage_form = ?
               AND id != ?
             ORDER BY mrp ASC
-        """, (target["generic_name"], target["dosage_form"], target["id"]))
+        """, (target["generic_name"], f"{primary_token}%", f"%{primary_token}%", target["dosage_form"], target["id"]))
 
         alternatives = []
         target_mrp = target["mrp"]

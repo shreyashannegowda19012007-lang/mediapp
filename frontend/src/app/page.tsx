@@ -30,14 +30,6 @@ export default function Home() {
     fetchCart();
   }, [fetchSession, fetchCart]);
 
-  // Synchronize tab if user changes role or if current tab is not allowed
-  useEffect(() => {
-    const targetDef = ROLE_DEFINITIONS[activeRole];
-    if (targetDef && !isTabAllowedForRole(activeTab, activeRole)) {
-      setActiveTab(targetDef.defaultTab);
-    }
-  }, [activeRole, activeTab]);
-
   const handleExploreCatalogue = () => {
     setActiveTab("catalogue");
     setTimeout(() => {
@@ -103,7 +95,7 @@ export default function Home() {
         <RxUploadModal
           isOpen={isRxModalOpen}
           onClose={() => setIsRxModalOpen(false)}
-          onUploadSuccess={() => setActiveTab("pharmacist-desk")}
+          onUploadSuccess={() => setActiveTab(activeRole === "customer" ? "logistics" : "pharmacist-desk")}
         />
       )}
 

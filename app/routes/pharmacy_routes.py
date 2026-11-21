@@ -90,6 +90,7 @@ def get_dashboard_metrics():
     })
 
 @pharmacy_bp.route("/orders", methods=["GET"])
+@pharmacy_bp.route("/orders/pending", methods=["GET"])
 @login_required
 @roles_required("pharmacy", "admin")
 def list_pharmacy_orders():
@@ -99,7 +100,16 @@ def list_pharmacy_orders():
         return jsonify({"error": str(e)}), 403
 
     status_filter = request.args.get("status")
-    if status_filter:
+    # If called via /orders/pending, default to active non-final orders if no status filter provided
+    if not status_filter and request.path.endswith("/pending"):
+        orders = query_db("""
+            SELECT o.*, u.full_name as customer_name, u.phone as customer_phone
+            FROM orders o
+            JOIN users u ON o.customer_id = u.id
+            WHERE o.pharmacy_id = ? AND o.order_status IN ('PLACED', 'AWAITING_PRESCRIPTION', 'PRESCRIPTION_VERIFIED', 'ACCEPTED', 'PREPARING')
+            ORDER BY o.created_at DESC
+        """, (pharmacy_id,))
+    elif status_filter:
         orders = query_db("""
             SELECT o.*, u.full_name as customer_name, u.phone as customer_phone
             FROM orders o
@@ -117,6 +127,87 @@ def list_pharmacy_orders():
         """, (pharmacy_id,))
 
     return jsonify({"status": "success", "orders": [dict(o) for o in orders]})
+
+@pharmacy_bp.route("/orders/<string:order_id>/pack", methods=["POST"])
+@login_required
+@roles_required("pharmacy", "admin")
+def pack_order(order_id: str):
+    """Packs order and advances state to PREPARING or READY_FOR_PICKUP."""
+    try:
+        pharmacy_id = get_current_pharmacy_id()
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
+
+    order = query_db("SELECT pharmacy_id, order_status FROM orders WHERE id = ?", (order_id,), one=True)
+    if not order:
+        return jsonify({"error": f"Order '{order_id}' not found."}), 404
+    if session.get("role") != "admin" and order["pharmacy_id"] != pharmacy_id:
+        return jsonify({"error": "Access denied. Order belongs to another pharmacy store."}), 403
+
+    curr = order["order_status"]
+    # Determine target status based on state machine
+    target = "PREPARING" if curr in ("PLACED", "ACCEPTED", "PRESCRIPTION_VERIFIED") else "READY_FOR_PICKUP"
+    try:
+        # If in PLACED or PRESCRIPTION_VERIFIED, accept first if required
+        if curr in ("PLACED", "PRESCRIPTION_VERIFIED"):
+            OrderService.transition_order_status(
+                order_id=order_id,
+                target_status="ACCEPTED",
+                user_id=session["user_id"],
+                user_role=session["role"],
+                notes="Order accepted for packing"
+            )
+        updated = OrderService.transition_order_status(
+            order_id=order_id,
+            target_status="PREPARING",
+            user_id=session["user_id"],
+            user_role=session["role"],
+            notes="Order packed and sealed in cold-chain tamper bag"
+        )
+        return jsonify({"status": "success", "message": "Order packed.", "order": updated})
+    except (PermissionError, ValueError) as e:
+        return jsonify({"error": str(e)}), 400
+
+@pharmacy_bp.route("/orders/<string:order_id>/dispatch", methods=["POST"])
+@login_required
+@roles_required("pharmacy", "admin")
+def dispatch_order(order_id: str):
+    """Marks packed order ready for pickup and logistics dispatch."""
+    try:
+        pharmacy_id = get_current_pharmacy_id()
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
+
+    order = query_db("SELECT pharmacy_id, order_status FROM orders WHERE id = ?", (order_id,), one=True)
+    if not order:
+        return jsonify({"error": f"Order '{order_id}' not found."}), 404
+    if session.get("role") != "admin" and order["pharmacy_id"] != pharmacy_id:
+        return jsonify({"error": "Access denied. Order belongs to another pharmacy store."}), 403
+
+    data = request.get_json() or {}
+    batch = data.get("cold_chain_batch", "CC-2026-N8")
+    try:
+        if order["order_status"] != "PREPARING":
+            try:
+                OrderService.transition_order_status(
+                    order_id=order_id,
+                    target_status="PREPARING",
+                    user_id=session["user_id"],
+                    user_role=session["role"],
+                    notes="Prepared for dispatch"
+                )
+            except Exception:
+                pass
+        updated = OrderService.transition_order_status(
+            order_id=order_id,
+            target_status="READY_FOR_PICKUP",
+            user_id=session["user_id"],
+            user_role=session["role"],
+            notes=f"Dispatched for courier pickup. Cold chain batch: {batch}"
+        )
+        return jsonify({"status": "success", "message": "Order ready for courier pickup.", "order": updated})
+    except (PermissionError, ValueError) as e:
+        return jsonify({"error": str(e)}), 400
 
 @pharmacy_bp.route("/orders/<string:order_id>/accept", methods=["POST"])
 @login_required

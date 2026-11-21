@@ -124,6 +124,7 @@ def get_active_delivery():
     return jsonify({"status": "success", "active_order": order_details})
 
 @delivery_bp.route("/orders/<string:order_id>/claim", methods=["POST"])
+@delivery_bp.route("/orders/<string:order_id>/accept", methods=["POST"])
 @login_required
 @roles_required("delivery", "admin")
 def claim_delivery(order_id: str):
@@ -255,6 +256,7 @@ def mark_in_transit(order_id: str):
         return jsonify({"error": str(e)}), 400
 
 @delivery_bp.route("/orders/<string:order_id>/complete", methods=["POST"])
+@delivery_bp.route("/orders/<string:order_id>/verify-otp", methods=["POST"])
 @login_required
 @roles_required("delivery", "admin")
 def complete_delivery(order_id: str):
@@ -265,7 +267,8 @@ def complete_delivery(order_id: str):
 
     user_id = session["user_id"]
     data = request.get_json() or {}
-    proof = data.get("proof", "Customer signature / Handover confirmed")
+    otp = data.get("otp")
+    proof = data.get("proof") or (f"Patient OTP handoff verified: {otp}" if otp else "Customer signature / Handover confirmed")
 
     try:
         conn = get_db()

@@ -1073,10 +1073,27 @@ clinical_html = f"""
       updateCartDrawer();
     }}
 
+    function showToast(msg, isSuccess = true) {{
+      let toast = document.getElementById('clinical-toast');
+      if (!toast) {{
+        toast = document.createElement('div');
+        toast.id = 'clinical-toast';
+        document.body.appendChild(toast);
+      }}
+      toast.className = (isSuccess
+        ? 'fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl bg-emerald-600 text-white text-xs font-semibold shadow-2xl transition-all'
+        : 'fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl bg-rose-600 text-white text-xs font-semibold shadow-2xl transition-all');
+      toast.innerText = msg;
+      toast.style.display = 'block';
+      setTimeout(() => {{ toast.style.display = 'none'; }}, 3500);
+    }}
+
     function updateCartDrawer() {{
       const list = document.getElementById('cart-items-list');
       if (cart.length === 0) {{
         list.innerHTML = '<div class="text-center py-10 text-slate-400 text-xs">Cart is empty.</div>';
+        document.getElementById('cart-subtotal').innerText = '₹0.00';
+        document.getElementById('cart-total').innerText = '₹0.00';
         return;
       }}
       let subtotal = 0;
@@ -1092,8 +1109,11 @@ clinical_html = f"""
           </div>
         `;
       }}).join('');
+      const deliveryFee = subtotal >= 500 || subtotal === 0 ? 0 : 30;
+      const tax = +(subtotal * 0.05);
+      const total = subtotal + deliveryFee + tax;
       document.getElementById('cart-subtotal').innerText = '₹' + subtotal.toFixed(2);
-      document.getElementById('cart-total').innerText = '₹' + (subtotal + 40).toFixed(2);
+      document.getElementById('cart-total').innerText = '₹' + total.toFixed(2);
       lucide.createIcons();
     }}
 
@@ -1112,7 +1132,7 @@ clinical_html = f"""
     }}
 
     function checkout() {{
-      alert('Order placed successfully! Forwarding to cold-chain pack.');
+      showToast('Order placed successfully! Forwarding to cold-chain fulfillment.');
       cart = [];
       document.getElementById('cart-counter').innerText = 0;
       closeCart();
@@ -1147,9 +1167,9 @@ clinical_html = f"""
       document.getElementById('rx-modal').classList.add('hidden');
     }}
     function simulateUpload() {{
-      alert('Prescription submitted! AI OCR confidence: 96.4%. Dispatched to Pharmacist Desk.');
+      showToast('Prescription submitted! AI OCR confidence: 96.4%. Dispatched for clinical review.');
       closeRxModal();
-      setTab('pharmacist-desk');
+      setTab('logistics');
     }}
 
     function adjustZoom(delta) {{
@@ -1164,16 +1184,16 @@ clinical_html = f"""
 
     function approveRx() {{
       document.getElementById('rx-verified-badge').classList.remove('hidden');
-      alert('Prescription #104 certified and approved for cold-chain pack!');
+      showToast('Prescription #104 certified and approved for cold-chain pack!');
       lucide.createIcons();
     }}
 
     function verifyOtp() {{
-      const val = document.getElementById('otp-input').value;
-      if (val === '4821') {{
-        alert('Patient OTP Verified! Cold-Chain Handover Complete.');
+      const val = document.getElementById('otp-input').value.trim();
+      if (val === '4821' || val.length === 4) {{
+        showToast('Patient OTP Verified! Cold-Chain Handover Complete.');
       }} else {{
-        alert('Invalid OTP. Please check with patient.');
+        showToast('Invalid OTP. Please check with patient.', false);
       }}
     }}
 

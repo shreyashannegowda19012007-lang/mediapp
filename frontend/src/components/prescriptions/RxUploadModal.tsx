@@ -91,7 +91,7 @@ export function RxUploadModal({ isOpen, onClose, onUploadSuccess }: RxUploadModa
             <span>Clinical Dispensary Gateway</span>
           </div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">
-            Upload Valid Doctor's Prescription
+            Upload Valid Doctor&apos;s Prescription
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Our AI optical scanner extracts formulations within seconds for licensed pharmacist verification.
