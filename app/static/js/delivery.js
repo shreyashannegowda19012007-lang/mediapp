@@ -46,7 +46,7 @@ const DeliveryPortal = {
           <p style="color:var(--text-secondary); font-size:0.9rem;">Follow step-by-step verified fulfillment milestones to complete handover.</p>
         </div>
         <div style="display:flex; gap:10px;">
-          <button type="button" class="btn-demo-pill" id="btn-refresh-active-deliv">↻ Refresh Status</button>
+          <button type="button" class="btn-demo-pill" id="btn-refresh-active-deliv">Refresh Status</button>
         </div>
       </div>
       <div id="active-delivery-container">
@@ -269,7 +269,7 @@ const DeliveryPortal = {
           <h2>Available Orders for Delivery</h2>
           <p style="color:var(--text-secondary); font-size:0.9rem;">Orders prepared by pharmacies and ready for rider collection.</p>
         </div>
-        <button type="button" class="btn-demo-pill" id="btn-refresh-available">↻ Refresh Pool</button>
+        <button type="button" class="btn-demo-pill" id="btn-refresh-available">Refresh Pool</button>
       </div>
       <div id="available-deliveries-list">
         <div class="loading-screen"><div class="spinner"></div><p>Checking available orders...</p></div>
@@ -359,7 +359,7 @@ const DeliveryPortal = {
     container.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
         <h2>Completed Deliveries History</h2>
-        <button type="button" class="btn-demo-pill" id="btn-refresh-history">↻ Refresh</button>
+        <button type="button" class="btn-demo-pill" id="btn-refresh-history">Refresh</button>
       </div>
       <div id="delivery-history-container">
         <div class="loading-screen"><div class="spinner"></div><p>Loading delivery history...</p></div>

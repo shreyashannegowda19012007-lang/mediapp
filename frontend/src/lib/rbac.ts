@@ -70,7 +70,7 @@ export const ROLE_DEFINITIONS: Record<RoleType, RoleDefinition> = {
   admin: {
     id: "admin",
     label: "Hospital HQ Admin",
-    roleTitle: "Executive Oversight",
+    roleTitle: "Operations Administrator",
     badge: "Hospital HQ",
     description: "Monitor hospital fulfillment KPIs, dispatch velocity, cold-chain regulatory compliance, generic cost savings impact, and partner dispensaries.",
     scopes: ["read:hospital_analytics", "manage:network", "read:audit_logs", "read:all_telemetry"],

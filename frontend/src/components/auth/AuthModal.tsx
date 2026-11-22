@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { X, Lock, Mail, User, Phone, MapPin, CheckCircle2, ShieldCheck, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
-import { useAuthStore } from "@/store/useAuthStore";
+import { useAuthStore, RoleType } from "@/store/useAuthStore";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -22,15 +22,51 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [success, setSuccess] = useState<string | null>(null);
 
   const { setActiveRole } = useAuthStore();
+  const dialogRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [isOpen, onClose]);
+
+  React.useEffect(() => {
+    if (!isOpen || !dialogRef.current) return;
+    const el = dialogRef.current;
+    const focusableElements = el.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    firstElement?.focus();
+
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement?.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement?.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleTabKey);
+    return () => window.removeEventListener("keydown", handleTabKey);
+  }, [isOpen, mode]);
 
   if (!isOpen) return null;
 
@@ -43,10 +79,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     try {
       if (mode === "login") {
         const res = await api.auth.login({ email, password });
-        setActiveRole((res.user?.role as any) || "customer");
+        setActiveRole((res.user?.role as RoleType) || "customer");
         setSuccess("Authentication successful! Welcome back.");
       } else {
-        const res = await api.auth.register({
+        await api.auth.register({
           email,
           password,
           full_name: fullName,
@@ -58,8 +94,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       }
       setTimeout(() => {
         onClose();
-        window.location.reload();
-      }, 1200);
+      }, 500);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Authentication request failed");
     } finally {
@@ -74,7 +109,13 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
     >
-      <div className="relative w-full max-w-md rounded-2xl border border-sky-200 dark:border-sky-900 bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-hidden">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-modal-title"
+        className="relative w-full max-w-md rounded-2xl border border-sky-200 dark:border-sky-900 bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-hidden"
+      >
         {/* Accent Bar */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-sky-500 via-emerald-500 to-teal-400" />
 
@@ -93,7 +134,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             <ShieldCheck className="h-4 w-4" />
             <span>Encrypted Clinical Access</span>
           </div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">
+          <h2 id="auth-modal-title" className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">
             {mode === "login" ? "Patient / Staff Sign In" : "Register Patient Account"}
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -131,7 +172,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
-            Register Patient
+            Create Patient Account
           </button>
         </div>
 
@@ -152,12 +193,13 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           {mode === "register" && (
             <>
               <div>
-                <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                <label htmlFor="auth-fullname" className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Full Name
                 </label>
                 <div className="relative">
                   <User className="h-4 w-4 absolute left-3 top-2.5 text-slate-400" />
                   <input
+                    id="auth-fullname"
                     type="text"
                     required
                     value={fullName}
@@ -169,12 +211,13 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                <label htmlFor="auth-phone" className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Phone Number
                 </label>
                 <div className="relative">
                   <Phone className="h-4 w-4 absolute left-3 top-2.5 text-slate-400" />
                   <input
+                    id="auth-phone"
                     type="tel"
                     required
                     value={phone}
@@ -186,12 +229,13 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                <label htmlFor="auth-address" className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 block mb-1">
                   Default Delivery Address
                 </label>
                 <div className="relative">
                   <MapPin className="h-4 w-4 absolute left-3 top-2.5 text-slate-400" />
                   <input
+                    id="auth-address"
                     type="text"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
@@ -204,12 +248,13 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           )}
 
           <div>
-            <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+            <label htmlFor="auth-email" className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 block mb-1">
               Email Address
             </label>
             <div className="relative">
               <Mail className="h-4 w-4 absolute left-3 top-2.5 text-slate-400" />
               <input
+                id="auth-email"
                 type="email"
                 required
                 value={email}
@@ -221,12 +266,13 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           </div>
 
           <div>
-            <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+            <label htmlFor="auth-password" className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 block mb-1">
               Password
             </label>
             <div className="relative">
               <Lock className="h-4 w-4 absolute left-3 top-2.5 text-slate-400" />
               <input
+                id="auth-password"
                 type="password"
                 required
                 value={password}

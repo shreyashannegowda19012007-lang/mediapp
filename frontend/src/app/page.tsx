@@ -11,7 +11,7 @@ import { RxUploadModal } from "@/components/prescriptions/RxUploadModal";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
-import { ShieldCheck, HeartHandshake, Phone, Mail, MapPin } from "lucide-react";
+import { ShieldCheck, Phone } from "lucide-react";
 import { ROLE_DEFINITIONS, isTabAllowedForRole } from "@/lib/rbac";
 import { AccessRestricted } from "@/components/auth/AccessRestricted";
 import { RoleLimitsModal } from "@/components/auth/RoleLimitsModal";

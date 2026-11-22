@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { X, Trash2, Plus, Minus, ShieldCheck, AlertTriangle, ArrowRight, ShoppingBag, CreditCard, Banknote, Smartphone } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { X, Trash2, Plus, Minus, ShieldCheck, AlertTriangle, ArrowRight, ShoppingBag, CreditCard, Banknote, Smartphone, ThermometerSnowflake } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { api, Prescription } from "@/lib/api";
 
@@ -21,6 +21,51 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
   const items = cart?.items || [];
   const pricing = cart?.pricing || { subtotal: 0, delivery_fee: 30, tax: 0, discount: 0, total: 30 };
   const hasRx = cart?.has_prescription_items || false;
+  const drawerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, setIsOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !drawerRef.current) return;
+    const el = drawerRef.current;
+    const focusableElements = el.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    firstElement?.focus();
+
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement?.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement?.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleTabKey);
+    return () => window.removeEventListener("keydown", handleTabKey);
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -99,7 +144,12 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) setIsOpen(false);
+      }}
+      className="fixed inset-0 z-50 overflow-hidden"
+    >
       {/* Backdrop */}
       <div
         onClick={() => setIsOpen(false)}
@@ -107,7 +157,13 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
       />
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between">
+        <div
+          ref={drawerRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="cart-drawer-title"
+          className="w-screen max-w-md bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between"
+        >
           {/* Header */}
           <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -115,7 +171,9 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
                 <ShoppingBag className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Prescription Cart</h2>
+                <h2 id="cart-drawer-title" className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                  Prescription Cart
+                </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {cart?.pharmacy_name || "Apollo Clinical Hub"}
                 </p>
@@ -212,22 +270,40 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
 
                 {/* Items List */}
                 <div className="space-y-3">
-                  {items.map((item) => (
-                    <div
-                      key={item.cart_item_id}
-                      className="p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 flex items-start justify-between gap-3"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-sm text-slate-900 dark:text-slate-100 truncate">
-                          {item.name}
+                  {items.map((item) => {
+                    const isColdChain = Boolean(
+                      item.cold_chain ||
+                      item.requires_cold_chain ||
+                      (item.category && (
+                        item.category.toLowerCase().includes("insulin") ||
+                        item.category.toLowerCase().includes("vaccine") ||
+                        item.category.toLowerCase().includes("biological")
+                      )) ||
+                      (item.name && item.name.toLowerCase().includes("insulin"))
+                    );
+
+                    return (
+                      <div
+                        key={item.cart_item_id}
+                        className="p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 flex items-start justify-between gap-3"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm text-slate-900 dark:text-slate-100 truncate">
+                            {item.name}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                            {item.generic_name} • {item.dosage_form}
+                          </div>
+                          {isColdChain && (
+                            <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-cyan-500/10 text-cyan-800 dark:text-cyan-400 border border-cyan-500/30">
+                              <ThermometerSnowflake className="h-3 w-3" />
+                              <span>2°C - 8°C Nominal IoT Monitored</span>
+                            </div>
+                          )}
+                          <div className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-1">
+                            ₹{item.unit_price.toFixed(2)} × {item.quantity} = ₹{item.line_total.toFixed(2)}
+                          </div>
                         </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                          {item.generic_name} • {item.dosage_form}
-                        </div>
-                        <div className="text-xs font-bold text-slate-800 dark:text-slate-200 mt-1">
-                          ₹{item.unit_price.toFixed(2)} × {item.quantity} = ₹{item.line_total.toFixed(2)}
-                        </div>
-                      </div>
 
                       {/* Quantity Controls */}
                       <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-1">
@@ -256,7 +332,8 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
-                  ))}
+                  );
+                })}
                 </div>
 
                 {/* Delivery Address Input */}

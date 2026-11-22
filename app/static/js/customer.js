@@ -877,7 +877,7 @@ const CustomerPortal = {
           <h2>Your Orders & Real-time Delivery Tracking</h2>
           <p style="color:var(--text-secondary); font-size:0.9rem;">Track live courier progress and prescription verification status.</p>
         </div>
-        <button type="button" class="btn-alt-pill" id="btn-refresh-orders">↻ Refresh</button>
+        <button type="button" class="btn-alt-pill" id="btn-refresh-orders">Refresh</button>
       </div>
       <div id="customer-orders-list">
         <div class="loading-screen"><div class="spinner"></div><p style="color:var(--text-muted);">Fetching your orders...</p></div>

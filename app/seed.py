@@ -136,6 +136,16 @@ def seed_database(db_path: str = None):
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, med_rows)
 
+            cur.execute("""
+                UPDATE medicines
+                SET requires_cold_chain = 1
+                WHERE LOWER(category) LIKE '%insulin%'
+                   OR LOWER(category) LIKE '%vaccine%'
+                   OR LOWER(category) LIKE '%biological%'
+                   OR LOWER(name) LIKE '%insulin%'
+                   OR LOWER(name) LIKE '%vaccine%'
+            """)
+
     # 6. Seed Pharmacy Inventory for Pharmacy 1 and Pharmacy 2
     # Ensure all catalogue medicines are stocked with realistic quantities and prices
     cur.execute("SELECT id, mrp FROM medicines")

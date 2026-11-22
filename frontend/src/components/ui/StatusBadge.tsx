@@ -10,7 +10,9 @@ export type StatusType =
   | "verified"
   | "pending"
   | "in-transit"
-  | "delivered";
+  | "delivered"
+  | "rejected"
+  | "crimson";
 
 interface StatusBadgeProps {
   type: StatusType;
@@ -61,7 +63,14 @@ export function StatusBadge({ type, label, size = "md", className }: StatusBadge
           )}
         >
           <ThermometerSnowflake className="h-3.5 w-3.5" />
-          <span>{label || "Cold-Chain (2°C - 8°C)"}</span>
+          {label ? (
+            <span>{label}</span>
+          ) : (
+            <>
+              <span>Cold-Chain</span>
+              <span className="ml-1 text-[11px] opacity-90">(2°C - 8°C)</span>
+            </>
+          )}
         </span>
       );
 
@@ -83,7 +92,7 @@ export function StatusBadge({ type, label, size = "md", className }: StatusBadge
       return (
         <span
           className={clsx(
-            "inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 font-medium",
+            "inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-medium",
             sizeClasses,
             className
           )}
@@ -125,13 +134,28 @@ export function StatusBadge({ type, label, size = "md", className }: StatusBadge
       return (
         <span
           className={clsx(
-            "inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 font-medium",
+            "inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-medium",
             sizeClasses,
             className
           )}
         >
           <CheckCircle2 className="h-3.5 w-3.5" />
           <span>{label || "Delivered"}</span>
+        </span>
+      );
+
+    case "rejected":
+    case "crimson":
+      return (
+        <span
+          className={clsx(
+            "inline-flex items-center rounded-full border border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-400 font-medium",
+            sizeClasses,
+            className
+          )}
+        >
+          <AlertTriangle className="h-3.5 w-3.5" />
+          <span>{label || "Rejected / Restricted"}</span>
         </span>
       );
 

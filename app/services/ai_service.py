@@ -94,6 +94,7 @@ class AIService:
                 "source": "emergency_triage_engine",
                 "is_emergency": True,
                 "response": emergency_warning,
+                "emergency_message": emergency_warning,
                 "disclaimer": "Automated emergency red-flag alert. Immediate medical intervention required."
             }
 

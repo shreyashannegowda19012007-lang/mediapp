@@ -6,7 +6,6 @@ import {
   Sparkles,
   ShieldCheck,
   ThermometerSnowflake,
-  Truck,
   ArrowRight,
   Clock,
   Pill,

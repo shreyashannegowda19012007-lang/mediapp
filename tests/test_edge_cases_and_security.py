@@ -346,44 +346,49 @@ def test_delivery_driver_hoarding_prevention(app, client):
         conn = get_db()
         cur = conn.cursor()
         cur.execute("DELETE FROM orders WHERE id LIKE 'ORD-TEST-CAP-%'")
-
-        # Setup 6 orders in READY_FOR_PICKUP
-        for i in range(1, 7):
-            cur.execute(f"""
-                INSERT INTO orders (id, customer_id, pharmacy_id, delivery_address_json, subtotal, tax, delivery_fee, discount, total_amount, currency, payment_status, order_status)
-                VALUES ('ORD-TEST-CAP-{i}', 1, 1, '{{"city":"Blr"}}', 100, 5, 30, 0, 135, 'INR', 'paid', 'READY_FOR_PICKUP')
-            """)
         conn.commit()
 
-        # Login as delivery rider
-        client.post("/api/auth/login", json={"email": "demo.delivery@mediapp.local", "password": "Delivery@MediApp2026!"})
+        try:
+            # Setup 6 orders in READY_FOR_PICKUP
+            for i in range(1, 7):
+                cur.execute(f"""
+                    INSERT INTO orders (id, customer_id, pharmacy_id, delivery_address_json, subtotal, tax, delivery_fee, discount, total_amount, currency, payment_status, order_status)
+                    VALUES ('ORD-TEST-CAP-{i}', 1, 1, '{{"city":"Blr"}}', 100, 5, 30, 0, 135, 'INR', 'paid', 'READY_FOR_PICKUP')
+                """)
+            conn.commit()
 
-        # Count how many active orders rider already has
-        cur.execute("SELECT COUNT(*) as c FROM orders WHERE delivery_person_id = 4 AND order_status IN ('DELIVERY_ASSIGNED', 'PICKED_UP', 'IN_TRANSIT')")
-        existing_active = cur.fetchone()["c"]
+            # Login as delivery rider
+            client.post("/api/auth/login", json={"email": "demo.delivery@mediapp.local", "password": "Delivery@MediApp2026!"})
 
-        # Claim orders up to capacity limit (5)
-        claimed_ids = []
-        for i in range(1, 6 - existing_active + 1):
-            r = client.post(f"/api/delivery/orders/ORD-TEST-CAP-{i}/claim")
-            if r.status_code == 200:
-                claimed_ids.append(f"ORD-TEST-CAP-{i}")
+            # Count how many active orders rider already has
+            cur.execute("SELECT COUNT(*) as c FROM orders WHERE delivery_person_id = 4 AND order_status IN ('DELIVERY_ASSIGNED', 'PICKED_UP', 'IN_TRANSIT')")
+            existing_active = cur.fetchone()["c"]
 
-        # Next claim exceeding capacity must be rejected with 409
-        r_exceed = client.post(f"/api/delivery/orders/ORD-TEST-CAP-6/claim")
-        assert r_exceed.status_code == 409
-        assert "maximum active delivery capacity" in r_exceed.get_json()["error"].lower()
+            # Claim orders up to capacity limit (5)
+            claimed_ids = []
+            for i in range(1, 6 - existing_active + 1):
+                r = client.post(f"/api/delivery/orders/ORD-TEST-CAP-{i}/claim")
+                if r.status_code == 200:
+                    claimed_ids.append(f"ORD-TEST-CAP-{i}")
 
-        # Complete one claimed order
-        if claimed_ids:
-            first_id = claimed_ids[0]
-            client.post(f"/api/delivery/orders/{first_id}/pickup")
-            client.post(f"/api/delivery/orders/{first_id}/in-transit")
-            client.post(f"/api/delivery/orders/{first_id}/complete", json={"proof": "Delivered to door"})
+            # Next claim exceeding capacity must be rejected with 409
+            r_exceed = client.post(f"/api/delivery/orders/ORD-TEST-CAP-6/claim")
+            assert r_exceed.status_code == 409
+            assert "maximum active delivery capacity" in r_exceed.get_json()["error"].lower()
 
-            # Now claiming ORD-TEST-CAP-6 succeeds
-            r_retry = client.post(f"/api/delivery/orders/ORD-TEST-CAP-6/claim")
-            assert r_retry.status_code == 200
+            # Complete one claimed order
+            if claimed_ids:
+                first_id = claimed_ids[0]
+                client.post(f"/api/delivery/orders/{first_id}/pickup")
+                client.post(f"/api/delivery/orders/{first_id}/in-transit")
+                client.post(f"/api/delivery/orders/{first_id}/complete", json={"proof": "Delivered to door"})
+
+                # Now claiming ORD-TEST-CAP-6 succeeds
+                r_retry = client.post(f"/api/delivery/orders/ORD-TEST-CAP-6/claim")
+                assert r_retry.status_code == 200
+        finally:
+            cur.execute("DELETE FROM orders WHERE id LIKE 'ORD-TEST-CAP-%'")
+            conn.commit()
 
 def test_empty_prescription_file_rejected(client):
     """Verifies that 0-byte file uploads are rejected with 400."""

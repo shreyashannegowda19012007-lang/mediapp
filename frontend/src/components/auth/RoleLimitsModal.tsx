@@ -10,9 +10,7 @@ import {
   Lock,
   CheckCircle2,
   X,
-  ExternalLink,
   KeyRound,
-  AlertTriangle,
 } from "lucide-react";
 import { useAuthStore, RoleType } from "@/store/useAuthStore";
 import { ROLE_DEFINITIONS } from "@/lib/rbac";
@@ -25,28 +23,69 @@ interface RoleLimitsModalProps {
 }
 
 export function RoleLimitsModal({ isOpen, onClose, onRoleSwitched }: RoleLimitsModalProps) {
-  const { user, activeRole, switchRole, isLoading } = useAuthStore();
+  const { user, activeRole, switchRole } = useAuthStore();
+  const dialogRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [isOpen, onClose]);
+
+  React.useEffect(() => {
+    if (!isOpen || !dialogRef.current) return;
+    const el = dialogRef.current;
+    const focusableElements = el.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    firstElement?.focus();
+
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement?.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement?.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleTabKey);
+    return () => window.removeEventListener("keydown", handleTabKey);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const currentDef = ROLE_DEFINITIONS[activeRole];
 
   const handleSelectRole = async (role: RoleType) => {
-    if (role === activeRole) return;
-    await switchRole(role);
-    onRoleSwitched?.(role);
     onClose();
+    if (role !== activeRole) {
+      try {
+        await switchRole(role);
+        onRoleSwitched?.(role);
+      } catch (err) {
+        console.error("Failed to switch role:", err);
+      }
+    }
   };
 
   const roleIcons: Record<RoleType, React.ReactNode> = {
@@ -57,14 +96,26 @@ export function RoleLimitsModal({ isOpen, onClose, onRoleSwitched }: RoleLimitsM
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-6 sm:p-8 overflow-hidden max-h-[90vh] flex flex-col">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200"
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="role-limits-title"
+        className="relative w-full max-w-2xl rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-6 sm:p-8 overflow-hidden max-h-[90vh] flex flex-col"
+      >
         {/* Top Accent Gradient */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-sky-500 via-emerald-500 to-teal-400" />
 
         {/* Close Button */}
         <button
           onClick={onClose}
+          aria-label="Close dialog"
           className="absolute top-5 right-5 p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
         >
           <X className="h-5 w-5" />
@@ -77,7 +128,7 @@ export function RoleLimitsModal({ isOpen, onClose, onRoleSwitched }: RoleLimitsM
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-black text-slate-900 dark:text-slate-100">
+              <h2 id="role-limits-title" className="text-xl font-black text-slate-900 dark:text-slate-100">
                 Role-Based Access Control
               </h2>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
@@ -131,9 +182,17 @@ export function RoleLimitsModal({ isOpen, onClose, onRoleSwitched }: RoleLimitsM
             return (
               <div
                 key={rKey}
+                role="button"
+                tabIndex={0}
                 onClick={() => handleSelectRole(rKey)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleSelectRole(rKey);
+                  }
+                }}
                 className={clsx(
-                  "p-4 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3",
+                  "p-4 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 focus:outline-hidden focus:ring-2 focus:ring-sky-500",
                   isCurrent
                     ? "border-sky-500 dark:border-sky-500/80 bg-sky-50/50 dark:bg-sky-950/30 shadow-xs"
                     : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 hover:border-slate-300 dark:hover:border-slate-700"
@@ -180,17 +239,9 @@ export function RoleLimitsModal({ isOpen, onClose, onRoleSwitched }: RoleLimitsM
                       <CheckCircle2 className="h-4 w-4" /> Active
                     </span>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectRole(rKey);
-                      }}
-                      disabled={isLoading}
-                      className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer"
-                    >
+                    <span className="px-3.5 py-1.5 rounded-xl bg-slate-100 group-hover:bg-slate-200 dark:bg-slate-800 dark:group-hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold transition-all">
                       Switch Persona
-                    </button>
+                    </span>
                   )}
                 </div>
               </div>

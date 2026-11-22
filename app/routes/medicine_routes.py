@@ -43,8 +43,17 @@ def search_medicines():
         params.append(dosage_form)
 
     if rx is not None and rx != "":
-        conditions.append("m.prescription_required = ?")
-        params.append(int(rx))
+        rx_str = str(rx).strip().lower()
+        if rx_str in ("1", "true", "yes"):
+            conditions.append("m.prescription_required = ?")
+            params.append(1)
+        elif rx_str in ("0", "false", "no"):
+            conditions.append("m.prescription_required = ?")
+            params.append(0)
+        elif rx_str in ("all",):
+            pass
+        else:
+            return jsonify({"error": f"Invalid value for rx parameter: '{rx}'. Expected 0, 1, true, or false."}), 400
 
     if cold_chain is not None and str(cold_chain).lower() in ("1", "true", "yes"):
         conditions.append("m.requires_cold_chain = 1")

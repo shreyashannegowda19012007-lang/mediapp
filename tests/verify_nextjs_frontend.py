@@ -106,21 +106,49 @@ def test_overhauled_frontend():
         # -------------------------------------------------------------
         # 6. Tab Navigation: Pharmacist Desk, Logistics Timeline, Hospital Analytics
         # -------------------------------------------------------------
-        btn_pharma = page.locator('button:has-text("Pharmacist Desk")')
-        btn_pharma.click()
-        time.sleep(0.8)
+        role_btn = page.locator("header button[title='View Auth0 Role Limits & Permissions']")
+
+        # Navigate / Switch to Pharmacist Review Desk
+        if not page.locator('button:has-text("Pharmacist")').first.is_visible():
+            if role_btn.is_visible():
+                role_btn.click()
+                page.wait_for_selector("text=Role-Based Access Control")
+                page.locator("div.cursor-pointer", has_text="Clinical Pharmacist").first.click()
+                time.sleep(0.8)
+        else:
+            page.locator('button:has-text("Pharmacist")').first.click()
+            time.sleep(0.8)
+
         assert page.locator('h1:has-text("Pharmacist")').is_visible(), "Pharmacist Desk not rendered"
         print("  - Pharmacist Review Desk workspace rendered with split-screen viewport")
 
-        btn_logistics = page.locator('button:has-text("Logistics & Orders")')
-        btn_logistics.click()
-        time.sleep(0.8)
+        # Navigate / Switch to Logistics & Orders
+        btn_logistics = page.locator('button:has-text("Orders"), button:has-text("Logistics"), button:has-text("Delivery Fleet")').first
+        if not btn_logistics.is_visible():
+            if role_btn.is_visible():
+                role_btn.click()
+                page.wait_for_selector("text=Role-Based Access Control")
+                page.locator("div.cursor-pointer", has_text="Delivery Rider").first.click()
+                time.sleep(0.8)
+        else:
+            btn_logistics.click()
+            time.sleep(0.8)
+
         assert page.locator('h1:has-text("Logistics")').is_visible(), "Logistics Timeline not rendered"
         print("  - Logistics & Cold-Chain tracking timeline rendered with IoT temperature badge")
 
-        btn_admin = page.locator('button:has-text("Hospital Analytics")')
-        btn_admin.click()
-        time.sleep(0.8)
+        # Navigate / Switch to Hospital Analytics & Oversight
+        btn_admin = page.locator('button:has-text("Hospital Analytics")').first
+        if not btn_admin.is_visible():
+            if role_btn.is_visible():
+                role_btn.click()
+                page.wait_for_selector("text=Role-Based Access Control")
+                page.locator("div.cursor-pointer", has_text="Hospital HQ Admin").first.click()
+                time.sleep(0.8)
+        else:
+            btn_admin.click()
+            time.sleep(0.8)
+
         assert page.locator('h1:has-text("Hospital Command")').is_visible(), "Hospital Analytics not rendered"
         print("  - Hospital Command & Logistics Oversight dashboard rendered with KPI charts")
 

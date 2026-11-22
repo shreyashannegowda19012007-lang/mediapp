@@ -40,3 +40,12 @@ def test_pharmacist_prescription_verification(auth_client):
     # Customer inspects verified state
     check_res = cust.get(f"/api/prescriptions/{rx_id}")
     assert check_res.json["prescription"]["status"] == "verified"
+
+    # Attempting to re-verify or reject an already verified prescription returns 400
+    reverify_res = pharm.post(f"/api/prescriptions/{rx_id}/verify", json={"decision": "verified"})
+    assert reverify_res.status_code == 400
+    assert "Only pending prescriptions can be reviewed or transitioned" in reverify_res.json["error"]
+
+    reject_res = pharm.post(f"/api/prescriptions/{rx_id}/reject", json={"reason": "Contradictory reject"})
+    assert reject_res.status_code == 400
+    assert "Only pending prescriptions can be reviewed or transitioned" in reject_res.json["error"]

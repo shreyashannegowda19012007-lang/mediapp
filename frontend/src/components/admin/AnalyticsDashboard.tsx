@@ -12,7 +12,6 @@ import {
   Sparkles,
   BarChart3,
   Calendar,
-  Layers,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import {
@@ -45,8 +44,6 @@ export function AnalyticsDashboard() {
     { name: "Thyronorm 50mcg", stock: 12, minThreshold: 25, pharmacy: "Apollo Central", status: "Low" },
     { name: "Covishield Booster Vial", stock: 2, minThreshold: 10, pharmacy: "Fortis Clinical Hub", status: "Critical" },
   ]);
-
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     api.admin
@@ -92,7 +89,9 @@ export function AnalyticsDashboard() {
           </div>
           <div>
             <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              Hospital Analytics & Logistics
+              <span>Hospital Command & </span>
+              <span>Analytics</span>
+              <span> Oversight</span>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-500/20">
                 Live
               </span>
@@ -191,8 +190,8 @@ export function AnalyticsDashboard() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#33415522" />
-                <XAxis dataKey="hour" stroke="#64748b" fontSize={11} />
-                <YAxis stroke="#64748b" fontSize={11} />
+                <XAxis dataKey="hour" stroke="#94a3b8" fontSize={11} />
+                <YAxis stroke="#94a3b8" fontSize={11} />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: isDark ? "#0f172a" : "#ffffff",
@@ -224,8 +223,8 @@ export function AnalyticsDashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={savingsCategoryData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#33415522" />
-                <XAxis type="number" unit="%" stroke="#64748b" fontSize={11} />
-                <YAxis dataKey="category" type="category" width={110} stroke="#64748b" fontSize={10} />
+                <XAxis type="number" unit="%" stroke="#94a3b8" fontSize={11} />
+                <YAxis dataKey="category" type="category" width={110} stroke="#94a3b8" fontSize={10} />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: isDark ? "#0f172a" : "#ffffff",
@@ -258,7 +257,7 @@ export function AnalyticsDashboard() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 uppercase tracking-wider">
+              <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-semibold uppercase tracking-wider">
                 <th className="py-2.5 px-3">Formulation & Batch Type</th>
                 <th className="py-2.5 px-3">Partner Pharmacy</th>
                 <th className="py-2.5 px-3 text-center">Remaining Stock</th>

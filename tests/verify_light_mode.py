@@ -6,8 +6,16 @@ b = p.chromium.launch()
 pg = b.new_page(viewport={'width': 1440, 'height': 900}, color_scheme='dark')
 pg.goto('http://localhost:3000', wait_until='networkidle')
 
+# Switch to Hospital HQ Admin role to access Hospital Analytics dashboard
+role_btn = pg.locator("header button[title='View Auth0 Role Limits & Permissions']")
+if role_btn.is_visible():
+    role_btn.click()
+    pg.wait_for_selector("text=Role-Based Access Control")
+    pg.locator("div.cursor-pointer", has_text="Hospital HQ Admin").first.click()
+    pg.wait_for_timeout(800)
+
 # Click Hospital Analytics tab (to match user's screenshot)
-pg.get_by_role('button', name='Hospital Analytics').click()
+pg.get_by_role('button', name='Hospital Analytics').first.click()
 pg.wait_for_timeout(500)
 
 # Switch to Light mode

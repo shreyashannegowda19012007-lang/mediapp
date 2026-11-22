@@ -39,7 +39,8 @@ def app():
 @pytest.fixture
 def client(app):
     """Test client with session cookie persistence."""
-    return app.test_client()
+    with app.app_context():
+        yield app.test_client()
 
 @pytest.fixture
 def auth_client(client):

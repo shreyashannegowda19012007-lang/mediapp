@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, Sparkles, AlertTriangle, ShieldCheck, ArrowRight, Loader2, HeartPulse } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { X, Sparkles, AlertTriangle, ShieldCheck, Loader2, HeartPulse } from "lucide-react";
 import { api } from "@/lib/api";
 
 interface AITriageModalProps {
@@ -9,20 +9,72 @@ interface AITriageModalProps {
   onClose: () => void;
 }
 
+interface TriageMedicine {
+  name?: string;
+  dosage?: string;
+}
+
+interface TriageResult {
+  is_emergency?: boolean;
+  emergency_message?: string;
+  response?: string;
+  assessment?: string;
+  care_advice?: string;
+  advice?: string;
+  summary?: string;
+  recommended_medicines?: Array<TriageMedicine | string>;
+}
+
 export function AITriageModal({ isOpen, onClose }: AITriageModalProps) {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<any | null>(null);
+  const [result, setResult] = useState<TriageResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (!isOpen || !dialogRef.current) return;
+    const el = dialogRef.current;
+    const focusableElements = el.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    firstElement?.focus();
+
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement?.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement?.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleTabKey);
+    return () => window.removeEventListener("keydown", handleTabKey);
+  }, [isOpen, result]);
 
   if (!isOpen) return null;
 
@@ -55,7 +107,13 @@ export function AITriageModal({ isOpen, onClose }: AITriageModalProps) {
       }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
     >
-      <div className="relative w-full max-w-xl rounded-2xl border border-sky-200 dark:border-sky-900 bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-hidden max-h-[90vh] flex flex-col">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ai-triage-title"
+        className="relative w-full max-w-xl rounded-2xl border border-sky-200 dark:border-sky-900 bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-hidden max-h-[90vh] flex flex-col"
+      >
         {/* Top Accent Gradient */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-sky-500 via-indigo-500 to-cyan-400" />
 
@@ -74,7 +132,7 @@ export function AITriageModal({ isOpen, onClose }: AITriageModalProps) {
             <HeartPulse className="h-4 w-4" />
             <span>AI Clinical Health Assistant</span>
           </div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">
+          <h2 id="ai-triage-title" className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">
             Symptom Assessment & Emergency Triage
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -167,16 +225,20 @@ export function AITriageModal({ isOpen, onClose }: AITriageModalProps) {
                   Recommended OTC Formulations
                 </div>
                 <div className="space-y-1.5">
-                  {result.recommended_medicines.map((m: any, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between text-xs bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-100 dark:border-slate-800">
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">
-                        {m.name || m}
-                      </span>
-                      {m.dosage && (
-                        <span className="text-[11px] text-slate-500">{m.dosage}</span>
-                      )}
-                    </div>
-                  ))}
+                  {result.recommended_medicines.map((m: TriageMedicine | string, idx: number) => {
+                    const name = typeof m === "string" ? m : (m.name || "Recommended Formulation");
+                    const dosage = typeof m === "string" ? undefined : m.dosage;
+                    return (
+                      <div key={idx} className="flex items-center justify-between text-xs bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-100 dark:border-slate-800">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">
+                          {name}
+                        </span>
+                        {dosage && (
+                          <span className="text-[11px] text-slate-500">{dosage}</span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

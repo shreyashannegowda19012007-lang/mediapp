@@ -358,7 +358,7 @@ class OrderService:
         return cls.get_order_details(order_id, managed_conn)
 
     @classmethod
-    def get_order_details(cls, order_id: str, conn: sqlite3.Connection = None) -> Mapping[str, Any] | None:
+    def get_order_details(cls, order_id: str, conn: sqlite3.Connection = None, user_role: str = None) -> Mapping[str, Any] | None:
         """Retrieves comprehensive order details with items, customer, pharmacy, delivery, and history."""
         managed_conn = conn or get_db()
         order = query_db(
@@ -418,5 +418,8 @@ class OrderService:
             order_dict["delivery_address"] = json.loads(order_dict["delivery_address_json"])
         except Exception:
             order_dict["delivery_address"] = {}
+
+        if user_role == "delivery":
+            order_dict["delivery_otp"] = None
 
         return order_dict

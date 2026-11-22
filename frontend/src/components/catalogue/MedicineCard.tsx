@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Plus, Check, Sparkles, Building2, Pill } from "lucide-react";
 import { Medicine, GenericAlternative, api } from "@/lib/api";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useCartStore } from "@/store/useCartStore";
+import { useAuthStore } from "@/store/useAuthStore";
+import { ROLE_DEFINITIONS } from "@/lib/rbac";
 import { GenericPriceMatchModal } from "./GenericPriceMatchModal";
 
 interface MedicineCardProps {
@@ -13,14 +15,81 @@ interface MedicineCardProps {
 
 export function MedicineCard({ medicine }: MedicineCardProps) {
   const addItem = useCartStore((s) => s.addItem);
+  const { activeRole } = useAuthStore();
+  const currentRoleDef = ROLE_DEFINITIONS[activeRole] || ROLE_DEFINITIONS.customer;
+
   const [isAdding, setIsAdding] = useState(false);
   const [genericData, setGenericData] = useState<GenericAlternative | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [checkingGeneric, setCheckingGeneric] = useState(false);
-
   const [authError, setAuthError] = useState<string | null>(null);
 
+  const isAlreadyGeneric =
+    medicine.name.toLowerCase().startsWith("generic ") ||
+    medicine.name.toLowerCase().includes(" generic ");
+
+  const [genericInfo, setGenericInfo] = useState<{
+    loaded: boolean;
+    hasCheaper: boolean;
+    savingsAmount: number;
+    savingsPct: number;
+    raw: GenericAlternative | null;
+  }>({
+    loaded: false,
+    hasCheaper: false,
+    savingsAmount: 0,
+    savingsPct: 0,
+    raw: null,
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    if (isAlreadyGeneric) {
+      return;
+    }
+
+    api.medicines
+      .getGenericAlternatives(medicine.id)
+      .then((res) => {
+        if (!isMounted) return;
+        const cheaper = res?.alternatives?.find((a) => a.is_cheaper);
+        if (cheaper && cheaper.savings_amount && cheaper.savings_amount > 0) {
+          setGenericInfo({
+            loaded: true,
+            hasCheaper: true,
+            savingsAmount: cheaper.savings_amount,
+            savingsPct: cheaper.savings_pct,
+            raw: res,
+          });
+        } else {
+          setGenericInfo({
+            loaded: true,
+            hasCheaper: false,
+            savingsAmount: 0,
+            savingsPct: 0,
+            raw: res,
+          });
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setGenericInfo({
+            loaded: true,
+            hasCheaper: false,
+            savingsAmount: 0,
+            savingsPct: 0,
+            raw: null,
+          });
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [medicine.id, isAlreadyGeneric]);
+
   const isColdChain =
+    Boolean(medicine.cold_chain || medicine.requires_cold_chain) ||
     medicine.category.toLowerCase().includes("insulin") ||
     medicine.category.toLowerCase().includes("vaccine") ||
     medicine.category.toLowerCase().includes("biological") ||
@@ -51,6 +120,11 @@ export function MedicineCard({ medicine }: MedicineCardProps) {
 
   const handleInspectGenericMatch = async () => {
     try {
+      if (genericInfo.raw) {
+        setGenericData(genericInfo.raw);
+        setIsModalOpen(true);
+        return;
+      }
       setCheckingGeneric(true);
       const res = await api.medicines.getGenericAlternatives(medicine.id);
       setGenericData(res);
@@ -91,7 +165,7 @@ export function MedicineCard({ medicine }: MedicineCardProps) {
           {/* Clinical Specifications */}
           <div className="grid grid-cols-2 gap-2 text-xs py-2 my-2 border-y border-slate-100 dark:border-slate-800/80 text-slate-600 dark:text-slate-400">
             <div>
-              <span className="text-[10px] uppercase font-semibold text-slate-400 dark:text-slate-500 block">
+              <span className="text-[10px] uppercase font-semibold text-slate-600 dark:text-slate-400 block">
                 Form & Strength
               </span>
               <span className="font-medium text-slate-800 dark:text-slate-200">
@@ -99,7 +173,7 @@ export function MedicineCard({ medicine }: MedicineCardProps) {
               </span>
             </div>
             <div>
-              <span className="text-[10px] uppercase font-semibold text-slate-400 dark:text-slate-500 block">
+              <span className="text-[10px] uppercase font-semibold text-slate-600 dark:text-slate-400 block">
                 Manufacturer
               </span>
               <span className="font-medium text-slate-800 dark:text-slate-200 truncate flex items-center gap-1">
@@ -114,20 +188,34 @@ export function MedicineCard({ medicine }: MedicineCardProps) {
             Category: <span className="font-medium text-slate-700 dark:text-slate-300">{medicine.category}</span>
           </div>
 
-          {/* Generic Price Match Trigger */}
-          <button
-            type="button"
-            onClick={handleInspectGenericMatch}
-            disabled={checkingGeneric}
-            aria-label={`Check generic bioequivalent alternatives for ${medicine.name}`}
-            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-sky-200 dark:border-sky-900/60 bg-sky-50/70 dark:bg-sky-950/20 text-sky-700 dark:text-sky-300 text-xs font-semibold hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-all cursor-pointer mb-4"
-          >
-            <span className="flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-sky-500" />
-              <span>Generic Price Match</span>
-            </span>
-            <span className="text-[11px] underline">Check Bioequivalent</span>
-          </button>
+          {/* Generic Price Match Trigger / Optimal Generic Indicator */}
+          {isAlreadyGeneric || (genericInfo.loaded && !genericInfo.hasCheaper) ? (
+            <div className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 text-xs font-semibold mb-4">
+              <span className="flex items-center gap-1.5">
+                <Check className="h-3.5 w-3.5 text-emerald-500" />
+                <span>Optimal Generic Price</span>
+              </span>
+              <span className="text-[11px] font-normal text-emerald-600 dark:text-emerald-400">Lowest Bioequivalent</span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleInspectGenericMatch}
+              disabled={checkingGeneric}
+              aria-label={`Check generic bioequivalent alternatives for ${medicine.name}`}
+              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-sky-200 dark:border-sky-900/60 bg-sky-50/70 dark:bg-sky-950/20 text-sky-700 dark:text-sky-300 text-xs font-semibold hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-all cursor-pointer mb-4"
+            >
+              <span className="flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-sky-500" />
+                <span>Generic Price Match</span>
+              </span>
+              <span className="text-[11px] font-bold text-sky-600 dark:text-sky-400 underline">
+                {genericInfo.hasCheaper
+                  ? `Save ₹${genericInfo.savingsAmount.toFixed(2)} (${genericInfo.savingsPct}%)`
+                  : "Check Bioequivalent"}
+              </span>
+            </button>
+          )}
         </div>
 
         {/* Pricing & Cart Action */}
@@ -152,20 +240,26 @@ export function MedicineCard({ medicine }: MedicineCardProps) {
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            disabled={isAdding || isOutOfStock}
-            aria-label={isOutOfStock ? `${medicine.name} is currently out of stock` : `Add ${medicine.name} to cart`}
-            className={`inline-flex items-center gap-1 px-3.5 py-2 rounded-xl text-xs font-semibold shadow-xs transition-all ${
-              isOutOfStock
-                ? "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
-                : "bg-sky-600 hover:bg-sky-700 active:scale-95 text-white hover:shadow-md cursor-pointer disabled:opacity-50"
-            }`}
-          >
-            {isAdding ? <Check className="h-4 w-4" /> : isOutOfStock ? null : <Plus className="h-4 w-4" />}
-            <span>{isAdding ? "Added" : isOutOfStock ? "Unavailable" : "Add to Cart"}</span>
-          </button>
+          {currentRoleDef.canAccessCart ? (
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              disabled={isAdding || isOutOfStock}
+              aria-label={isOutOfStock ? `${medicine.name} is currently out of stock` : `Add ${medicine.name} to cart`}
+              className={`inline-flex items-center gap-1 px-3.5 py-2 rounded-xl text-xs font-semibold shadow-xs transition-all ${
+                isOutOfStock
+                  ? "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
+                  : "bg-sky-600 hover:bg-sky-700 active:scale-95 text-white hover:shadow-md cursor-pointer disabled:opacity-50"
+              }`}
+            >
+              {isAdding ? <Check className="h-4 w-4" /> : isOutOfStock ? null : <Plus className="h-4 w-4" />}
+              <span>{isAdding ? "Added" : isOutOfStock ? "Unavailable" : "Add to Cart"}</span>
+            </button>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400">
+              Formulary Lookup
+            </span>
+          )}
         </div>
 
         {authError && (

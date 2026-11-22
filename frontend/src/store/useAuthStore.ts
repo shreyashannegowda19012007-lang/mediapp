@@ -17,13 +17,8 @@ interface AuthState {
   logout: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
-  user: {
-    user_id: 1,
-    email: "customer@mediapp.local",
-    full_name: "Clinical Customer Demo",
-    role: "customer",
-  },
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
   activeRole: "customer",
   isLoading: false,
   error: null,
@@ -34,9 +29,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const res = await api.auth.getSession();
       if (res.authenticated && res.user) {
         set({ user: res.user, activeRole: res.user.role });
+      } else {
+        set({ user: null, activeRole: "customer" });
       }
     } catch {
-      // Fallback to active demo role
+      set({ user: null });
     } finally {
       set({ isLoading: false });
     }

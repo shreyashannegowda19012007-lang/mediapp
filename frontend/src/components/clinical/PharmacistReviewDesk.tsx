@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   FileText,
   ShieldCheck,
@@ -8,14 +8,13 @@ import {
   CheckCircle2,
   ZoomIn,
   ZoomOut,
-  RotateCw,
   Eye,
   AlertTriangle,
   Clock,
   Sparkles,
-  PackageCheck,
   Building,
   ArrowRight,
+  X,
 } from "lucide-react";
 import { Prescription, api } from "@/lib/api";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -31,6 +30,51 @@ export function PharmacistReviewDesk() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
+  const rejectionModalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showRejectModal) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowRejectModal(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showRejectModal]);
+
+  useEffect(() => {
+    if (!showRejectModal || !rejectionModalRef.current) return;
+    const el = rejectionModalRef.current;
+    const focusableElements = el.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    firstElement?.focus();
+
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement?.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement?.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleTabKey);
+    return () => window.removeEventListener("keydown", handleTabKey);
+  }, [showRejectModal]);
 
   const reloadPrescriptions = async () => {
     try {
@@ -188,17 +232,23 @@ export function PharmacistReviewDesk() {
           </div>
 
           {/* Rx Document Canvas */}
-          <div className="flex-1 bg-slate-100/70 dark:bg-slate-950 flex items-center justify-center p-6 overflow-auto relative">
+          <div className="flex-1 bg-slate-100/70 dark:bg-slate-950 p-6 overflow-auto relative min-h-[500px] flex">
             {selectedRx ? (
               <div
+                className="m-auto flex items-center justify-center transition-all duration-150"
                 style={{
-                  transform: `scale(${zoomLevel})`,
-                  filter: invertColors ? "invert(1) hue-rotate(180deg)" : "none",
-                  transformOrigin: "center center",
-                  transition: "transform 0.15s ease-out",
+                  padding: zoomLevel > 1 ? `${Math.round((zoomLevel - 1) * 200)}px` : "16px",
                 }}
-                className="max-w-full max-h-[500px] flex items-center justify-center shadow-lg rounded-xl overflow-hidden bg-white"
               >
+                <div
+                  style={{
+                    transform: `scale(${zoomLevel})`,
+                    filter: invertColors ? "invert(1) hue-rotate(180deg)" : "none",
+                    transformOrigin: "center center",
+                    transition: "transform 0.15s ease-out",
+                  }}
+                  className="flex items-center justify-center shadow-lg rounded-xl bg-white dark:bg-slate-900"
+                >
                 {selectedRx.file_path && selectedRx.file_path.endsWith(".pdf") ? (
                   <div className="flex flex-col items-center justify-center p-2 bg-slate-50 dark:bg-slate-900 rounded-xl w-full h-[480px]">
                     <iframe
@@ -233,7 +283,8 @@ export function PharmacistReviewDesk() {
                   />
                 )}
               </div>
-            ) : (
+            </div>
+          ) : (
               <div className="text-center py-20 text-slate-400">
                 <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
                 <p className="text-sm font-medium">Prescription Review Queue is Clear</p>
@@ -299,7 +350,7 @@ export function PharmacistReviewDesk() {
                   </p>
                 </div>
                 <StatusBadge
-                  type={selectedRx.status === "verified" ? "verified" : selectedRx.status === "rejected" ? "rx" : "pending"}
+                  type={selectedRx.status === "verified" ? "verified" : selectedRx.status === "rejected" ? "rejected" : "pending"}
                   label={selectedRx.status.toUpperCase()}
                   size="sm"
                 />
@@ -383,26 +434,35 @@ export function PharmacistReviewDesk() {
 
           {/* Action Footer */}
           {selectedRx && (
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center gap-3">
-              <button
-                type="button"
-                onClick={handleApprove}
-                disabled={isProcessing || selectedRx.status === "verified"}
-                className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs shadow-md transition-all cursor-pointer disabled:opacity-50"
-              >
-                <ShieldCheck className="h-4 w-4" />
-                <span>{selectedRx.status === "verified" ? "Already Certified" : "Certify & Approve Rx"}</span>
-              </button>
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+              {selectedRx.status !== "pending" && (
+                <div className="w-full text-center text-xs font-semibold text-slate-500 dark:text-slate-400 py-1.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                  {selectedRx.status === "verified"
+                    ? "Prescription has already been certified and approved (Locked)."
+                    : "Prescription has already been rejected (Locked)."}
+                </div>
+              )}
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleApprove}
+                  disabled={isProcessing || selectedRx.status !== "pending"}
+                  className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  <span>{selectedRx.status === "verified" ? "Already Certified" : selectedRx.status === "rejected" ? "Prescription Rejected" : "Certify & Approve Rx"}</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setShowRejectModal(true)}
-                disabled={isProcessing || selectedRx.status === "rejected"}
-                className="inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl border border-rose-300 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
-              >
-                <XCircle className="h-4 w-4" />
-                <span>Reject</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setShowRejectModal(true)}
+                  disabled={isProcessing || selectedRx.status !== "pending"}
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl border border-rose-300 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <XCircle className="h-4 w-4" />
+                  <span>Reject</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -410,11 +470,31 @@ export function PharmacistReviewDesk() {
 
       {/* Clinical Rejection Reason Modal */}
       {showRejectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-2xl border border-rose-200 dark:border-rose-900 bg-white dark:bg-slate-900 p-6 space-y-4 shadow-2xl">
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowRejectModal(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
+        >
+          <div
+            ref={rejectionModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="rejection-modal-title"
+            className="relative w-full max-w-md rounded-2xl border border-rose-200 dark:border-rose-900 bg-white dark:bg-slate-900 p-6 space-y-4 shadow-2xl"
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowRejectModal(false)}
+              aria-label="Close rejection modal"
+              className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
             <div className="flex items-center gap-2 text-rose-600 font-bold text-sm">
               <AlertTriangle className="h-5 w-5" />
-              <span>Prescription Rejection Rationale</span>
+              <span id="rejection-modal-title">Prescription Rejection Rationale</span>
             </div>
             <p className="text-xs text-slate-500">
               State the reason for rejecting Rx #{selectedRx?.id}. This feedback will be sent immediately to the patient.

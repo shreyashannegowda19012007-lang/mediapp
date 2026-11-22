@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Truck, Package, MapPin, CheckCircle2, ThermometerSnowflake, ShieldCheck, RefreshCw, AlertCircle } from "lucide-react";
+import { Truck, Package, MapPin, CheckCircle2, ThermometerSnowflake, RefreshCw } from "lucide-react";
 import { Order, api } from "@/lib/api";
 
 interface DeliveryRunsBoardProps {
@@ -27,7 +27,21 @@ export function DeliveryRunsBoard({ onRunClaimed }: DeliveryRunsBoardProps) {
   };
 
   useEffect(() => {
-    fetchRuns();
+    let isMounted = true;
+    api.delivery
+      .getAvailableRuns()
+      .then((res) => {
+        if (isMounted) setRuns(res.orders || []);
+      })
+      .catch(() => {
+        if (isMounted) setRuns([]);
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleAcceptRun = async (orderId: number) => {

@@ -27,7 +27,7 @@ const PharmacyPortal = {
           <h2>Pharmacy Fulfillment Dashboard</h2>
           <p style="color:var(--text-secondary); font-size:0.9rem;" id="pharmacy-header-meta">Loading pharmacy operations...</p>
         </div>
-        <button type="button" class="btn-demo-pill" id="btn-refresh-pharm-dash">↻ Refresh Operations</button>
+        <button type="button" class="btn-demo-pill" id="btn-refresh-pharm-dash">Refresh Operations</button>
       </div>
 
       <div class="stats-grid" id="pharmacy-stats-grid">
@@ -236,7 +236,7 @@ const PharmacyPortal = {
             <option value="DELIVERED">Delivered</option>
             <option value="CANCELLED">Cancelled</option>
           </select>
-          <button type="button" class="btn-demo-pill" id="btn-refresh-orders-tab">↻ Refresh</button>
+          <button type="button" class="btn-demo-pill" id="btn-refresh-orders-tab">Refresh</button>
         </div>
       </div>
       <div id="pharmacy-orders-table-wrapper">

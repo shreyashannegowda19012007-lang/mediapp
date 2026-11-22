@@ -144,7 +144,12 @@ def list_orders():
     else:
         return jsonify({"error": "Unauthorized role."}), 403
 
-    return jsonify({"status": "success", "orders": [format_order_response(o) for o in orders]})
+    formatted_orders = [format_order_response(o) for o in orders]
+    if role == "delivery":
+        for fo in formatted_orders:
+            fo["delivery_otp"] = None
+
+    return jsonify({"status": "success", "orders": formatted_orders})
 
 @order_bp.route("/<string:order_id>", methods=["GET"])
 @login_required
@@ -156,7 +161,7 @@ def get_order(order_id: str):
     role = session["role"]
     pharmacy_id = session.get("pharmacy_id")
 
-    order = OrderService.get_order_details(order_id)
+    order = OrderService.get_order_details(order_id, user_role=role)
     if not order:
         return jsonify({"error": f"Order '{order_id}' not found."}), 404
 
@@ -167,6 +172,9 @@ def get_order(order_id: str):
         return jsonify({"error": "Access denied. Order belongs to another pharmacy."}), 403
     elif role == "delivery" and order["delivery_person_id"] != user_id and order["order_status"] != "READY_FOR_PICKUP":
         return jsonify({"error": "Access denied. This delivery is not assigned to you."}), 403
+
+    if role == "delivery":
+        order["delivery_otp"] = None
 
     return jsonify({"status": "success", "order": order})
 

@@ -205,6 +205,12 @@ def verify_prescription(rx_id: int):
         return jsonify({"error": "Decision must be 'verified' or 'rejected'."}), 400
 
     conn = get_db()
+    existing_rx = query_db("SELECT id, status FROM prescriptions WHERE id = ?", (rx_id,), one=True, conn=conn)
+    if not existing_rx:
+        return jsonify({"error": f"Prescription ID {rx_id} not found."}), 404
+    if (existing_rx["status"] or "").lower() != "pending":
+        return jsonify({"error": "Only pending prescriptions can be reviewed or transitioned."}), 400
+
     cur = conn.cursor()
     cur.execute("""
         UPDATE prescriptions
@@ -281,6 +287,12 @@ def reject_prescription(rx_id: int):
     user_id = session["user_id"]
 
     conn = get_db()
+    existing_rx = query_db("SELECT id, status FROM prescriptions WHERE id = ?", (rx_id,), one=True, conn=conn)
+    if not existing_rx:
+        return jsonify({"error": f"Prescription ID {rx_id} not found."}), 404
+    if (existing_rx["status"] or "").lower() != "pending":
+        return jsonify({"error": "Only pending prescriptions can be reviewed or transitioned."}), 400
+
     cur = conn.cursor()
     cur.execute("""
         UPDATE prescriptions

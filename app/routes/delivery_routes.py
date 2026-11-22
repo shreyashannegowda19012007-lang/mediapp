@@ -4,6 +4,7 @@ Manages delivery personnel profile, available delivery pool, assignment claims,
 and live delivery workflow transitions (Claim -> Picked Up -> In Transit -> Delivered).
 """
 from flask import Blueprint, request, jsonify, session
+import json
 from datetime import datetime, timezone
 from app.services.auth_service import login_required, roles_required
 from app.services.order_service import OrderService
@@ -94,7 +95,29 @@ def get_available_deliveries():
         WHERE o.order_status = 'READY_FOR_PICKUP' AND o.delivery_person_id IS NULL
         ORDER BY o.created_at ASC
     """)
-    order_list = [dict(o) for o in orders]
+    order_list = []
+    for row in orders:
+        o = dict(row)
+        addr_raw = o.get("delivery_address_json")
+        delivery_addr = ""
+        if addr_raw:
+            try:
+                parsed = json.loads(addr_raw)
+                if isinstance(parsed, dict):
+                    line1 = parsed.get("address_line1") or parsed.get("line1") or ""
+                    line2 = parsed.get("address_line2") or parsed.get("line2") or ""
+                    city = parsed.get("city") or ""
+                    pincode = parsed.get("pincode") or parsed.get("postal_code") or ""
+                    parts = [p for p in [line1, line2, city, pincode] if p]
+                    delivery_addr = ", ".join(parts) if parts else str(parsed)
+                elif isinstance(parsed, str):
+                    delivery_addr = parsed.strip()
+                else:
+                    delivery_addr = str(parsed)
+            except Exception:
+                delivery_addr = str(addr_raw).strip('"')
+        o["delivery_address"] = delivery_addr
+        order_list.append(o)
     return jsonify({
         "status": "success",
         "orders": order_list,
@@ -125,7 +148,9 @@ def get_active_delivery():
     if not order:
         return jsonify({"status": "success", "active_order": None})
 
-    order_details = OrderService.get_order_details(order["id"])
+    order_details = OrderService.get_order_details(order["id"], user_role=session.get("role"))
+    if session.get("role") == "delivery" and order_details:
+        order_details["delivery_otp"] = None
     return jsonify({"status": "success", "active_order": order_details})
 
 @delivery_bp.route("/orders/<string:order_id>/claim", methods=["POST"])
@@ -189,7 +214,9 @@ def claim_delivery(order_id: str):
             VALUES (?, 'READY_FOR_PICKUP', 'DELIVERY_ASSIGNED', ?, 'delivery', 'Claimed by delivery personnel')
         """, (order_id, user_id))
 
-    updated_order = OrderService.get_order_details(order_id)
+    updated_order = OrderService.get_order_details(order_id, user_role=session.get("role"))
+    if session.get("role") == "delivery" and updated_order:
+        updated_order["delivery_otp"] = None
     return jsonify({"status": "success", "message": "Delivery successfully claimed.", "order": updated_order})
 
 @delivery_bp.route("/orders/<string:order_id>/pickup", methods=["POST"])

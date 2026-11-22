@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Sparkles, ArrowRight, ShieldCheck, Check, X, AlertCircle } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Sparkles, ShieldCheck, Check, X } from "lucide-react";
 import { GenericAlternative } from "@/lib/api";
 import { useCartStore } from "@/store/useCartStore";
 
@@ -13,16 +13,52 @@ interface GenericPriceMatchModalProps {
 
 export function GenericPriceMatchModal({ isOpen, onClose, data }: GenericPriceMatchModalProps) {
   const addItem = useCartStore((s) => s.addItem);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
-    if (isOpen) {
-      window.addEventListener("keydown", handleKeyDown);
-    }
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (!isOpen || !dialogRef.current) return;
+    const el = dialogRef.current;
+    const focusableElements = el.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    firstElement?.focus();
+
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement?.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement?.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleTabKey);
+    return () => window.removeEventListener("keydown", handleTabKey);
+  }, [isOpen]);
 
   if (!isOpen || !data) {
     return null;
@@ -55,7 +91,6 @@ export function GenericPriceMatchModal({ isOpen, onClose, data }: GenericPriceMa
       : null);
 
   const hasSavings = Boolean(cheaperAlternative);
-  const [actionError, setActionError] = useState<string | null>(null);
 
   const handleSelectGeneric = async () => {
     if (cheaperAlternative) {
@@ -82,8 +117,19 @@ export function GenericPriceMatchModal({ isOpen, onClose, data }: GenericPriceMa
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg rounded-2xl border border-sky-200 dark:border-sky-900 bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-hidden">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200"
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="generic-match-title"
+        className="relative w-full max-w-lg rounded-2xl border border-sky-200 dark:border-sky-900 bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-hidden"
+      >
         {/* Top Accent Gradient */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-sky-500 via-emerald-500 to-teal-400" />
 
@@ -107,7 +153,7 @@ export function GenericPriceMatchModal({ isOpen, onClose, data }: GenericPriceMa
           <Sparkles className="h-4 w-4" />
           <span>Bioequivalent Generic Price-Match</span>
         </div>
-        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+        <h2 id="generic-match-title" className="text-xl font-bold text-slate-900 dark:text-slate-100">
           {hasSavings
             ? `Save ${cheaperAlternative?.savings_pct}% with Certified Generic`
             : "No Cheaper Generic Needed"}

@@ -29,7 +29,7 @@ const AdminPortal = {
           <h2>Platform Operations & Revenue Intelligence</h2>
           <p style="color:var(--text-secondary); font-size:0.9rem;">Authoritative aggregated metrics calculated directly from database records.</p>
         </div>
-        <button type="button" class="btn-demo-pill" id="btn-refresh-admin-stats">↻ Refresh Analytics</button>
+        <button type="button" class="btn-demo-pill" id="btn-refresh-admin-stats">Refresh Analytics</button>
       </div>
 
       <div class="stats-grid" id="admin-stats-grid">
@@ -148,7 +148,7 @@ const AdminPortal = {
             <option value="delivery">Delivery</option>
             <option value="admin">Administrator</option>
           </select>
-          <button type="button" class="btn-demo-pill" id="btn-refresh-users">↻ Refresh</button>
+          <button type="button" class="btn-demo-pill" id="btn-refresh-users">Refresh</button>
         </div>
       </div>
       <div id="admin-users-table-container">
@@ -233,7 +233,7 @@ const AdminPortal = {
     container.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
         <h2>Pharmacy Network Onboarding & Approvals</h2>
-        <button type="button" class="btn-demo-pill" id="btn-refresh-pharmacies">↻ Refresh</button>
+        <button type="button" class="btn-demo-pill" id="btn-refresh-pharmacies">Refresh</button>
       </div>
       <div id="admin-pharmacies-table-container">
         <div class="loading-screen"><div class="spinner"></div><p>Loading pharmacy partners...</p></div>
@@ -315,7 +315,7 @@ const AdminPortal = {
     container.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
         <h2>Global Order Monitor & Cross-Portal Audit</h2>
-        <button type="button" class="btn-demo-pill" id="btn-refresh-all-orders">↻ Refresh</button>
+        <button type="button" class="btn-demo-pill" id="btn-refresh-all-orders">Refresh</button>
       </div>
       <div id="admin-all-orders-container">
         <div class="loading-screen"><div class="spinner"></div><p>Fetching platform orders...</p></div>

@@ -68,20 +68,30 @@ class AuthService:
         new_user_id = cur.lastrowid
 
         # Optional initial delivery address
-        if address and isinstance(address, dict):
-            line1 = address.get("address_line1", "").strip()
-            city = address.get("city", "").strip()
-            state = address.get("state", "").strip()
-            pincode = address.get("pincode", "").strip()
-            if line1 and city and pincode:
+        if address:
+            if isinstance(address, str) and address.strip():
                 cur.execute("""
                     INSERT INTO customer_addresses (
                         user_id, address_line1, address_line2, city, state, pincode, landmark, is_default
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, 1)
                 """, (
-                    new_user_id, line1, address.get("address_line2", ""),
-                    city, state or "Karnataka", pincode, address.get("landmark", "")
+                    new_user_id, address.strip(), "",
+                    "Bengaluru", "Karnataka", "560001", ""
                 ))
+            elif isinstance(address, dict):
+                line1 = address.get("address_line1", "").strip() or address.get("line1", "").strip()
+                city = address.get("city", "").strip() or "Bengaluru"
+                state = address.get("state", "").strip() or "Karnataka"
+                pincode = address.get("pincode", "").strip() or address.get("postal_code", "").strip() or "560001"
+                if line1:
+                    cur.execute("""
+                        INSERT INTO customer_addresses (
+                            user_id, address_line1, address_line2, city, state, pincode, landmark, is_default
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+                    """, (
+                        new_user_id, line1, address.get("address_line2", ""),
+                        city, state, pincode, address.get("landmark", "")
+                    ))
 
         conn.commit()
         return dict(query_db("SELECT * FROM users WHERE id = ?", (new_user_id,), one=True))

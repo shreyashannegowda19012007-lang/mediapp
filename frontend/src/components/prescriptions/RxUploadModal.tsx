@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { UploadCloud, FileText, CheckCircle2, AlertTriangle, X, ShieldCheck, Sparkles } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -18,6 +18,51 @@ export function RxUploadModal({ isOpen, onClose, onUploadSuccess }: RxUploadModa
   const [ocrDetected, setOcrDetected] = useState<string[] | null>(null);
   const [uploadComplete, setUploadComplete] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (!isOpen || !dialogRef.current) return;
+    const el = dialogRef.current;
+    const focusableElements = el.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    firstElement?.focus();
+
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement?.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement?.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleTabKey);
+    return () => window.removeEventListener("keydown", handleTabKey);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -72,8 +117,19 @@ export function RxUploadModal({ isOpen, onClose, onUploadSuccess }: RxUploadModa
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-hidden">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200"
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rx-upload-modal-title"
+        className="relative w-full max-w-lg rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-hidden"
+      >
         {/* Top Accent */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-sky-500 to-emerald-500" />
 
@@ -92,7 +148,7 @@ export function RxUploadModal({ isOpen, onClose, onUploadSuccess }: RxUploadModa
             <ShieldCheck className="h-4 w-4" />
             <span>Clinical Dispensary Gateway</span>
           </div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">
+          <h2 id="rx-upload-modal-title" className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">
             Upload Valid Doctor&apos;s Prescription
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -126,10 +182,19 @@ export function RxUploadModal({ isOpen, onClose, onUploadSuccess }: RxUploadModa
           <div className="space-y-4">
             {/* Drag & Drop Canvas */}
             <div
-              onDragOver={(e) => e.preventDefault()}
+              tabIndex={0}
+              role="button"
+              aria-label="Upload prescription file: drag and drop or press enter to browse"
+              onClick={function() { fileInputRef.current?.click(); }}
               onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-sky-500 dark:hover:border-sky-400 rounded-2xl p-6 text-center cursor-pointer bg-slate-50/50 dark:bg-slate-950/40 transition-colors"
+              onDragOver={(e) => e.preventDefault()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
+              className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-sky-500 dark:hover:border-sky-400 rounded-2xl p-6 text-center cursor-pointer bg-slate-50/50 dark:bg-slate-950/40 transition-colors focus:outline-hidden focus:ring-2 focus:ring-sky-500"
             >
               <input
                 ref={fileInputRef}

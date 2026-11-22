@@ -19,6 +19,7 @@ export interface Medicine {
   uses?: string;
   side_effects?: string;
   contraindications?: string;
+  requires_cold_chain?: number | boolean;
   cold_chain?: boolean; // Evaluated or mapped for temperature-sensitive items
 }
 
@@ -77,6 +78,8 @@ export interface CartItem {
   line_total: number;
   is_available: number;
   stock_quantity: number;
+  cold_chain?: boolean;
+  requires_cold_chain?: boolean | number;
 }
 
 export interface CartData {
@@ -110,19 +113,33 @@ export interface Order {
   payment_status: string;
   total_amount: number;
   delivery_address: string;
+  delivery_fee?: number;
+  customer_name?: string;
+  customer_phone?: string;
+  pharmacy_id?: number;
   created_at: string;
   estimated_delivery_time?: string;
   cold_chain?: boolean;
+  requires_cold_chain?: boolean;
   delivery_agent_name?: string;
   delivery_agent_phone?: string;
   otp?: string;
   delivery_otp?: string;
   items?: Array<{
     id: number;
-    medicine_name: string;
+    medicine_name?: string;
+    medicine_name_snapshot?: string;
+    generic_name?: string;
+    generic_name_snapshot?: string;
+    dosage_form?: string;
+    dosage_form_snapshot?: string;
+    strength?: string;
+    strength_snapshot?: string;
+    manufacturer?: string;
     quantity: number;
     unit_price: number;
-    prescription_required: number;
+    prescription_required?: number;
+    total_price?: number;
   }>;
 }
 
@@ -324,7 +341,7 @@ export const api = {
   // Delivery Logistics
   delivery: {
     getAvailableRuns: async () => {
-      const res = await apiFetch<any>("/api/delivery/available");
+      const res = await apiFetch<{ status?: string; orders?: Order[]; available_orders?: Order[] }>("/api/delivery/available");
       const list = (res.orders || res.available_orders || []) as Order[];
       return { status: res.status || "success", orders: list };
     },
@@ -340,11 +357,11 @@ export const api = {
   // Payment Processing & Gateways
   payments: {
     createOrder: (orderId: number | string) =>
-      apiFetch<{ status: string; payment_order: any }>("/api/payments/create-order", {
+      apiFetch<{ status: string; payment_order: Record<string, unknown> }>("/api/payments/create-order", {
         method: "POST",
         body: JSON.stringify({ order_id: orderId }),
       }),
-    verify: (orderId: number | string, paymentData: any) =>
+    verify: (orderId: number | string, paymentData: Record<string, unknown>) =>
       apiFetch<{ status: string; message: string }>("/api/payments/verify", {
         method: "POST",
         body: JSON.stringify({ order_id: orderId, ...paymentData }),
@@ -354,7 +371,7 @@ export const api = {
   // AI Clinical Consultation & Emergency Triage
   ai: {
     consult: (query: string) =>
-      apiFetch<{ status: string; result: any }>("/api/ai/consult", {
+      apiFetch<{ status: string; result: Record<string, unknown> }>("/api/ai/consult", {
         method: "POST",
         body: JSON.stringify({ query }),
       }),

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Search, Filter, AlertCircle, RefreshCw, X, Pill, ShieldCheck, ThermometerSnowflake, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, RefreshCw, X, Pill, ThermometerSnowflake, ChevronLeft, ChevronRight } from "lucide-react";
 import { Medicine, api } from "@/lib/api";
 import { MedicineCard } from "./MedicineCard";
 import { clsx } from "clsx";
@@ -82,12 +82,15 @@ export function MedicineCatalogue() {
                 setSearchQuery(e.target.value);
                 setPage(1);
               }}
-              placeholder="Search medicines, active molecules, ailments..."
+              placeholder="Search 1,250+ medicines, active molecules, ailments..."
               className="w-full pl-12 pr-10 py-3.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 shadow-lg text-sm focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition-all"
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery("")}
+                onClick={() => {
+                  setSearchQuery("");
+                  setPage(1);
+                }}
                 className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 <X className="h-4 w-4" />
@@ -99,6 +102,7 @@ export function MedicineCatalogue() {
           <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
             <button
               onClick={() => {
+                setPage(1);
                 setRxFilter(undefined);
                 setColdChainOnly(false);
               }}
@@ -114,6 +118,7 @@ export function MedicineCatalogue() {
 
             <button
               onClick={() => {
+                setPage(1);
                 setRxFilter(0);
                 setColdChainOnly(false);
               }}
@@ -129,6 +134,7 @@ export function MedicineCatalogue() {
 
             <button
               onClick={() => {
+                setPage(1);
                 setRxFilter(1);
                 setColdChainOnly(false);
               }}
@@ -143,7 +149,10 @@ export function MedicineCatalogue() {
             </button>
 
             <button
-              onClick={() => setColdChainOnly(!coldChainOnly)}
+              onClick={() => {
+                setPage(1);
+                setColdChainOnly(!coldChainOnly);
+              }}
               className={clsx(
                 "inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer",
                 coldChainOnly
@@ -162,7 +171,10 @@ export function MedicineCatalogue() {
       {categories.length > 0 && (
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
           <button
-            onClick={() => setSelectedCategory("")}
+            onClick={() => {
+              setPage(1);
+              setSelectedCategory("");
+            }}
             className={clsx(
               "px-3 py-1.5 text-xs font-medium rounded-xl whitespace-nowrap border transition-all cursor-pointer",
               selectedCategory === ""
@@ -175,7 +187,10 @@ export function MedicineCatalogue() {
           {categories.map((cat) => (
             <button
               key={cat.category}
-              onClick={() => setSelectedCategory(cat.category === selectedCategory ? "" : cat.category)}
+              onClick={() => {
+                setPage(1);
+                setSelectedCategory(cat.category === selectedCategory ? "" : cat.category);
+              }}
               className={clsx(
                 "px-3 py-1.5 text-xs font-medium rounded-xl whitespace-nowrap border transition-all cursor-pointer",
                 selectedCategory === cat.category
