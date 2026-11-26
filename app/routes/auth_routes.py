@@ -259,7 +259,9 @@ def google_callback():
         token = AuthService.create_auth_token(user["id"])
         return redirect(f"{origin}/?login_success=1&role={role}&provider=google&token={token}")
     except Exception as e:
-        return redirect(f"{frontend_origin}/?auth_error={str(e)}")
+        import urllib.parse
+        clean_err = urllib.parse.quote_plus(str(e).replace("\n", " ").replace("\r", " ").strip())
+        return redirect(f"{frontend_origin}/?auth_error={clean_err}")
 
 @auth_bp.route("/google/demo-callback", methods=["GET"])
 def google_demo_callback():
@@ -284,7 +286,9 @@ def google_demo_callback():
         token = AuthService.create_auth_token(user["id"])
         return redirect(f"{origin}/?login_success=1&role={role}&provider=google&token={token}")
     except Exception as e:
-        return redirect(f"{frontend_origin}/?auth_error={str(e)}")
+        import urllib.parse
+        clean_err = urllib.parse.quote_plus(str(e).replace("\n", " ").replace("\r", " ").strip())
+        return redirect(f"{frontend_origin}/?auth_error={clean_err}")
 
 @auth_bp.route("/profile", methods=["PUT"])
 @login_required

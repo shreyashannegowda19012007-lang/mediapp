@@ -404,7 +404,8 @@ class AuthService:
         }
         token_res = requests.post(token_url, data=data, timeout=10.0)
         if token_res.status_code != 200:
-            raise ValueError(f"Google token exchange failed: {token_res.text}")
+            err_msg = token_res.text.replace("\n", " ").strip()
+            raise ValueError(f"Google token exchange failed: {err_msg}")
             
         tokens = token_res.json()
         access_token = tokens.get("access_token")
