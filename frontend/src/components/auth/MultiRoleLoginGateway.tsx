@@ -152,32 +152,7 @@ export function MultiRoleLoginGateway({ onLoginSuccess }: MultiRoleLoginGatewayP
         onLoginSuccess(selectedRole);
       }, 500);
     } catch (err: unknown) {
-      // Fallback for demo environments
-      try {
-        await switchRole(selectedRole);
-        setSuccess(`Demo session active for ${currentTab.label}. Redirecting...`);
-        setTimeout(() => {
-          onLoginSuccess(selectedRole);
-        }, 500);
-      } catch (innerErr: unknown) {
-        setError(err instanceof Error ? err.message : "Authentication failed");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleFastDemoLogin = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      await switchRole(selectedRole);
-      setSuccess(`Authenticated as ${currentTab.label}. Entering dedicated workspace...`);
-      setTimeout(() => {
-        onLoginSuccess(selectedRole);
-      }, 500);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Fast login failed");
+      setError(err instanceof Error ? err.message : "Authentication failed");
     } finally {
       setIsLoading(false);
     }
@@ -338,12 +313,9 @@ export function MultiRoleLoginGateway({ onLoginSuccess }: MultiRoleLoginGatewayP
             <div className="space-y-1.5">
               <label
                 htmlFor={`input-password-${selectedRole}`}
-                className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between"
+                className="text-xs font-bold text-slate-700 dark:text-slate-300"
               >
                 <span>Password</span>
-                <span className="text-[11px] text-slate-400 font-normal">
-                  Demo: {currentTab.defaultPass}
-                </span>
               </label>
               <input
                 id={`input-password-${selectedRole}`}
@@ -362,7 +334,7 @@ export function MultiRoleLoginGateway({ onLoginSuccess }: MultiRoleLoginGatewayP
                 id={`btn-gateway-login-${selectedRole}`}
                 type="submit"
                 disabled={isLoading}
-                className="w-full sm:flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-sky-600 hover:bg-sky-700 active:scale-[0.98] text-white text-xs sm:text-sm font-bold transition-all shadow-md cursor-pointer disabled:opacity-50"
+                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-sky-600 hover:bg-sky-700 active:scale-[0.98] text-white text-xs sm:text-sm font-bold transition-all shadow-md cursor-pointer disabled:opacity-50"
               >
                 {isLoading ? (
                   <>
@@ -376,18 +348,6 @@ export function MultiRoleLoginGateway({ onLoginSuccess }: MultiRoleLoginGatewayP
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
-              </button>
-
-              <button
-                id={`btn-fast-demo-${selectedRole}`}
-                type="button"
-                onClick={handleFastDemoLogin}
-                disabled={isLoading}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer shadow-xs disabled:opacity-50"
-                title="Instant one-click credential population and verified login"
-              >
-                <Sparkles className="h-4 w-4 text-sky-500" />
-                <span>1-Click Fast Login</span>
               </button>
             </div>
 

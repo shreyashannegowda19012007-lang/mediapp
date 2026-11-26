@@ -154,6 +154,19 @@ def test_frontend_parity_and_playwright():
         context = browser.new_context()
         page = context.new_page()
 
+        # Intercept external Google OAuth redirects to inspect the URL and state parameter
+        intercepted_urls = []
+        def handle_route(route):
+            url = route.request.url
+            if "accounts.google.com" in url:
+                intercepted_urls.append(url)
+                # Fulfill with 200 so Playwright doesn't hang trying to load external Google login
+                route.fulfill(status=200, body="<html><body>Google OAuth Sign-In Intercepted</body></html>")
+            else:
+                route.continue_()
+
+        page.route("**/*", handle_route)
+
         # Ensure clean state (no lingering tokens or cookies)
         page.goto("http://localhost:3000")
         page.evaluate("() => { localStorage.clear(); sessionStorage.clear(); }")
@@ -161,67 +174,108 @@ def test_frontend_parity_and_playwright():
         page.reload()
         page.wait_for_timeout(1000)
 
-        # 1. Landing View
+        # 1. Landing View Google Sign-In button
         landing_google = page.locator("#btn-landing-google-signin")
         assert landing_google.count() > 0, "Missing #btn-landing-google-signin on landing page!"
         print("PASS: Landing page features prominent Google Sign-In button.")
 
-        # 2. Enter Customer Portal
+        # 2. Check for absence of any Demo login buttons on landing page
+        assert page.locator("text='Demo Login'").count() == 0, "Demo Login button should not exist!"
+        assert page.locator("text='One-Click Demo'").count() == 0, "One-Click Demo buttons should not exist!"
+        print("PASS: Zero demo buttons present on landing page.")
+
+        # 3. Test Clicking Portal Card 1: Customer -> Should directly redirect to Google OAuth with role=customer
+        intercepted_urls.clear()
         page.locator("#portal-card-customer").click()
+        page.wait_for_timeout(1500)
+        assert len(intercepted_urls) > 0, "Clicking customer portal should trigger Google OAuth redirect!"
+        cust_oauth_url = intercepted_urls[-1]
+        assert "accounts.google.com/o/oauth2/v2/auth" in cust_oauth_url
+        parsed = urllib.parse.urlparse(cust_oauth_url)
+        params = urllib.parse.parse_qs(parsed.query)
+        cust_state = params.get("state", [""])[0]
+        verified_state = AuthService.verify_google_state(cust_state)
+        assert verified_state["role"] == "customer", f"Expected customer role, got {verified_state['role']}"
+        print("PASS: Clicking Customer portal card directly redirects to Google OAuth with signed customer state.")
+
+        # Reset back to landing
+        page.goto("http://localhost:3000")
         page.wait_for_timeout(1000)
-        cust_google = page.locator("#btn-customer-google-signin")
-        assert cust_google.count() > 0, "Missing #btn-customer-google-signin on customer portal!"
-        print("PASS: Customer portal features Google Sign-In button.")
 
-        # Click Back to Portals
-        page.locator("text=All portals").first.click()
-        page.wait_for_timeout(800)
-
-        # 3. Enter Pharmacy Portal
+        # 4. Test Clicking Portal Card 2: Pharmacy Partner -> Should directly redirect to Google OAuth with role=pharmacy
+        intercepted_urls.clear()
         page.locator("#portal-card-pharmacy").click()
+        page.wait_for_timeout(1500)
+        assert len(intercepted_urls) > 0, "Clicking pharmacy portal should trigger Google OAuth redirect!"
+        pharm_oauth_url = intercepted_urls[-1]
+        assert "accounts.google.com/o/oauth2/v2/auth" in pharm_oauth_url
+        parsed = urllib.parse.urlparse(pharm_oauth_url)
+        params = urllib.parse.parse_qs(parsed.query)
+        pharm_state = params.get("state", [""])[0]
+        verified_pharm_state = AuthService.verify_google_state(pharm_state)
+        assert verified_pharm_state["role"] == "pharmacy", f"Expected pharmacy role, got {verified_pharm_state['role']}"
+        print("PASS: Clicking Pharmacy Partner portal card directly redirects to Google OAuth with signed pharmacy state.")
+
+        # Reset back to landing
+        page.goto("http://localhost:3000")
         page.wait_for_timeout(1000)
-        pharm_google = page.locator("#btn-pharmacy-google-signin")
-        assert pharm_google.count() > 0, "Missing #btn-pharmacy-google-signin on pharmacy portal!"
-        print("PASS: Pharmacy portal features Google Sign-In button.")
 
-        # Click Back to Portals
-        page.locator("text=All portals").first.click()
-        page.wait_for_timeout(800)
-
-        # 4. Enter Admin Portal
+        # 5. Test Clicking Portal Card 3: Admin -> Should directly redirect to Google OAuth with role=admin
+        intercepted_urls.clear()
         page.locator("#portal-card-admin").click()
+        page.wait_for_timeout(1500)
+        assert len(intercepted_urls) > 0, "Clicking admin portal should trigger Google OAuth redirect!"
+        admin_oauth_url = intercepted_urls[-1]
+        assert "accounts.google.com/o/oauth2/v2/auth" in admin_oauth_url
+        parsed = urllib.parse.urlparse(admin_oauth_url)
+        params = urllib.parse.parse_qs(parsed.query)
+        admin_state = params.get("state", [""])[0]
+        verified_admin_state = AuthService.verify_google_state(admin_state)
+        assert verified_admin_state["role"] == "admin", f"Expected admin role, got {verified_admin_state['role']}"
+        print("PASS: Clicking Admin portal card directly redirects to Google OAuth with signed admin state.")
+
+        # Reset back to landing
+        page.goto("http://localhost:3000")
         page.wait_for_timeout(1000)
-        admin_google = page.locator("#btn-admin-google-signin")
-        assert admin_google.count() > 0, "Missing #btn-admin-google-signin on admin portal!"
-        print("PASS: Admin portal features Google Sign-In button.")
 
-        # Click Back to Portals
-        page.locator("text=All portals").first.click()
-        page.wait_for_timeout(800)
-
-        # 5. Enter Delivery Portal
+        # 6. Test Clicking Portal Card 4: Delivery Partner -> Should directly redirect to Google OAuth with role=delivery
+        intercepted_urls.clear()
         page.locator("#portal-card-delivery").click()
-        page.wait_for_timeout(1000)
-        deliv_google = page.locator("#btn-delivery-google-signin")
-        assert deliv_google.count() > 0, "Missing #btn-delivery-google-signin on delivery portal!"
-        print("PASS: Delivery partner portal features Google Sign-In button.")
+        page.wait_for_timeout(1500)
+        assert len(intercepted_urls) > 0, "Clicking delivery portal should trigger Google OAuth redirect!"
+        deliv_oauth_url = intercepted_urls[-1]
+        assert "accounts.google.com/o/oauth2/v2/auth" in deliv_oauth_url
+        parsed = urllib.parse.urlparse(deliv_oauth_url)
+        params = urllib.parse.parse_qs(parsed.query)
+        deliv_state = params.get("state", [""])[0]
+        verified_deliv_state = AuthService.verify_google_state(deliv_state)
+        assert verified_deliv_state["role"] == "delivery", f"Expected delivery role, got {verified_deliv_state['role']}"
+        print("PASS: Clicking Delivery Partner portal card directly redirects to Google OAuth with signed delivery state.")
 
-        # 6. Test OAuth Redirect Simulation into Customer Portal
-        state = AuthService.generate_google_state(origin="http://localhost:3000", role="customer")
+        # 7. Test OAuth Redirect Simulation into Customer Portal
         token = AuthService.create_auth_token(1)
         page.goto(f"http://localhost:3000/?login_success=1&role=customer&provider=google&token={token}")
         page.wait_for_timeout(1500)
-        
-        # Verify authenticated state renders
         assert page.locator("text=Sign Out").count() > 0, "Sign Out button should be visible when authenticated!"
         print("PASS: OAuth callback successfully mounts authenticated customer view with Sign Out.")
 
-        # 7. Test OAuth Redirect Simulation into Pharmacy Portal
-        state_pharm = AuthService.generate_google_state(origin="http://localhost:3000", role="pharmacy")
+        # 8. Test OAuth Redirect Simulation into Pharmacy Portal
         page.goto(f"http://localhost:3000/?login_success=1&role=pharmacy&provider=google&token={token}")
         page.wait_for_timeout(1500)
         assert page.locator("text=PHARMACY PARTNER").count() > 0, "Pharmacy partner portal should mount on role=pharmacy!"
         print("PASS: OAuth callback successfully routes directly into Pharmacy Partner Portal.")
+
+        # 9. Test OAuth Redirect Simulation into Admin Portal
+        page.goto(f"http://localhost:3000/?login_success=1&role=admin&provider=google&token={token}")
+        page.wait_for_timeout(1500)
+        assert page.locator("text=Hospital Administration").count() > 0 or page.locator("text=ADMIN CONSOLE").count() > 0 or page.locator("text=Sign Out").count() > 0
+        print("PASS: OAuth callback successfully routes directly into Admin Portal.")
+
+        # 10. Test OAuth Redirect Simulation into Delivery Partner Portal
+        page.goto(f"http://localhost:3000/?login_success=1&role=delivery&provider=google&token={token}")
+        page.wait_for_timeout(1500)
+        assert page.locator("text=DELIVERY PARTNER").count() > 0 or page.locator("text=Earnings").count() > 0 or page.locator("text=Sign Out").count() > 0
+        print("PASS: OAuth callback successfully routes directly into Delivery Partner Portal.")
 
         browser.close()
         print("PASS: All Playwright frontend platform verifications passed cleanly!")

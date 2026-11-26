@@ -43,7 +43,7 @@ export function MedicineCard({ medicine }: MedicineCardProps) {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to add to cart";
       if (msg.toLowerCase().includes("auth") || msg.toLowerCase().includes("sign in") || msg.toLowerCase().includes("401")) {
-        setAuthError("Sign-in required: Please select a demo role or sign in to add medicines.");
+        setAuthError("Sign-in required: Please sign in to add medicines.");
       } else {
         setAuthError(msg);
       }

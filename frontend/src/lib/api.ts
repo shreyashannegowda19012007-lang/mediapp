@@ -159,6 +159,7 @@ export interface UserSession {
   full_name: string;
   role: "customer" | "pharmacy" | "delivery" | "admin";
   phone?: string;
+  authorized_roles?: string[];
 }
 
 async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -211,20 +212,6 @@ export const api = {
       const res = await apiFetch<{ status: string; user: UserSession; token?: string }>("/api/auth/login", {
         method: "POST",
         body: JSON.stringify(credentials),
-      });
-      if (typeof window !== "undefined" && res.token) {
-        localStorage.setItem("mediapp_token", res.token);
-      }
-      return res;
-    },
-    demoLogin: async (role: "customer" | "pharmacy" | "delivery" | "admin") => {
-      const res = await apiFetch<{ status: string; user: UserSession; token?: string }>("/api/auth/login", {
-        method: "POST",
-        body: JSON.stringify({
-          email: `${role}@mediapp.local`,
-          password: `${role.charAt(0).toUpperCase() + role.slice(1)}@123`,
-          role,
-        }),
       });
       if (typeof window !== "undefined" && res.token) {
         localStorage.setItem("mediapp_token", res.token);

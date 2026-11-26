@@ -26,37 +26,6 @@ interface AuthModalProps {
   onAuthSuccess?: () => void;
 }
 
-const DEMO_ACCOUNTS = [
-  {
-    role: "Customer",
-    email: "customer@mediapp.local",
-    pass: "Customer@123",
-    icon: User,
-    badgeColor: "border-sky-500/30 bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300",
-  },
-  {
-    role: "Pharmacist",
-    email: "pharmacy@mediapp.local",
-    pass: "Pharmacy@123",
-    icon: Building,
-    badgeColor: "border-amber-500/30 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300",
-  },
-  {
-    role: "Courier",
-    email: "delivery@mediapp.local",
-    pass: "Delivery@123",
-    icon: Truck,
-    badgeColor: "border-cyan-500/30 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300",
-  },
-  {
-    role: "Admin",
-    email: "admin@mediapp.local",
-    pass: "Admin@123",
-    icon: Activity,
-    badgeColor: "border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300",
-  },
-];
-
 export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
   const [mounted, setMounted] = useState(false);
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -132,13 +101,6 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
     }
   };
 
-  const handleSelectDemo = (accEmail: string, accPass: string) => {
-    setMode("login");
-    setEmail(accEmail);
-    setPassword(accPass);
-    setError(null);
-  };
-
   const handleGoogleAuth = async () => {
     setError(null);
     setIsGoogleLoading(true);
@@ -191,7 +153,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {mode === "login"
-              ? "Sign in with your verified credentials or select a one-click demo account below."
+              ? "Sign in with your verified credentials or continue with Google."
               : "Create a verified patient record with express delivery address."}
           </p>
         </div>
@@ -263,45 +225,6 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
             <div className="flex-1 border-t border-slate-200 dark:border-slate-800" />
           </div>
         </div>
-
-        {/* One-Click Demo Credentials Pill Selector (Login Mode) */}
-        {mode === "login" && (
-          <div className="mb-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 shrink-0">
-            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-2">
-              <span className="flex items-center gap-1">
-                <KeyRound className="h-3 w-3 text-sky-500" />
-                <span>One-Click Demo Accounts</span>
-              </span>
-              <span className="text-[10px] text-slate-400">Click to autofill</span>
-            </div>
-            <div className="grid grid-cols-2 gap-1.5">
-              {DEMO_ACCOUNTS.map((acc) => {
-                const IconComponent = acc.icon;
-                const isSelected = email === acc.email;
-                return (
-                  <button
-                    key={acc.role}
-                    type="button"
-                    onClick={() => handleSelectDemo(acc.email, acc.pass)}
-                    className={`flex items-center gap-1.5 p-2 rounded-lg border text-left text-xs transition-all cursor-pointer ${
-                      isSelected
-                        ? "border-sky-500 bg-sky-50 dark:bg-sky-950/50 shadow-xs"
-                        : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700"
-                    }`}
-                  >
-                    <IconComponent className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                    <div className="truncate">
-                      <div className="font-semibold text-slate-800 dark:text-slate-200 text-[11px] leading-tight">
-                        {acc.role}
-                      </div>
-                      <div className="text-[9px] text-slate-400 font-mono truncate">{acc.email}</div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Feedback Alerts */}
         {error && (

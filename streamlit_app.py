@@ -103,15 +103,6 @@ if "logout" in _qp:
     st.session_state["oauth_error"] = None
     st.query_params.clear()
     st.rerun()
-elif "demo_google" in _qp:
-    st.session_state["google_user"] = {
-        "name": "Shreyash (Google Verified)",
-        "email": "google.customer@mediapp.local",
-        "provider": "google_demo",
-    }
-    st.session_state["oauth_error"] = None
-    st.query_params.clear()
-    st.rerun()
 elif "error" in _qp:
     st.session_state["oauth_error"] = str(_qp.get("error"))
     st.query_params.clear()
@@ -197,8 +188,8 @@ if google_user:
     </div>
     """
 else:
-    _auth_href = html.escape(google_auth_url if google_auth_url else "?demo_google=1", quote=True)
-    _mode_label = "Google Cloud OAuth 2.0 Active" if google_auth_url else "Google Sign-In (Demo Mode)"
+    _auth_href = html.escape(google_auth_url, quote=True)
+    _mode_label = "Google Cloud OAuth 2.0 Active"
     auth_header_html = """
         <span class="hidden md:inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 text-[11px] font-medium border border-slate-200 dark:border-slate-700">
           Guest Session

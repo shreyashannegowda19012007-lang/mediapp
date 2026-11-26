@@ -89,7 +89,7 @@ export function AnalyticsDashboard() {
         }
       })
       .catch(() => {
-        // Fallback to rich telemetry demo values
+        // Fallback to rich telemetry baseline values
       })
       .finally(() => {
         setIsLoading(false);
