@@ -326,10 +326,13 @@ template_html = """<!DOCTYPE html>
       border-radius: 9999px;
     }
     .portal-view {
-      display: none;
+      display: none !important;
     }
     .portal-view.active {
-      display: block;
+      display: block !important;
+    }
+    #view-landing.portal-view.active {
+      display: flex !important;
     }
   </style>
 </head>
@@ -338,7 +341,7 @@ template_html = """<!DOCTYPE html>
   <!-- ========================================== -->
   <!-- VIEW 1: PORTAL LANDING VIEW                -->
   <!-- ========================================== -->
-  <div id="view-landing" class="portal-view __LANDING_ACTIVE__ relative min-h-screen flex flex-col justify-between">
+  <div id="view-landing" class="portal-view __LANDING_ACTIVE__ relative min-h-screen flex-col justify-between">
     <!-- Ambient background glow orbs -->
     <div class="absolute top-1/4 -left-32 w-96 h-96 bg-purple-700/20 rounded-full blur-3xl pointer-events-none"></div>
     <div class="absolute top-1/4 -right-32 w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl pointer-events-none"></div>
