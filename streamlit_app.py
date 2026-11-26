@@ -113,8 +113,13 @@ if "oauth_error" not in st.session_state:
 if "target_role" not in st.session_state:
     st.session_state["target_role"] = "landing"
 
-# Handle OAuth redirects on top-level Streamlit URL
+# Handle OAuth redirects and portal navigation on top-level Streamlit URL
 _qp = st.query_params
+if "portal" in _qp:
+    _portal_req = str(_qp.get("portal", "")).strip().lower()
+    if _portal_req in ["customer", "pharmacy", "admin", "delivery", "landing"]:
+        st.session_state["target_role"] = _portal_req
+
 if "logout" in _qp:
     st.session_state["google_user"] = None
     st.session_state["oauth_error"] = None
@@ -179,12 +184,17 @@ elif "code" in _qp and GOOGLE_OAUTH_CONFIGURED:
         st.session_state["oauth_error"] = None
     except Exception as _oauth_exc:
         st.session_state["oauth_error"] = str(_oauth_exc)
+    
     st.query_params.clear()
+    st.query_params["portal"] = _matched_role
     st.rerun()
 
 google_user = st.session_state.get("google_user")
 oauth_error = st.session_state.get("oauth_error")
 target_role = st.session_state.get("target_role", "landing")
+
+if oauth_error:
+    st.error(f"Google Authentication Alert: {oauth_error}")
 
 def get_role_google_url(role="customer"):
     if not GOOGLE_OAUTH_CONFIGURED:
@@ -328,7 +338,7 @@ template_html = """<!DOCTYPE html>
   <!-- ========================================== -->
   <!-- VIEW 1: PORTAL LANDING VIEW                -->
   <!-- ========================================== -->
-  <div id="view-landing" class="portal-view active relative min-h-screen flex flex-col justify-between">
+  <div id="view-landing" class="portal-view __LANDING_ACTIVE__ relative min-h-screen flex flex-col justify-between">
     <!-- Ambient background glow orbs -->
     <div class="absolute top-1/4 -left-32 w-96 h-96 bg-purple-700/20 rounded-full blur-3xl pointer-events-none"></div>
     <div class="absolute top-1/4 -right-32 w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -521,7 +531,7 @@ template_html = """<!DOCTYPE html>
   <!-- ========================================== -->
   <!-- VIEW 2: CUSTOMER PORTAL VIEW               -->
   <!-- ========================================== -->
-  <div id="view-customer" class="portal-view min-h-screen">
+  <div id="view-customer" class="portal-view __CUSTOMER_ACTIVE__ min-h-screen">
     <!-- Customer Header -->
     <header class="sticky top-0 z-30 bg-[#070b14]/90 backdrop-blur-md border-b border-slate-800/80 px-4 sm:px-8 py-3.5 flex items-center justify-between">
       <div class="flex items-center gap-4">
@@ -600,7 +610,7 @@ template_html = """<!DOCTYPE html>
   <!-- ========================================== -->
   <!-- VIEW 3: PHARMACY PARTNER PORTAL VIEW       -->
   <!-- ========================================== -->
-  <div id="view-pharmacy" class="portal-view min-h-screen">
+  <div id="view-pharmacy" class="portal-view __PHARMACY_ACTIVE__ min-h-screen">
     <header class="sticky top-0 z-30 bg-[#070b14]/90 backdrop-blur-md border-b border-slate-800/80 px-4 sm:px-8 py-3.5 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <button onclick="switchPortal('landing')" class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors cursor-pointer py-1 px-2 rounded-lg hover:bg-slate-800">
@@ -712,7 +722,7 @@ template_html = """<!DOCTYPE html>
   <!-- ========================================== -->
   <!-- VIEW 4: ADMIN PORTAL VIEW                  -->
   <!-- ========================================== -->
-  <div id="view-admin" class="portal-view min-h-screen">
+  <div id="view-admin" class="portal-view __ADMIN_ACTIVE__ min-h-screen">
     <header class="sticky top-0 z-30 bg-[#070b14]/90 backdrop-blur-md border-b border-slate-800/80 px-4 sm:px-8 py-3.5 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <button onclick="switchPortal('landing')" class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors cursor-pointer py-1 px-2 rounded-lg hover:bg-slate-800">
@@ -775,7 +785,7 @@ template_html = """<!DOCTYPE html>
   <!-- ========================================== -->
   <!-- VIEW 5: DELIVERY PARTNER PORTAL VIEW       -->
   <!-- ========================================== -->
-  <div id="view-delivery" class="portal-view min-h-screen">
+  <div id="view-delivery" class="portal-view __DELIVERY_ACTIVE__ min-h-screen">
     <header class="sticky top-0 z-30 bg-[#070b14]/90 backdrop-blur-md border-b border-slate-800/80 px-4 sm:px-8 py-3.5 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <button onclick="switchPortal('landing')" class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors cursor-pointer py-1 px-2 rounded-lg hover:bg-slate-800">
@@ -1035,8 +1045,8 @@ template_html = """<!DOCTYPE html>
     }
 
     function handlePortalCardClick(portalRole) {
-      // If user is logged in for this role, navigate straight to that portal
-      if (USER && USER.email && (USER.role === portalRole || currentPortal === portalRole)) {
+      // If user is authenticated, enter requested portal directly
+      if (USER && USER.email) {
         switchPortal(portalRole);
         return;
       }
@@ -1488,22 +1498,30 @@ template_html = """<!DOCTYPE html>
       }, 3500);
     }
 
-    // Initialize UI on page load
-    window.addEventListener("DOMContentLoaded", () => {
-      renderAuthElements();
-      renderCategoryPills();
-      renderMedicines();
-      renderPharmacyInventory();
-      renderAdminPharmacies();
-      lucide.createIcons();
-      if (INITIAL_PORTAL && INITIAL_PORTAL !== "landing") {
+    // Bulletproof initialization across all browser iframe loading states
+    function init() {
+      try { renderAuthElements(); } catch (e) { console.error("renderAuthElements error:", e); }
+      try { renderCategoryPills(); } catch (e) { console.error("renderCategoryPills error:", e); }
+      try { renderMedicines(); } catch (e) { console.error("renderMedicines error:", e); }
+      try { renderPharmacyInventory(); } catch (e) { console.error("renderPharmacyInventory error:", e); }
+      try { renderAdminPharmacies(); } catch (e) { console.error("renderAdminPharmacies error:", e); }
+      try { if (window.lucide) lucide.createIcons(); } catch (e) { console.error("lucide error:", e); }
+      if (INITIAL_PORTAL) {
         switchPortal(INITIAL_PORTAL);
       }
       const oauthErr = __OAUTH_ERROR__;
       if (oauthErr) {
-        showToast("Google Sign-In: " + oauthErr, false);
+        showToast("Google Sign-In Alert: " + oauthErr, false);
       }
-    });
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", init);
+    } else {
+      init();
+    }
+    window.addEventListener("load", init);
+    setTimeout(init, 50);
   </script>
 </body>
 </html>
@@ -1515,6 +1533,13 @@ final_html = final_html.replace("__GOOGLE_USER_JSON__", json.dumps(google_user))
 final_html = final_html.replace("__ROLE_GOOGLE_URLS__", json.dumps(role_google_urls))
 final_html = final_html.replace("__INITIAL_PORTAL__", target_role)
 final_html = final_html.replace("__OAUTH_ERROR__", json.dumps(oauth_error or ""))
+
+# Direct HTML server-side portal visibility (eliminates flash & guarantees portal rendering)
+final_html = final_html.replace("__LANDING_ACTIVE__", "active" if target_role == "landing" else "")
+final_html = final_html.replace("__CUSTOMER_ACTIVE__", "active" if target_role == "customer" else "")
+final_html = final_html.replace("__PHARMACY_ACTIVE__", "active" if target_role == "pharmacy" else "")
+final_html = final_html.replace("__ADMIN_ACTIVE__", "active" if target_role == "admin" else "")
+final_html = final_html.replace("__DELIVERY_ACTIVE__", "active" if target_role == "delivery" else "")
 
 # 5. Render Full-Bleed Application Viewport with 100% localhost visual parity
 components.html(final_html, height=1350, scrolling=True)
