@@ -49,8 +49,11 @@ export default function Home() {
       }
     }
 
-    fetchSession();
-    fetchCart();
+    fetchSession().then(() => {
+      if (typeof window !== "undefined" && localStorage.getItem("mediapp_token")) {
+        fetchCart();
+      }
+    });
   }, [fetchSession, fetchCart]);
 
   const handleSelectPortal = async (portal: "customer" | "pharmacy" | "admin" | "delivery") => {
