@@ -84,6 +84,8 @@ def _get_oauth_setting(key: str, default: str = "") -> str:
 def _detect_streamlit_redirect_uri() -> str:
     explicit = _get_oauth_setting("STREAMLIT_GOOGLE_REDIRECT_URI")
     if explicit:
+        if not explicit.endswith("/") and "?" not in explicit:
+            explicit += "/"
         return explicit
     try:
         host = st.context.headers.get("Host", "").strip().lower()
@@ -1439,7 +1441,7 @@ template_html = """<!DOCTYPE html>
           <td class="p-3 font-semibold text-white">${p.name}</td>
           <td class="p-3 font-mono text-slate-400 text-[11px]">${p.license_number || 'DL-KA-2023-0941'}</td>
           <td class="p-3 text-slate-400">${p.city || 'Bangalore'}</td>
-          <td class="p-3 font-mono text-amber-400">${p.rating || '4.8'} ★</td>
+          <td class="p-3 font-mono text-amber-400 font-semibold">${p.rating || '4.8'} / 5.0</td>
           <td class="p-3 text-right">
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               Active
