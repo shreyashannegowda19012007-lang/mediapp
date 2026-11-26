@@ -18,12 +18,7 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-  user: {
-    user_id: 1,
-    email: "customer@mediapp.local",
-    full_name: "Clinical Customer Demo",
-    role: "customer",
-  },
+  user: null,
   activeRole: "customer",
   isLoading: false,
   error: null,
@@ -34,9 +29,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const res = await api.auth.getSession();
       if (res.authenticated && res.user) {
         set({ user: res.user, activeRole: res.user.role });
+      } else {
+        set({ user: null });
       }
     } catch {
-      // Fallback to active demo role
+      // Keep state as is on network blip
     } finally {
       set({ isLoading: false });
     }
@@ -45,9 +42,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   switchRole: async (role: RoleType) => {
     try {
       set({ isLoading: true, activeRole: role, error: null });
-      const res = await api.auth.demoLogin(role);
-      if (res.user) {
-        set({ user: res.user, activeRole: role });
+      if (get().user) {
+        try {
+          await api.auth.switchRole(role);
+          await get().fetchSession();
+        } catch {
+          // Ignore if switch-role not permitted on current identity
+        }
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to switch role";

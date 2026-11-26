@@ -31,7 +31,20 @@ class OCRService:
         Attempts OCR on an image file using available engines.
         Returns (extracted_text, provider_name)
         """
-        # Tier 1: Tesseract if configured or available
+        # Tier 1: RapidOCR Neural Engine (ONNX Runtime, runs natively on CPU)
+        try:
+            from rapidocr_onnxruntime import RapidOCR
+            ocr = RapidOCR()
+            results, _ = ocr(file_path)
+            if results:
+                lines = [item[1] for item in results if len(item) > 1 and item[1]]
+                text = "\n".join(lines).strip()
+                if text:
+                    return text, "rapidocr_onnx"
+        except Exception:
+            pass
+
+        # Tier 2: Tesseract if configured or available
         tesseract_cmd = Config.TESSERACT_CMD
         if tesseract_cmd:
             import pytesseract
@@ -47,7 +60,7 @@ class OCRService:
         except Exception:
             pass
 
-        # Tier 2: Read binary metadata / fallback
+        # Tier 3: Read binary metadata / fallback
         return "", "unprocessed"
 
     @classmethod

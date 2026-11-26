@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { UploadCloud, FileText, CheckCircle2, AlertTriangle, X, ShieldCheck, Sparkles } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { UploadCloud, FileText, CheckCircle2, AlertTriangle, X, ShieldCheck, Sparkles, Search, User } from "lucide-react";
 import { api } from "@/lib/api";
+import { AuthModal } from "@/components/auth/AuthModal";
 
 interface RxUploadModalProps {
   isOpen: boolean;
@@ -11,18 +13,35 @@ interface RxUploadModalProps {
 }
 
 export function RxUploadModal({ isOpen, onClose, onUploadSuccess }: RxUploadModalProps) {
+  const [mounted, setMounted] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthError, setIsAuthError] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [ocrDetected, setOcrDetected] = useState<string[] | null>(null);
   const [uploadComplete, setUploadComplete] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Revoke object URL to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  if (!isOpen || !mounted) return null;
 
   const handleFileSelect = (selectedFile: File) => {
     setError(null);
+    setIsAuthError(false);
     const validTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
     if (!validTypes.includes(selectedFile.type)) {
       setError("Please upload a valid prescription document (JPG, PNG, WebP, or PDF).");
@@ -31,6 +50,10 @@ export function RxUploadModal({ isOpen, onClose, onUploadSuccess }: RxUploadModa
     if (selectedFile.size > 16 * 1024 * 1024) {
       setError("File size exceeds 16MB limit.");
       return;
+    }
+
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
     }
 
     setFile(selectedFile);
@@ -53,6 +76,7 @@ export function RxUploadModal({ isOpen, onClose, onUploadSuccess }: RxUploadModa
     try {
       setIsUploading(true);
       setError(null);
+      setIsAuthError(false);
       const res = await api.prescriptions.upload(file);
       const detected = res.detected_medicines || (res as unknown as { prescription?: { extracted_medicines?: string[] } }).prescription?.extracted_medicines || [];
       setOcrDetected(detected);
@@ -61,19 +85,31 @@ export function RxUploadModal({ isOpen, onClose, onUploadSuccess }: RxUploadModa
       setTimeout(() => {
         setUploadComplete(false);
         setFile(null);
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
         onClose();
-      }, 3000);
+      }, 4000);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Prescription upload failed");
+      const msg = err instanceof Error ? err.message : "Prescription upload failed";
+      if (msg.toLowerCase().includes("auth") || msg.toLowerCase().includes("401") || msg.toLowerCase().includes("login")) {
+        setIsAuthError(true);
+        setError("Sign-in required: Please sign in or register to submit a doctor's prescription.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setIsUploading(false);
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-hidden">
+  return createPortal(
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-200"
+    >
+      <div className="relative w-full max-w-lg my-auto max-h-[92vh] flex flex-col rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-hidden">
         {/* Top Accent */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-sky-500 to-emerald-500" />
 
@@ -171,9 +207,21 @@ export function RxUploadModal({ isOpen, onClose, onUploadSuccess }: RxUploadModa
             </div>
 
             {error && (
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 text-xs text-rose-700 dark:text-rose-400">
-                <AlertTriangle className="h-4 w-4 shrink-0" />
-                <span>{error}</span>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 text-xs text-rose-700 dark:text-rose-400">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
+                {isAuthError && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAuthModal(true)}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer"
+                  >
+                    <User className="h-4 w-4" />
+                    <span>Sign In or Register Patient Account</span>
+                  </button>
+                )}
               </div>
             )}
 
@@ -193,13 +241,21 @@ export function RxUploadModal({ isOpen, onClose, onUploadSuccess }: RxUploadModa
               type="button"
               onClick={handleUpload}
               disabled={!file || isUploading}
-              className="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-semibold text-xs shadow-md transition-all cursor-pointer disabled:opacity-50"
+              className="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-semibold text-xs shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-sky-600 disabled:active:scale-100"
             >
               {isUploading ? "Scanning & Running OCR Analysis..." : "Submit Prescription for Pharmacist Review"}
             </button>
           </div>
         )}
       </div>
-    </div>
+
+      {showAuthModal && (
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+        />
+      )}
+    </div>,
+    document.body
   );
 }

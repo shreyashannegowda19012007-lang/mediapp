@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Sparkles, ArrowRight, ShieldCheck, Check, X, AlertCircle } from "lucide-react";
 import { GenericAlternative } from "@/lib/api";
 import { useCartStore } from "@/store/useCartStore";
@@ -12,9 +13,14 @@ interface GenericPriceMatchModalProps {
 }
 
 export function GenericPriceMatchModal({ isOpen, onClose, data }: GenericPriceMatchModalProps) {
-  const addItem = useCartStore((s) => s.addItem);
+  const [mounted, setMounted] = useState(false);
+  const { cart, addItem, removeItem } = useCartStore();
 
-  React.useEffect(() => {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
@@ -24,7 +30,7 @@ export function GenericPriceMatchModal({ isOpen, onClose, data }: GenericPriceMa
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen || !data) {
+  if (!isOpen || !mounted || !data) {
     return null;
   }
 
@@ -61,6 +67,10 @@ export function GenericPriceMatchModal({ isOpen, onClose, data }: GenericPriceMa
     if (cheaperAlternative) {
       try {
         setActionError(null);
+        const existingBrand = cart?.items?.find((it) => it.medicine_id === target.id);
+        if (existingBrand) {
+          await removeItem(existingBrand.cart_item_id);
+        }
         await addItem(cheaperAlternative.id, 1);
         onClose();
       } catch (err: unknown) {
@@ -81,9 +91,14 @@ export function GenericPriceMatchModal({ isOpen, onClose, data }: GenericPriceMa
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg rounded-2xl border border-sky-200 dark:border-sky-900 bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-hidden">
+  return createPortal(
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-200"
+    >
+      <div className="relative w-full max-w-lg my-auto max-h-[90vh] flex flex-col rounded-2xl border border-sky-200 dark:border-sky-900 bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-hidden">
         {/* Top Accent Gradient */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-sky-500 via-emerald-500 to-teal-400" />
 
@@ -194,6 +209,7 @@ export function GenericPriceMatchModal({ isOpen, onClose, data }: GenericPriceMa
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

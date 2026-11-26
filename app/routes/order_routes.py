@@ -11,10 +11,13 @@ from app.database import query_db, get_db
 
 order_bp = Blueprint("orders", __name__, url_prefix="/api/orders")
 
-def format_order_response(o):
+def format_order_response(o, user_id=None, role=None):
     d = dict(o)
     d["status"] = d.get("order_status", "PLACED")
     d["order_number"] = d.get("id")
+    # Redact delivery OTP for non-owner or non-customer
+    if role != "customer" or (user_id is not None and d.get("customer_id") != user_id):
+        d["delivery_otp"] = None
     addr_raw = d.get("delivery_address_json")
     if addr_raw and not d.get("delivery_address"):
         try:
@@ -53,18 +56,39 @@ def create_order():
     prescription_id = data.get("prescription_id")
     delivery_notes = data.get("delivery_notes")
 
-    # Retrieve items from user's current cart
-    cart = query_db("SELECT * FROM carts WHERE user_id = ?", (user_id,), one=True)
-    if not cart:
-        return jsonify({"error": "Cart is empty."}), 400
+    # Support items supplied directly or retrieved from user's current cart
+    raw_items = data.get("items") or data.get("cart_items")
+    if raw_items and isinstance(raw_items, list) and len(raw_items) > 0:
+        pharmacy_id = data.get("pharmacy_id", 1)
+        cart_items = []
+        for it in raw_items:
+            mid = it.get("medicine_id") or it.get("id")
+            qty = it.get("quantity") or it.get("qty") or 1
+            if mid:
+                try:
+                    m_int = int(mid)
+                    q_int = int(qty)
+                    if m_int <= 0 or q_int <= 0:
+                        return jsonify({"error": "Item medicine_id and quantity must be positive integers."}), 400
+                    cart_items.append({"medicine_id": m_int, "quantity": q_int})
+                except (ValueError, TypeError):
+                    return jsonify({"error": "Invalid non-integer medicine_id or quantity in items payload."}), 400
+        if not cart_items:
+            return jsonify({"error": "No valid items in order payload."}), 400
+        has_direct_items = True
+    else:
+        has_direct_items = False
+        cart = query_db("SELECT * FROM carts WHERE user_id = ?", (user_id,), one=True)
+        if not cart:
+            return jsonify({"error": "Cart is empty."}), 400
 
-    cart_items = query_db("SELECT medicine_id, quantity FROM cart_items WHERE cart_id = ?", (cart["id"],))
-    if not cart_items:
-        return jsonify({"error": "Your cart contains no items."}), 400
+        cart_items = query_db("SELECT medicine_id, quantity FROM cart_items WHERE cart_id = ?", (cart["id"],))
+        if not cart_items:
+            return jsonify({"error": "Your cart contains no items."}), 400
 
-    pharmacy_id = cart["pharmacy_id"]
-    if not pharmacy_id:
-        return jsonify({"error": "No pharmacy is associated with this order."}), 400
+        pharmacy_id = cart["pharmacy_id"]
+        if not pharmacy_id:
+            return jsonify({"error": "No pharmacy is associated with this order."}), 400
 
     try:
         order = OrderService.create_order(
@@ -76,11 +100,12 @@ def create_order():
             delivery_notes=delivery_notes
         )
 
-        # Clear cart upon successful order placement
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("DELETE FROM cart_items WHERE cart_id = ?", (cart["id"],))
-        conn.commit()
+        # Clear cart upon successful order placement if cart was used
+        if not has_direct_items:
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("DELETE FROM cart_items WHERE cart_id = ?", (cart["id"],))
+            conn.commit()
 
         return jsonify({
             "status": "success",
@@ -144,7 +169,7 @@ def list_orders():
     else:
         return jsonify({"error": "Unauthorized role."}), 403
 
-    return jsonify({"status": "success", "orders": [format_order_response(o) for o in orders]})
+    return jsonify({"status": "success", "orders": [format_order_response(o, user_id=user_id, role=role) for o in orders]})
 
 @order_bp.route("/<string:order_id>", methods=["GET"])
 @login_required
@@ -168,7 +193,11 @@ def get_order(order_id: str):
     elif role == "delivery" and order["delivery_person_id"] != user_id and order["order_status"] != "READY_FOR_PICKUP":
         return jsonify({"error": "Access denied. This delivery is not assigned to you."}), 403
 
-    return jsonify({"status": "success", "order": order})
+    order_dict = dict(order)
+    if role != "customer" or order_dict.get("customer_id") != user_id:
+        order_dict["delivery_otp"] = None
+
+    return jsonify({"status": "success", "order": order_dict})
 
 @order_bp.route("/<string:order_id>/transition", methods=["POST"])
 @login_required

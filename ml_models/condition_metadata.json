@@ -1,0 +1,387 @@
+{
+  "fever": {
+    "name": "Acute Fever & Pyrexia",
+    "category": "Infectious / Systemic",
+    "otc_molecules": [
+      "Paracetamol",
+      "Acetaminophen",
+      "Ibuprofen"
+    ],
+    "catalog_keywords": [
+      "Paracetamol",
+      "Dolo",
+      "Crocin",
+      "Calpol"
+    ]
+  },
+  "headache": {
+    "name": "Tension Headache & Cephalea",
+    "category": "Neurological",
+    "otc_molecules": [
+      "Paracetamol",
+      "Ibuprofen",
+      "Aspirin",
+      "Naproxen"
+    ],
+    "catalog_keywords": [
+      "Paracetamol",
+      "Dolo",
+      "Saridon",
+      "Combiflam"
+    ]
+  },
+  "migraine": {
+    "name": "Acute Migraine with Aura/Photophobia",
+    "category": "Neurological",
+    "otc_molecules": [
+      "Naproxen",
+      "Ibuprofen",
+      "Paracetamol",
+      "Caffeine"
+    ],
+    "catalog_keywords": [
+      "Combiflam",
+      "Saridon",
+      "Naprosyn",
+      "Dolo"
+    ]
+  },
+  "acidity": {
+    "name": "Gastroesophageal Reflux (GERD) & Acidity",
+    "category": "Gastroenterology",
+    "otc_molecules": [
+      "Pantoprazole",
+      "Omeprazole",
+      "Ranitidine",
+      "Antacid (Magaldrate/Simethicone)"
+    ],
+    "catalog_keywords": [
+      "Pantocid",
+      "Pan",
+      "Omez",
+      "Aciloc",
+      "Digene",
+      "Gelusil"
+    ]
+  },
+  "cold": {
+    "name": "Common Cold & Nasal Congestion",
+    "category": "Respiratory / ENT",
+    "otc_molecules": [
+      "Cetirizine",
+      "Chlorpheniramine",
+      "Phenylephrine",
+      "Paracetamol"
+    ],
+    "catalog_keywords": [
+      "Cetirizine",
+      "Cheston",
+      "Sinarest",
+      "Cetzine"
+    ]
+  },
+  "cough_dry": {
+    "name": "Dry Tickly Non-Productive Cough",
+    "category": "Respiratory",
+    "otc_molecules": [
+      "Dextromethorphan",
+      "Chlorpheniramine",
+      "Honey Lozenge"
+    ],
+    "catalog_keywords": [
+      "Ascoril",
+      "Benadryl",
+      "Alex",
+      "Chericof"
+    ]
+  },
+  "cough_wet": {
+    "name": "Wet Productive Chest Cough",
+    "category": "Respiratory",
+    "otc_molecules": [
+      "Guaifenesin",
+      "Ambroxol",
+      "Bromhexine",
+      "Terbutaline"
+    ],
+    "catalog_keywords": [
+      "Ascoril",
+      "Mucolite",
+      "Ambrodil",
+      "Grilinctus"
+    ]
+  },
+  "sore_throat": {
+    "name": "Acute Pharyngitis & Sore Throat",
+    "category": "Respiratory / ENT",
+    "otc_molecules": [
+      "Amylmetacresol Lozenge",
+      "Povidone Iodine Gargle",
+      "Paracetamol",
+      "Flurbiprofen"
+    ],
+    "catalog_keywords": [
+      "Strepsils",
+      "Betadine",
+      "Paracetamol",
+      "Dolo"
+    ]
+  },
+  "diarrhea": {
+    "name": "Acute Watery Diarrhea & Dehydration Risk",
+    "category": "Gastroenterology",
+    "otc_molecules": [
+      "Oral Rehydration Salts (ORS)",
+      "Zinc Sulfate",
+      "Loperamide",
+      "Racecadotril"
+    ],
+    "catalog_keywords": [
+      "Electral",
+      "ORS",
+      "Lopamide",
+      "Zincovit"
+    ]
+  },
+  "nausea_vomiting": {
+    "name": "Acute Nausea & Emesis",
+    "category": "Gastroenterology",
+    "otc_molecules": [
+      "Domperidone",
+      "Ondansetron",
+      "Oral Rehydration Salts (ORS)"
+    ],
+    "catalog_keywords": [
+      "Domstal",
+      "Emeset",
+      "Vomitstop",
+      "Electral"
+    ]
+  },
+  "allergies": {
+    "name": "Allergic Rhinitis & Urticaria",
+    "category": "Immunology / Dermatology",
+    "otc_molecules": [
+      "Cetirizine",
+      "Levocetirizine",
+      "Loratadine",
+      "Fexofenadine"
+    ],
+    "catalog_keywords": [
+      "Cetirizine",
+      "Allegra",
+      "Levocet",
+      "Cetzine"
+    ]
+  },
+  "constipation": {
+    "name": "Acute Functional Constipation",
+    "category": "Gastroenterology",
+    "otc_molecules": [
+      "Isabgol (Psyllium Husk)",
+      "Lactulose",
+      "Bisacodyl",
+      "Docusate"
+    ],
+    "catalog_keywords": [
+      "Dulcolax",
+      "Cremaffin",
+      "Duphalac",
+      "Isabgol"
+    ]
+  },
+  "gas_bloating": {
+    "name": "Intestinal Gas & Abdominal Distension",
+    "category": "Gastroenterology",
+    "otc_molecules": [
+      "Simethicone",
+      "Activated Charcoal",
+      "Digestive Enzymes (Pancreatin)"
+    ],
+    "catalog_keywords": [
+      "Digene",
+      "Gelusil",
+      "Aristozyme",
+      "Pankreoflat"
+    ]
+  },
+  "muscle_pain": {
+    "name": "Musculoskeletal Strain, Cramps & Myalgia",
+    "category": "Orthopedics / Rheumatology",
+    "otc_molecules": [
+      "Diclofenac Gel",
+      "Ibuprofen",
+      "Paracetamol",
+      "Thiocolchicoside"
+    ],
+    "catalog_keywords": [
+      "Volini",
+      "Combiflam",
+      "Voveran",
+      "Moov"
+    ]
+  },
+  "joint_pain": {
+    "name": "Joint Arthralgia & Mild Osteoarthritis",
+    "category": "Orthopedics / Rheumatology",
+    "otc_molecules": [
+      "Glucosamine",
+      "Paracetamol",
+      "Aceclofenac",
+      "Diclofenac"
+    ],
+    "catalog_keywords": [
+      "Hifenac",
+      "Voveran",
+      "Combiflam",
+      "Dolo"
+    ]
+  },
+  "mouth_ulcers": {
+    "name": "Aphthous Stomatitis & Canker Sores",
+    "category": "Oral Medicine / Dentistry",
+    "otc_molecules": [
+      "Choline Salicylate Gel",
+      "Triamcinolone Acetonide",
+      "Riboflavin (Vitamin B2)"
+    ],
+    "catalog_keywords": [
+      "Orajel",
+      "Kenacort",
+      "Becosules",
+      "Zytee"
+    ]
+  },
+  "toothache": {
+    "name": "Dental Pain & Gingival Sensitivity",
+    "category": "Dentistry",
+    "otc_molecules": [
+      "Clove Oil (Eugenol)",
+      "Ketorolac",
+      "Ibuprofen",
+      "Paracetamol"
+    ],
+    "catalog_keywords": [
+      "Combiflam",
+      "Ketorol",
+      "Sensodyne",
+      "Clove Oil"
+    ]
+  },
+  "eye_strain": {
+    "name": "Asthenopia, Computer Eye Strain & Dry Eye",
+    "category": "Ophthalmology",
+    "otc_molecules": [
+      "Carboxymethylcellulose Eye Drops",
+      "Polyethylene Glycol Drops"
+    ],
+    "catalog_keywords": [
+      "Refresh Tears",
+      "Tears Naturale",
+      "Systane"
+    ]
+  },
+  "fungal_skin": {
+    "name": "Tinea Corporis, Cruris & Fungal Ringworm",
+    "category": "Dermatology",
+    "otc_molecules": [
+      "Clotrimazole",
+      "Miconazole",
+      "Terbinafine",
+      "Ketoconazole"
+    ],
+    "catalog_keywords": [
+      "Candid",
+      "Canesten",
+      "Dermiford",
+      "Ketoconazole"
+    ]
+  },
+  "acne": {
+    "name": "Acne Vulgaris & Facial Breakouts",
+    "category": "Dermatology",
+    "otc_molecules": [
+      "Benzoyl Peroxide",
+      "Salicylic Acid",
+      "Clindamycin Gel",
+      "Adapalene"
+    ],
+    "catalog_keywords": [
+      "Benzac",
+      "Clindac",
+      "Deriva",
+      "Sebogel"
+    ]
+  },
+  "minor_cuts_burns": {
+    "name": "Minor Superficial Cuts, Abrasions & 1st Degree Burns",
+    "category": "Emergency / First Aid",
+    "otc_molecules": [
+      "Povidone Iodine Ointment",
+      "Neomycin/Bacitracin",
+      "Silver Sulfadiazine"
+    ],
+    "catalog_keywords": [
+      "Betadine",
+      "Soframycin",
+      "Burnol",
+      "Silverex"
+    ]
+  },
+  "insomnia": {
+    "name": "Transient Sleep Disturbance & Sleep Onset Insomnia",
+    "category": "Psychiatry / Sleep Medicine",
+    "otc_molecules": [
+      "Melatonin",
+      "Diphenhydramine",
+      "Chamomile"
+    ],
+    "catalog_keywords": [
+      "Melatonin",
+      "Restyl",
+      "ZzzQuil"
+    ]
+  },
+  "motion_sickness": {
+    "name": "Kinetosis & Travel Motion Sickness",
+    "category": "ENT / Neurology",
+    "otc_molecules": [
+      "Dimenhydrinate",
+      "Meclizine",
+      "Promethazine",
+      "Ginger Extract"
+    ],
+    "catalog_keywords": [
+      "Avomine",
+      "Dramamine",
+      "Stugeron"
+    ]
+  },
+  "urinary_discomfort": {
+    "name": "Mild Lower Urinary Tract Irritation / Cystitis Symptoms",
+    "category": "Urology / Nephrology",
+    "otc_molecules": [
+      "Disodium Hydrogen Citrate (Urine Alkalizer)",
+      "Cranberry Extract"
+    ],
+    "catalog_keywords": [
+      "Cital",
+      "Alkamax",
+      "Urikind"
+    ]
+  },
+  "ear_discomfort": {
+    "name": "Otalgia & Impacted Cerumen / Ear Fullness",
+    "category": "ENT",
+    "otc_molecules": [
+      "Paradichlorobenzene / Benzocaine Ear Drops",
+      "Paracetamol"
+    ],
+    "catalog_keywords": [
+      "Waxsol",
+      "Clearwax",
+      "Otogesic",
+      "Soliwax"
+    ]
+  }
+}

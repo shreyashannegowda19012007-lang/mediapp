@@ -20,6 +20,7 @@ export interface Medicine {
   side_effects?: string;
   contraindications?: string;
   cold_chain?: boolean; // Evaluated or mapped for temperature-sensitive items
+  requires_cold_chain?: boolean | number; // Direct database column indicator
 }
 
 export interface GenericAlternative {
@@ -107,6 +108,7 @@ export interface Order {
   order_number: string;
   status: string;
   order_status?: string;
+  prescription_id?: number | null;
   payment_status: string;
   total_amount: number;
   delivery_address: string;
@@ -128,15 +130,26 @@ export interface Order {
 
 export interface Prescription {
   id: number;
-  user_id: number;
-  user_name?: string;
-  file_path: string;
+  user_id?: number;
+  customer_id?: number;
+  customer_name?: string;
+  customer_email?: string;
+  file_path?: string;
   original_filename: string;
+  file_size?: number;
+  mime_type?: string;
   status: "pending" | "verified" | "rejected";
+  doctor_name?: string | null;
+  patient_name?: string | null;
+  prescription_date?: string | null;
   ocr_extracted_text?: string;
+  extracted_text?: string;
   ocr_confidence?: number;
+  ocr_provider?: string;
   detected_medicines?: string[];
-  rejection_reason?: string;
+  extracted_medicines?: string[];
+  rejection_reason?: string | null;
+  clinical_notes?: string | null;
   created_at: string;
 }
 
@@ -194,21 +207,48 @@ export const api = {
         method: "POST",
         body: JSON.stringify(payload),
       }),
-    login: (credentials: { email: string; password?: string; role?: string }) =>
-      apiFetch<{ status: string; user: UserSession }>("/api/auth/login", {
+    login: async (credentials: { email: string; password?: string; role?: string }) => {
+      const res = await apiFetch<{ status: string; user: UserSession; token?: string }>("/api/auth/login", {
         method: "POST",
         body: JSON.stringify(credentials),
-      }),
-    demoLogin: (role: "customer" | "pharmacy" | "delivery" | "admin") =>
-      apiFetch<{ status: string; user: UserSession }>("/api/auth/login", {
+      });
+      if (typeof window !== "undefined" && res.token) {
+        localStorage.setItem("mediapp_token", res.token);
+      }
+      return res;
+    },
+    demoLogin: async (role: "customer" | "pharmacy" | "delivery" | "admin") => {
+      const res = await apiFetch<{ status: string; user: UserSession; token?: string }>("/api/auth/login", {
         method: "POST",
         body: JSON.stringify({
           email: `${role}@mediapp.local`,
           password: `${role.charAt(0).toUpperCase() + role.slice(1)}@123`,
           role,
         }),
+      });
+      if (typeof window !== "undefined" && res.token) {
+        localStorage.setItem("mediapp_token", res.token);
+      }
+      return res;
+    },
+    getGoogleUrl: (origin?: string, role?: string) => {
+      const params = new URLSearchParams();
+      if (origin) params.append("origin", origin);
+      if (role) params.append("role", role);
+      const q = params.toString() ? `?${params.toString()}` : "";
+      return apiFetch<{ status: string; url: string; state: string }>(`/api/auth/google/url${q}`);
+    },
+    switchRole: (role: "customer" | "pharmacy" | "delivery" | "admin") =>
+      apiFetch<{ status: string; message: string; active_role: string; pharmacy_id?: number }>("/api/auth/switch-role", {
+        method: "POST",
+        body: JSON.stringify({ role }),
       }),
-    logout: () => apiFetch<{ status: string }>("/api/auth/logout", { method: "POST" }),
+    logout: async () => {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("mediapp_token");
+      }
+      return apiFetch<{ status: string }>("/api/auth/logout", { method: "POST" });
+    },
   },
 
   // Medicines & Discovery
@@ -307,10 +347,11 @@ export const api = {
 
   // Pharmacy Clinical Desk
   pharmacy: {
-    getPendingOrders: () => apiFetch<{ status: string; orders: Order[] }>("/api/pharmacy/orders/pending"),
-    packOrder: (orderId: number) =>
+    getPendingOrders: () => apiFetch<{ status: string; orders: Order[] }>("/api/pharmacy/orders"),
+    getOrders: () => apiFetch<{ status: string; orders: Order[] }>("/api/pharmacy/orders"),
+    packOrder: (orderId: number | string) =>
       apiFetch<{ status: string }>(`/api/pharmacy/orders/${orderId}/pack`, { method: "POST" }),
-    dispatchOrder: (orderId: number, coldChainBatch?: string) =>
+    dispatchOrder: (orderId: number | string, coldChainBatch?: string) =>
       apiFetch<{ status: string }>(`/api/pharmacy/orders/${orderId}/dispatch`, {
         method: "POST",
         body: JSON.stringify({ cold_chain_batch: coldChainBatch || "CC-2026-N8" }),
@@ -328,9 +369,18 @@ export const api = {
       const list = (res.orders || res.available_orders || []) as Order[];
       return { status: res.status || "success", orders: list };
     },
-    acceptRun: (orderId: number) =>
+    acceptRun: (orderId: number | string) =>
       apiFetch<{ status: string }>(`/api/delivery/orders/${orderId}/accept`, { method: "POST" }),
-    verifyHandoff: (orderId: number, otp: string) =>
+    pickup: (orderId: number | string) =>
+      apiFetch<{ status: string; message: string }>(`/api/delivery/orders/${orderId}/pickup`, { method: "POST" }),
+    markInTransit: (orderId: number | string) =>
+      apiFetch<{ status: string; message: string }>(`/api/delivery/orders/${orderId}/in-transit`, { method: "POST" }),
+    updateLocation: (latitude: number, longitude: number) =>
+      apiFetch<{ status: string; location: { latitude: number; longitude: number } }>("/api/delivery/location", {
+        method: "POST",
+        body: JSON.stringify({ latitude, longitude }),
+      }),
+    verifyHandoff: (orderId: number | string, otp: string) =>
       apiFetch<{ status: string; message: string }>(`/api/delivery/orders/${orderId}/verify-otp`, {
         method: "POST",
         body: JSON.stringify({ otp }),
@@ -362,7 +412,7 @@ export const api = {
 
   // Admin Oversight & Analytics
   admin: {
-    getAnalytics: () =>
+    getAnalytics: (timeframe?: string) =>
       apiFetch<{
         status: string;
         metrics: {
@@ -372,9 +422,13 @@ export const api = {
           avg_fulfillment_time_mins: number;
           generic_savings_total: number;
           low_stock_alerts?: number;
+          hourly_fulfillment?: Array<{ hour: string; orders: number; avgMins: number }>;
+          category_savings?: Array<{ category: string; savingsPct: number; brandedPrice: number; genericPrice: number }>;
         };
         recent_activity: Array<{ id: number; action: string; timestamp: string; details: string }>;
         low_stock?: Array<{ id: number; name: string; generic_name: string; stock: number; minThreshold: number; pharmacy: string; status: string }>;
-      }>("/api/admin/analytics"),
+        hourly_fulfillment?: Array<{ hour: string; orders: number; avgMins: number }>;
+        category_savings?: Array<{ category: string; savingsPct: number; brandedPrice: number; genericPrice: number }>;
+      }>(timeframe && timeframe !== "all" ? `/api/admin/analytics?timeframe=${encodeURIComponent(timeframe)}` : "/api/admin/analytics"),
   },
 };

@@ -55,6 +55,20 @@ def _get_oauth_setting(key: str, default: str = "") -> str:
     try:
         if key in st.secrets:
             return str(st.secrets[key]).strip()
+        # Also support nested [auth.google] TOML secrets if configured
+        if "auth" in st.secrets:
+            auth_sec = st.secrets["auth"]
+            if key == "STREAMLIT_GOOGLE_REDIRECT_URI" and "redirect_uri" in auth_sec:
+                return str(auth_sec["redirect_uri"]).strip()
+            if "google" in auth_sec:
+                g_sec = auth_sec["google"]
+                nested_map = {
+                    "GOOGLE_CLIENT_ID": "client_id",
+                    "GOOGLE_CLIENT_SECRET": "client_secret",
+                }
+                nested_key = nested_map.get(key)
+                if nested_key and nested_key in g_sec:
+                    return str(g_sec[nested_key]).strip()
     except Exception:
         pass
     return os.getenv(key, default).strip()

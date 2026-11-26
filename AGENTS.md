@@ -55,3 +55,28 @@ Always adhere to clinical-grade, high-trust color tokens:
   - Desktop (> 1024px): 3 or 4 columns
 - **Dark Mode Support**:
   - Support seamless Dark, Light, and System Default toggling via `next-themes` and `.dark` class attributes.
+
+---
+
+## 5. AI Clinical Suggestion & Medication Plan Invariants
+
+All AI-driven clinical guidance, symptom triage, and medication suggestion features must adhere strictly to these standards:
+
+1. **Anti-Boilerplate & Uniqueness Invariant**:
+   - The AI assistant must NEVER return generic, identical canned text across distinct ailments.
+   - Every condition must receive tailored physiological context, unique self-care protocols, and targeted OTC active molecules.
+2. **Mandatory 5-Pillar Structured Response**:
+   - Every ailment assessment must be formatted with the 5 clinical pillars:
+     1. *Clinical Condition Context*
+     2. *Non-Pharmacological Self-Care Measures*
+     3. *Over-The-Counter (OTC) Symptom Regimen* (with dosing, food timing, and duration limits)
+     4. *Acute Red Flags & Emergency Warning Signs*
+     5. *Physician Consultation & Referral Criteria*
+3. **Database Stock Linkage**:
+   - Recommended formulations must be dynamically linked to genuine dispensary inventory (`medicines` and `pharmacy_inventory`).
+   - Every recommendation must display real-time stock units, unit prices, and 1-click cart addition.
+4. **Emergency Red-Flag Priority**:
+   - Any inquiry mentioning crushing chest pain, neurological deficits, severe dyspnea, anaphylaxis, or acute poisoning must immediately trigger a prominent, non-dismissible Emergency ER alert (112 / 911).
+5. **OTC Boundary Guard**:
+   - Never recommend prescription-only (Schedule H/X) medications (such as antibiotics, oral steroids, or cardiac agents) without a verified doctor's prescription.
+

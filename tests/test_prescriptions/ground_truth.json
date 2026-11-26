@@ -1,0 +1,69 @@
+{
+  "rx_01_cardiology_printed.png": {
+    "document_type": "e_prescription",
+    "expected_doctor": "Dr. Arvind Kapoor",
+    "expected_patient": "Ramesh Sharma",
+    "expected_date": "14/11/2026",
+    "expected_medicines": [
+      "Telma 40mg",
+      "Atorva 20mg",
+      "Ecosprin 75mg"
+    ],
+    "is_medical_prescription": true
+  },
+  "rx_02_diabetology_insulin.png": {
+    "document_type": "e_prescription_coldchain",
+    "expected_doctor": "Dr. Sunita Rao",
+    "expected_patient": "Anita Nair",
+    "expected_date": "2026-11-10",
+    "expected_medicines": [
+      "Huminsulin",
+      "Glycomet 500mg"
+    ],
+    "is_medical_prescription": true
+  },
+  "rx_03_gastro_handwritten.png": {
+    "document_type": "clinic_slip",
+    "expected_doctor": "Dr. Priya Nair",
+    "expected_patient": "Vikram Malhotra",
+    "expected_date": "05-11-2026",
+    "expected_medicines": [
+      "Pan 40mg",
+      "Aciloc 150mg",
+      "Dolo 650mg"
+    ],
+    "is_medical_prescription": true
+  },
+  "rx_04_pediatric_antibiotic.png": {
+    "document_type": "pediatric_prescription",
+    "expected_doctor": "Dr. Rajesh Kumar",
+    "expected_patient": "Aryan Sharma",
+    "expected_date": "18/11/2026",
+    "expected_medicines": [
+      "Augmentin",
+      "Paracetamol",
+      "Cetirizine"
+    ],
+    "is_medical_prescription": true
+  },
+  "rx_05_noisy_handwriting.png": {
+    "document_type": "handwritten_clinic_slip",
+    "expected_doctor": "Dr. K. S. Verma",
+    "expected_patient": "Suresh Babu",
+    "expected_date": "12/10/2026",
+    "expected_medicines": [
+      "Amlodipine",
+      "Dolo",
+      "Cetirizine"
+    ],
+    "is_medical_prescription": true
+  },
+  "rx_06_negative_control.png": {
+    "document_type": "grocery_receipt_negative_control",
+    "expected_doctor": null,
+    "expected_patient": null,
+    "expected_date": null,
+    "expected_medicines": [],
+    "is_medical_prescription": false
+  }
+}

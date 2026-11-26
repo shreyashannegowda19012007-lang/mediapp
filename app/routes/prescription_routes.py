@@ -143,7 +143,19 @@ def list_prescriptions():
             item["extracted_medicines"] = json.loads(item["extracted_medicines"]) if item["extracted_medicines"] else []
         except Exception:
             item["extracted_medicines"] = []
-        item["detected_medicines"] = item["extracted_medicines"]
+
+        if item.get("approved_medicines"):
+            try:
+                item["approved_medicines"] = json.loads(item["approved_medicines"]) if isinstance(item["approved_medicines"], str) else item["approved_medicines"]
+            except Exception:
+                pass
+
+        if item.get("status") in ("verified", "approved") and item.get("approved_medicines"):
+            item["detected_medicines"] = item["approved_medicines"]
+        else:
+            item["detected_medicines"] = item["extracted_medicines"]
+        item["file_url"] = f"/api/prescriptions/{item['id']}/file"
+        item.pop("file_path", None)
         result.append(item)
 
     return jsonify({"status": "success", "prescriptions": result})
@@ -178,7 +190,19 @@ def get_prescription(rx_id: int):
         rx_dict["extracted_medicines"] = json.loads(rx_dict["extracted_medicines"]) if rx_dict["extracted_medicines"] else []
     except Exception:
         rx_dict["extracted_medicines"] = []
-    rx_dict["detected_medicines"] = rx_dict["extracted_medicines"]
+
+    if rx_dict.get("approved_medicines"):
+        try:
+            rx_dict["approved_medicines"] = json.loads(rx_dict["approved_medicines"]) if isinstance(rx_dict["approved_medicines"], str) else rx_dict["approved_medicines"]
+        except Exception:
+            pass
+
+    if rx_dict.get("status") in ("verified", "approved") and rx_dict.get("approved_medicines"):
+        rx_dict["detected_medicines"] = rx_dict["approved_medicines"]
+    else:
+        rx_dict["detected_medicines"] = rx_dict["extracted_medicines"]
+    rx_dict["file_url"] = f"/api/prescriptions/{rx_dict['id']}/file"
+    rx_dict.pop("file_path", None)
 
     return jsonify({"status": "success", "prescription": rx_dict})
 

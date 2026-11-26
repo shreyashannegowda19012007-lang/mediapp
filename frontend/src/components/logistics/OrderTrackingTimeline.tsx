@@ -26,24 +26,70 @@ export function OrderTrackingTimeline() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [otpInput, setOtpInput] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [showCancelPrompt, setShowCancelPrompt] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const { activeRole } = useAuthStore();
 
-  const handleCancelOrder = async () => {
+  const handlePickup = async () => {
     if (!selectedOrder) return;
-    if (!confirm("Are you sure you wish to cancel this clinical order? Reserved pharmacy stock will be released.")) {
-      return;
+    try {
+      setIsUpdatingStatus(true);
+      await api.delivery.pickup(selectedOrder.id);
+      setActionSuccess("Package collected from pharmacy. Thermal seal verified (4.2°C).");
+      await reloadOrders();
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : "Failed to mark order as picked up.");
+      setTimeout(() => setActionError(null), 4000);
+    } finally {
+      setIsUpdatingStatus(false);
+      setTimeout(() => setActionSuccess(null), 3000);
     }
+  };
+
+  const handleStartTransit = async () => {
+    if (!selectedOrder) return;
+    try {
+      setIsUpdatingStatus(true);
+      const coords = await new Promise<{ lat: number; lng: number }>((resolve) => {
+        if (typeof window !== "undefined" && "geolocation" in navigator) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+            () => resolve({ lat: 12.9716, lng: 77.5946 }),
+            { timeout: 3000 }
+          );
+        } else {
+          resolve({ lat: 12.9716, lng: 77.5946 });
+        }
+      });
+      await api.delivery.updateLocation(coords.lat, coords.lng);
+      await api.delivery.markInTransit(selectedOrder.id);
+      setActionSuccess("Order marked in transit. Live GPS coordinates broadcasted.");
+      await reloadOrders();
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : "Failed to mark order in transit.");
+      setTimeout(() => setActionError(null), 4000);
+    } finally {
+      setIsUpdatingStatus(false);
+      setTimeout(() => setActionSuccess(null), 3000);
+    }
+  };
+
+  const executeCancelOrder = async () => {
+    if (!selectedOrder) return;
     try {
       setIsCancelling(true);
       await api.orders.cancel(selectedOrder.id, "Customer requested cancellation");
       setActionSuccess("Order has been cancelled and pharmacy stock restored.");
+      setShowCancelPrompt(false);
       await reloadOrders();
       setTimeout(() => setActionSuccess(null), 4000);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to cancel order");
+      setActionError(err instanceof Error ? err.message : "Failed to cancel order");
+      setTimeout(() => setActionError(null), 4000);
     } finally {
       setIsCancelling(false);
     }
@@ -91,6 +137,13 @@ export function OrderTrackingTimeline() {
     };
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      reloadOrders();
+    }, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
   const milestones = [
     { key: "placed", label: "Order Placed", desc: "Digital clinical prescription logged" },
     { key: "verified", label: "Rx Clinically Approved", desc: "Checked by licensed pharmacist" },
@@ -103,13 +156,19 @@ export function OrderTrackingTimeline() {
     switch ((status || "").toLowerCase()) {
       case "placed":
       case "pending":
+      case "awaiting_prescription":
         return 0;
       case "approved":
       case "verified":
+      case "prescription_verified":
+      case "accepted":
         return 1;
       case "packed":
+      case "preparing":
       case "ready_for_pickup":
         return 2;
+      case "delivery_assigned":
+      case "picked_up":
       case "out_for_delivery":
       case "in_transit":
       case "assigned":
@@ -124,7 +183,8 @@ export function OrderTrackingTimeline() {
 
   const handleVerifyOtp = async () => {
     if (!selectedOrder || !otpInput.trim()) {
-      alert("Please enter patient OTP.");
+      setActionError("Please enter patient OTP.");
+      setTimeout(() => setActionError(null), 3000);
       return;
     }
     try {
@@ -134,7 +194,8 @@ export function OrderTrackingTimeline() {
       setOtpInput("");
       await reloadOrders();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "OTP Verification failed");
+      setActionError(err instanceof Error ? err.message : "OTP Verification failed");
+      setTimeout(() => setActionError(null), 4000);
     } finally {
       setIsVerifying(false);
       setTimeout(() => setActionSuccess(null), 3000);
@@ -164,12 +225,21 @@ export function OrderTrackingTimeline() {
           </div>
         </div>
 
-        {actionSuccess && (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-xs font-semibold">
-            <CheckCircle2 className="h-4 w-4" />
-            <span>{actionSuccess}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {actionSuccess && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-xs font-semibold">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>{actionSuccess}</span>
+            </div>
+          )}
+
+          {actionError && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20 text-xs font-semibold">
+              <AlertCircle className="h-4 w-4" />
+              <span>{actionError}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Main Grid */}
@@ -192,6 +262,7 @@ export function OrderTrackingTimeline() {
               orders.map((o) => (
                 <button
                   key={o.id}
+                  id={`btn-select-order-${o.id}`}
                   onClick={() => setSelectedOrder(o)}
                   className={clsx(
                     "w-full p-3.5 rounded-xl border text-left transition-all cursor-pointer",
@@ -228,7 +299,7 @@ export function OrderTrackingTimeline() {
           {selectedOrder ? (
             <>
               {/* Cold-Chain IoT Telemetry Card */}
-              <div className="p-5 rounded-2xl border border-cyan-200 dark:border-cyan-900/60 bg-gradient-to-r from-cyan-500/10 via-sky-500/5 to-transparent shadow-xs">
+              <div className="p-5 rounded-2xl border border-cyan-200 dark:border-cyan-900/60 bg-gradient-to-r from-cyan-500/10 via-sky-500/5 to-transparent shadow-xs space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="p-3 rounded-xl bg-cyan-500/20 text-cyan-600 dark:text-cyan-300">
@@ -252,10 +323,32 @@ export function OrderTrackingTimeline() {
                     <span>Integrity Verified</span>
                   </div>
                 </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-cyan-200/50 dark:border-cyan-900/40 text-xs">
+                  <div className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-cyan-100 dark:border-cyan-900/40">
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Current Temp</span>
+                    <span className="font-extrabold text-cyan-700 dark:text-cyan-300 text-sm">4.2°C</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-cyan-100 dark:border-cyan-900/40">
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Nominal Range</span>
+                    <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-sm">2.0°C – 8.0°C</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-cyan-100 dark:border-cyan-900/40">
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">IoT Sensor</span>
+                    <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-xs">#CC-842-BLE</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-cyan-100 dark:border-cyan-900/40">
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Telemetry Link</span>
+                    <span className="font-bold text-sky-600 dark:text-sky-400 text-xs flex items-center gap-1">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                      IoT Live Active
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* Patient Delivery Handover OTP Card */}
-              {selectedOrder.delivery_otp && (
+              {activeRole === "customer" && selectedOrder.delivery_otp && (
                 <div className="p-4 rounded-2xl border border-sky-200 dark:border-sky-900 bg-sky-50/70 dark:bg-sky-950/30 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
                   <div className="flex items-center gap-3">
                     <div className="p-2.5 rounded-xl bg-sky-500/20 text-sky-600 dark:text-sky-300">
@@ -296,15 +389,38 @@ export function OrderTrackingTimeline() {
                     {["PLACED", "AWAITING_PRESCRIPTION"].includes(
                       (selectedOrder.status || selectedOrder.order_status || "").toUpperCase()
                     ) && (
-                      <button
-                        type="button"
-                        onClick={handleCancelOrder}
-                        disabled={isCancelling}
-                        aria-label="Cancel this order"
-                        className="px-3 py-1.5 rounded-xl border border-rose-300 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
-                      >
-                        {isCancelling ? "Cancelling..." : "Cancel Order"}
-                      </button>
+                      showCancelPrompt ? (
+                        <div className="flex items-center gap-1.5 bg-rose-50 dark:bg-rose-950/60 p-1.5 rounded-xl border border-rose-200 dark:border-rose-900">
+                          <span className="text-[11px] font-semibold text-rose-700 dark:text-rose-400">Cancel order?</span>
+                          <button
+                            type="button"
+                            id="btn-confirm-cancel-order"
+                            onClick={executeCancelOrder}
+                            disabled={isCancelling}
+                            className="px-2 py-0.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold cursor-pointer disabled:opacity-50"
+                          >
+                            {isCancelling ? "Cancelling..." : "Yes, Cancel"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowCancelPrompt(false)}
+                            className="px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold cursor-pointer"
+                          >
+                            No
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          id="btn-cancel-order"
+                          onClick={() => setShowCancelPrompt(true)}
+                          disabled={isCancelling}
+                          aria-label="Cancel this order"
+                          className="px-3 py-1.5 rounded-xl border border-rose-300 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+                        >
+                          Cancel Order
+                        </button>
+                      )
                     )}
                   </div>
                 </div>
@@ -371,54 +487,153 @@ export function OrderTrackingTimeline() {
 
               {/* Delivery Agent & OTP Handoff Section */}
               <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Assigned Delivery Agent
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-700 dark:text-slate-300">
-                      MK
-                    </div>
-                    <div>
-                      <div className="font-bold text-sm text-slate-900 dark:text-slate-100">
-                        {selectedOrder.delivery_agent_name || "Manoj Kumar (Certified Cold-Chain Fleet)"}
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                        <Phone className="h-3 w-3" />
-                        <span>+91 98450 12849 • Thermal Van KA-05-MH-2914</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                {(() => {
+                  const agentName = selectedOrder.delivery_agent_name || "Manoj Kumar (Certified Cold-Chain Fleet)";
+                  const agentInitials = agentName
+                    .split(" ")
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map((w: string) => w[0])
+                    .join("")
+                    .toUpperCase() || "MK";
+                  const agentPhone = selectedOrder.delivery_agent_phone || "+91 98450 12849 • Thermal Van KA-05-MH-2914";
 
-                {/* Patient OTP Verification Box */}
-                <div className="p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 space-y-2">
-                  <div className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                    <KeyRound className="h-3.5 w-3.5 text-sky-500" />
-                    <span>Patient Handover OTP Verification</span>
+                  return (
+                    <div className="space-y-2">
+                      <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Assigned Delivery Agent
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-700 dark:text-slate-300">
+                          {agentInitials}
+                        </div>
+                        <div>
+                          <div className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                            {agentName}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            <span>{agentPhone}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Courier / Admin OTP Verification Box vs Patient Security Prompt */}
+                {activeRole === "delivery" || activeRole === "admin" ? (
+                  <div className="space-y-3">
+                    {/* Step A: Pickup action if assigned */}
+                    {((selectedOrder.status || selectedOrder.order_status || "").toUpperCase() === "DELIVERY_ASSIGNED") && (
+                      <div className="p-3.5 rounded-xl border border-sky-200 dark:border-sky-900 bg-sky-50/60 dark:bg-sky-950/40 space-y-2">
+                        <div className="flex items-center justify-between text-xs font-bold text-sky-900 dark:text-sky-200">
+                          <span className="flex items-center gap-1.5">
+                            <Package className="h-4 w-4 text-sky-600" />
+                            <span>Step 1: Pick Up from Pharmacy</span>
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] bg-sky-500/10 text-sky-700 dark:text-sky-300 font-semibold uppercase">
+                            Assigned
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                          Collect insulated thermal box from Apollo Pharmacy desk and confirm cold-chain seal.
+                        </p>
+                        <button
+                          id="btn-courier-pickup"
+                          type="button"
+                          onClick={handlePickup}
+                          disabled={isUpdatingStatus}
+                          className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-bold text-xs transition-all cursor-pointer disabled:opacity-50 shadow-xs"
+                        >
+                          <Package className="h-3.5 w-3.5" />
+                          <span>{isUpdatingStatus ? "Updating..." : "Confirm Package Pickup"}</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Step B: Start Transit if picked up */}
+                    {((selectedOrder.status || selectedOrder.order_status || "").toUpperCase() === "PICKED_UP") && (
+                      <div className="p-3.5 rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50/60 dark:bg-amber-950/40 space-y-2">
+                        <div className="flex items-center justify-between text-xs font-bold text-amber-900 dark:text-amber-200">
+                          <span className="flex items-center gap-1.5">
+                            <Truck className="h-4 w-4 text-amber-600" />
+                            <span>Step 2: Start Express Transit</span>
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-300 font-semibold uppercase">
+                            Picked Up
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                          Activate IoT temperature telemetry (4.2°C nominal) and broadcast GPS coordinates.
+                        </p>
+                        <button
+                          id="btn-courier-transit"
+                          type="button"
+                          onClick={handleStartTransit}
+                          disabled={isUpdatingStatus}
+                          className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-bold text-xs transition-all cursor-pointer disabled:opacity-50 shadow-xs"
+                        >
+                          <Truck className="h-3.5 w-3.5" />
+                          <span>{isUpdatingStatus ? "Broadcasting..." : "Start Transit & Broadcast GPS"}</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Step C: Delivered state or OTP verification input */}
+                    {((selectedOrder.status || selectedOrder.order_status || "").toUpperCase() === "DELIVERED") ? (
+                      <div className="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/60 dark:bg-emerald-950/30 text-xs text-emerald-800 dark:text-emerald-300 space-y-1">
+                        <div className="flex items-center gap-1.5 font-bold">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                          <span>Delivery Handover Verified</span>
+                        </div>
+                        <p className="text-[11px] leading-relaxed">
+                          Patient OTP verified successfully. Cold-chain thermal guarantee preserved (4.2°C nominal). Order marked delivered.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 space-y-2">
+                        <div className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                          <KeyRound className="h-3.5 w-3.5 text-sky-500" />
+                          <span>Courier Handover OTP Verification</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <input
+                            id="input-courier-otp"
+                            type="text"
+                            maxLength={6}
+                            value={otpInput}
+                            onChange={(e) => setOtpInput(e.target.value)}
+                            placeholder="Enter 6-digit OTP (e.g. 914027)"
+                            className="flex-1 text-xs rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono tracking-widest text-center"
+                          />
+                          <button
+                            id="btn-verify-otp"
+                            type="button"
+                            onClick={handleVerifyOtp}
+                            disabled={isVerifying || !otpInput.trim()}
+                            className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+                          >
+                            {isVerifying ? "Verifying..." : "Verify OTP"}
+                          </button>
+                        </div>
+                        <div className="text-[10px] text-slate-500">
+                          Collect the 6-digit verification code from the customer at doorstep arrival to verify safe custody.
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      maxLength={6}
-                      value={otpInput}
-                      onChange={(e) => setOtpInput(e.target.value)}
-                      placeholder="Enter 4-digit OTP (e.g. 4821)"
-                      className="flex-1 text-xs rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono tracking-widest text-center"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleVerifyOtp}
-                      disabled={isVerifying || !otpInput.trim()}
-                      className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
-                    >
-                      {isVerifying ? "Verifying..." : "Verify OTP"}
-                    </button>
+                ) : (
+                  <div className="p-3.5 rounded-xl border border-sky-100 dark:border-sky-900/60 bg-sky-50/50 dark:bg-sky-950/20 text-xs text-sky-800 dark:text-sky-300 space-y-1">
+                    <div className="flex items-center gap-1.5 font-bold">
+                      <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                      <span>Doorstep Handover Verification</span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed">
+                      Please share your 6-digit <strong>Patient Handover Security OTP</strong> with your courier upon arrival to confirm safe delivery and prevent medication diversion.
+                    </p>
                   </div>
-                  <div className="text-[10px] text-slate-500">
-                    Patient receives OTP via SMS/App upon clinical dispatch to prevent medication diversion.
-                  </div>
-                </div>
+                )}
               </div>
             </>
           ) : (

@@ -5,7 +5,7 @@ demo role authentication, Google OAuth flow, and sessions.
 """
 from flask import Blueprint, request, jsonify, session, redirect
 from app.services.auth_service import (
-    AuthService, set_user_session, clear_user_session, login_required
+    AuthService, set_user_session, clear_user_session, login_required, get_user_from_request
 )
 from app.config import Config
 from app.database import query_db, get_db
@@ -76,10 +76,11 @@ def login():
             return jsonify({"error": "Invalid email or password."}), 401
 
         set_user_session(user)
+        token = AuthService.create_auth_token(user["id"])
         return jsonify({
             "status": "success",
             "message": "Logged in successfully.",
-            "token": f"usr_{user['id']}",
+            "token": token,
             "user": {
                 "id": user["id"],
                 "email": user["email"],
@@ -168,8 +169,8 @@ def logout():
 @auth_bp.route("/me", methods=["GET"])
 @auth_bp.route("/session", methods=["GET"])
 def get_current_user():
-    user_id = session.get("user_id")
-    if not user_id:
+    user = get_user_from_request()
+    if not user:
         return jsonify({
             "status": "success",
             "authenticated": False,
@@ -177,11 +178,7 @@ def get_current_user():
             "capabilities": Config.get_public_capabilities()
         })
         
-    user = query_db("SELECT id, email, full_name, phone, role, profile_image, is_active FROM users WHERE id = ?", (user_id,), one=True)
-    if not user or not user["is_active"]:
-        clear_user_session()
-        return jsonify({"status": "success", "authenticated": False, "user": None, "capabilities": Config.get_public_capabilities()})
-        
+    user_id = user["id"]
     user_data = dict(user)
     user_data["user_id"] = user["id"]
     user_data["active_role"] = session.get("role", user["role"])
@@ -221,7 +218,16 @@ def get_current_user():
 @auth_bp.route("/google/url", methods=["GET"])
 def google_auth_url():
     try:
-        url, state = AuthService.get_google_auth_url()
+        frontend_origin = request.args.get("origin") or request.headers.get("Referer", "")
+        role = request.args.get("role", "customer").lower().strip()
+        if frontend_origin.startswith("http"):
+            import urllib.parse
+            parsed = urllib.parse.urlparse(frontend_origin)
+            origin = f"{parsed.scheme}://{parsed.netloc}"
+        else:
+            origin = "http://localhost:3000"
+            
+        url, state = AuthService.get_google_auth_url(redirect_origin=origin, target_role=role)
         return jsonify({"status": "success", "url": url, "state": state})
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -232,32 +238,53 @@ def google_callback():
     state = request.args.get("state")
     error = request.args.get("error")
     
+    # Extract origin safely from state if possible
+    frontend_origin = "http://localhost:3000"
+    if state:
+        try:
+            state_data = AuthService.verify_google_state(state)
+            frontend_origin = state_data.get("origin", "http://localhost:3000")
+        except Exception:
+            pass
+
     if error:
-        return redirect(f"/?auth_error={error}")
+        return redirect(f"{frontend_origin}/?auth_error={error}")
     if not code or not state:
-        return redirect("/?auth_error=missing_oauth_params")
+        return redirect(f"{frontend_origin}/?auth_error=missing_oauth_params")
         
     try:
-        user = AuthService.exchange_google_code(code, state)
+        user, origin, role = AuthService.exchange_google_code(code, state)
         set_user_session(user)
-        return redirect(f"/?login_success=1&role={user['role']}&provider=google")
+        session["role"] = role
+        token = AuthService.create_auth_token(user["id"])
+        return redirect(f"{origin}/?login_success=1&role={role}&provider=google&token={token}")
     except Exception as e:
-        return redirect(f"/?auth_error={str(e)}")
+        return redirect(f"{frontend_origin}/?auth_error={str(e)}")
 
 @auth_bp.route("/google/demo-callback", methods=["GET"])
 def google_demo_callback():
     """Simulates immediate Google OAuth sign-in flow for demo mode."""
-    if not Config.is_demo():
-        return redirect("/?auth_error=demo_disabled")
     state = request.args.get("state")
+    frontend_origin = "http://localhost:3000"
+    if state:
+        try:
+            state_data = AuthService.verify_google_state(state)
+            frontend_origin = state_data.get("origin", "http://localhost:3000")
+        except Exception:
+            pass
+
+    if not Config.is_demo():
+        return redirect(f"{frontend_origin}/?auth_error=demo_disabled")
     if not state:
-        return redirect("/?auth_error=missing_oauth_params")
+        return redirect(f"{frontend_origin}/?auth_error=missing_oauth_params")
     try:
-        user = AuthService.demo_google_login(state)
+        user, origin, role = AuthService.demo_google_login(state)
         set_user_session(user)
-        return redirect(f"/?login_success=1&role={user['role']}&provider=google")
+        session["role"] = role
+        token = AuthService.create_auth_token(user["id"])
+        return redirect(f"{origin}/?login_success=1&role={role}&provider=google&token={token}")
     except Exception as e:
-        return redirect(f"/?auth_error={str(e)}")
+        return redirect(f"{frontend_origin}/?auth_error={str(e)}")
 
 @auth_bp.route("/profile", methods=["PUT"])
 @login_required

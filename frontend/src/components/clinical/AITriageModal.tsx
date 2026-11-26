@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, Sparkles, AlertTriangle, ShieldCheck, ArrowRight, Loader2, HeartPulse } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { X, Sparkles, AlertTriangle, ShieldCheck, ArrowRight, Loader2, HeartPulse, Plus, Check } from "lucide-react";
 import { api } from "@/lib/api";
+import { useCartStore } from "@/store/useCartStore";
 
 interface AITriageModalProps {
   isOpen: boolean;
@@ -10,12 +12,21 @@ interface AITriageModalProps {
 }
 
 export function AITriageModal({ isOpen, onClose }: AITriageModalProps) {
+  const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [cartError, setCartError] = useState<string | null>(null);
+  const [addedIds, setAddedIds] = useState<Record<string | number, boolean>>({});
 
-  React.useEffect(() => {
+  const addItem = useCartStore((s) => s.addItem);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -24,7 +35,7 @@ export function AITriageModal({ isOpen, onClose }: AITriageModalProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const handleConsult = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,19 +54,22 @@ export function AITriageModal({ isOpen, onClose }: AITriageModalProps) {
   };
 
   const sampleQueries = [
-    "Mild acid reflux and burning sensation in chest after dinner",
-    "Seasonal allergic rhinitis with sneezing and watery eyes",
-    "Headache and low-grade body ache for past 24 hours",
+    "Acid reflux and burning chest sensation after dinner",
+    "Seasonal allergies, sneezing, and itchy hives",
+    "Acute loose motions and watery diarrhea",
+    "Sore throat and pain on swallowing",
+    "Tension headache and low-grade fever",
+    "Painful mouth ulcers and burning tongue",
   ];
 
-  return (
+  return createPortal(
     <div
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-150"
     >
-      <div className="relative w-full max-w-xl rounded-2xl border border-sky-200 dark:border-sky-900 bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-hidden max-h-[90vh] flex flex-col">
+      <div className="relative w-full max-w-xl my-auto rounded-2xl border border-sky-200 dark:border-sky-900 bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-hidden max-h-[90vh] flex flex-col">
         {/* Top Accent Gradient */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-sky-500 via-indigo-500 to-cyan-400" />
 
@@ -167,17 +181,51 @@ export function AITriageModal({ isOpen, onClose }: AITriageModalProps) {
                   Recommended OTC Formulations
                 </div>
                 <div className="space-y-1.5">
-                  {result.recommended_medicines.map((m: any, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between text-xs bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-100 dark:border-slate-800">
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">
-                        {m.name || m}
-                      </span>
-                      {m.dosage && (
-                        <span className="text-[11px] text-slate-500">{m.dosage}</span>
-                      )}
-                    </div>
-                  ))}
+                  {result.recommended_medicines.map((m: any, idx: number) => {
+                    const medId = m.id || idx;
+                    const isAdded = Boolean(addedIds[medId]);
+                    const medName = m.name || (typeof m === "string" ? m : "OTC Formulation");
+                    return (
+                      <div key={idx} className="flex items-center justify-between text-xs bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <div>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">
+                            {medName}
+                          </span>
+                          {m.dosage && (
+                            <span className="text-[11px] text-slate-500 block">{m.dosage}</span>
+                          )}
+                        </div>
+                        {m.id && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                await addItem(m.id, 1);
+                                setAddedIds((prev) => ({ ...prev, [medId]: true }));
+                                setTimeout(() => setAddedIds((prev) => ({ ...prev, [medId]: false })), 2000);
+                              } catch (err: unknown) {
+                                setCartError(err instanceof Error ? err.message : "Failed to add to cart");
+                                setTimeout(() => setCartError(null), 3000);
+                              }
+                            }}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                              isAdded ? "bg-emerald-600 text-white" : "bg-sky-600 hover:bg-sky-700 text-white"
+                            }`}
+                          >
+                            {isAdded ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+                            <span>{isAdded ? "Added" : "Add"}</span>
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
+              </div>
+            )}
+
+            {cartError && (
+              <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs font-semibold text-rose-700 dark:text-rose-400">
+                {cartError}
               </div>
             )}
 
@@ -197,6 +245,7 @@ export function AITriageModal({ isOpen, onClose }: AITriageModalProps) {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

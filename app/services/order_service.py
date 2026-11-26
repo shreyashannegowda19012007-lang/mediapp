@@ -317,7 +317,7 @@ class OrderService:
 
             cur = managed_conn.cursor()
 
-            # Handle cancellation: restore inventory & handle refund if paid
+            # Handle cancellation: restore inventory, mark assignment cancelled & handle refund if paid
             if target_status == "CANCELLED":
                 items = query_db(
                     "SELECT medicine_id, quantity FROM order_items WHERE order_id = ?",
@@ -325,6 +325,12 @@ class OrderService:
                     conn=managed_conn
                 )
                 InventoryService.restore_stock(order["pharmacy_id"], items, managed_conn)
+                
+                # Mark courier assignment as cancelled
+                cur.execute(
+                    "UPDATE delivery_assignments SET status = 'cancelled' WHERE order_id = ?",
+                    (order_id,)
+                )
                 
                 # If payment was completed, set status to refunded
                 if order["payment_status"] == "paid":

@@ -114,12 +114,26 @@ def get_cart():
 def add_to_cart():
     data = request.get_json() or {}
     medicine_id = data.get("medicine_id")
-    quantity = data.get("quantity", 1)
+    raw_qty = data.get("quantity", 1)
     pharmacy_id = data.get("pharmacy_id")
     clear_existing = data.get("clear_existing", False)
 
-    if not medicine_id or quantity <= 0:
-        return jsonify({"error": "Valid medicine_id and quantity > 0 are required."}), 400
+    if isinstance(raw_qty, bool) or not isinstance(raw_qty, (int, str)):
+        return jsonify({"error": "Quantity must be a valid positive integer."}), 400
+
+    try:
+        quantity = int(raw_qty)
+        if quantity <= 0 or float(raw_qty) != float(quantity):
+            return jsonify({"error": "Quantity must be a positive integer greater than 0."}), 400
+    except (ValueError, TypeError):
+        return jsonify({"error": "Valid integer quantity greater than 0 is required."}), 400
+
+    try:
+        medicine_id = int(medicine_id)
+        if medicine_id <= 0:
+            return jsonify({"error": "Valid positive medicine_id is required."}), 400
+    except (ValueError, TypeError):
+        return jsonify({"error": "Valid positive medicine_id is required."}), 400
 
     user_id = session["user_id"]
     try:
@@ -170,9 +184,19 @@ def add_to_cart():
 @login_required
 def update_cart_item(item_id: int):
     data = request.get_json() or {}
-    quantity = data.get("quantity")
+    raw_qty = data.get("quantity")
     
-    if quantity is None or quantity < 0:
+    if raw_qty is None:
+        return jsonify({"error": "Quantity is required."}), 400
+
+    if isinstance(raw_qty, bool) or not isinstance(raw_qty, (int, str)):
+        return jsonify({"error": "Quantity must be a valid integer greater than or equal to 0."}), 400
+
+    try:
+        quantity = int(raw_qty)
+        if quantity < 0 or float(raw_qty) != float(quantity):
+            return jsonify({"error": "Quantity must be a non-negative integer."}), 400
+    except (ValueError, TypeError):
         return jsonify({"error": "Valid quantity >= 0 is required."}), 400
 
     user_id = session["user_id"]

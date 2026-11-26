@@ -244,7 +244,10 @@ def run_tests():
 
         page.set_input_files("#rx-file-input", dummy_rx_path)
         page.click("#btn-upload-rx-submit")
-        time.sleep(1.2)
+        try:
+            page.wait_for_selector("#prescription-modal", state="hidden", timeout=6000)
+        except Exception:
+            time.sleep(1.0)
         assert not page.locator("#prescription-modal").is_visible(), "Prescription modal did not close after upload"
         log("Prescription uploaded and processed via OCR")
 

@@ -29,6 +29,8 @@ export const ROLE_DEFINITIONS: Record<RoleType, RoleDefinition> = {
     scopes: ["read:catalogue", "write:cart", "create:prescription", "read:own_orders"],
     allowedTabs: [
       { id: "catalogue", label: "Medicine Catalogue" },
+      { id: "symptom-triage", label: "Describe Medical Conditions" },
+      { id: "prescriptions", label: "Upload & Track Prescriptions" },
       { id: "logistics", label: "My Orders & Tracking" },
     ],
     defaultTab: "catalogue",

@@ -106,7 +106,7 @@ def list_pharmacy_orders():
             SELECT o.*, u.full_name as customer_name, u.phone as customer_phone
             FROM orders o
             JOIN users u ON o.customer_id = u.id
-            WHERE o.pharmacy_id = ? AND o.order_status IN ('PLACED', 'AWAITING_PRESCRIPTION', 'PRESCRIPTION_VERIFIED', 'ACCEPTED', 'PREPARING')
+            WHERE o.pharmacy_id = ? AND o.order_status IN ('PLACED', 'AWAITING_PRESCRIPTION', 'PRESCRIPTION_VERIFIED', 'ACCEPTED', 'PREPARING', 'READY_FOR_PICKUP')
             ORDER BY o.created_at DESC
         """, (pharmacy_id,))
     elif status_filter:

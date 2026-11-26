@@ -1,0 +1,172 @@
+{
+  "total_documents": 6,
+  "doctor_accuracy_percent": 83.3,
+  "patient_accuracy_percent": 83.3,
+  "date_accuracy_percent": 83.3,
+  "global_medicine_precision_percent": 32.4,
+  "global_medicine_recall_percent": 78.6,
+  "global_medicine_f1_percent": 45.8,
+  "zero_hallucination_passed": true,
+  "per_document_results": [
+    {
+      "filename": "rx_01_cardiology_printed.png",
+      "document_type": "e_prescription",
+      "provider": "rapidocr_onnx",
+      "confidence": 0.98,
+      "doctor_detected": "Dr. Arvind Kapoor",
+      "doctor_matched": true,
+      "patient_detected": "Ramesh Sharma",
+      "patient_matched": true,
+      "date_detected": "14/11/2026",
+      "date_matched": true,
+      "expected_medicines": [
+        "Telma 40mg",
+        "Atorva 20mg",
+        "Ecosprin 75mg"
+      ],
+      "detected_medicines": [
+        "Telma 40mg Tablet",
+        "Telmisartan (40mg)",
+        "Telmisartan + Hydrochlorothiazide (40mg + 12.5mg)",
+        "Atorva 20mg Tablet",
+        "Atorvastatin (20mg)",
+        "Ecosprin 75mg Tablet",
+        "Aspirin (Acetylsalicylic Acid) (75mg)"
+      ],
+      "precision": 0.429,
+      "recall": 1.0,
+      "f1_score": 0.6
+    },
+    {
+      "filename": "rx_02_diabetology_insulin.png",
+      "document_type": "e_prescription_coldchain",
+      "provider": "rapidocr_onnx",
+      "confidence": 0.98,
+      "doctor_detected": "Dr. Sunita Rao",
+      "doctor_matched": true,
+      "patient_detected": "Anita Nair",
+      "patient_matched": true,
+      "date_detected": "2026-11-10",
+      "date_matched": true,
+      "expected_medicines": [
+        "Huminsulin",
+        "Glycomet 500mg"
+      ],
+      "detected_medicines": [
+        "Glycomet 500mg SR",
+        "Metformin Hydrochloride (500mg)",
+        "Insulin Glargine (100IU/ml)",
+        "Huminsulin R 100IU",
+        "Huminsulin R 100IU (Vial of 2ml)",
+        "Huminsulin R 100IU (Ampoule of 5ml)",
+        "Huminsulin R 100IU (Prefilled Syringe 1ml)"
+      ],
+      "precision": 0.286,
+      "recall": 1.0,
+      "f1_score": 0.444
+    },
+    {
+      "filename": "rx_03_gastro_handwritten.png",
+      "document_type": "clinic_slip",
+      "provider": "rapidocr_onnx",
+      "confidence": 0.98,
+      "doctor_detected": "Dr. Priya Nair",
+      "doctor_matched": true,
+      "patient_detected": "Not clearly detected",
+      "patient_matched": false,
+      "date_detected": "05-11-2026",
+      "date_matched": true,
+      "expected_medicines": [
+        "Pan 40mg",
+        "Aciloc 150mg",
+        "Dolo 650mg"
+      ],
+      "detected_medicines": [
+        "Paracetamol (500mg)",
+        "Dolo 650mg",
+        "Paracetamol (650mg)",
+        "Pantoprazole (40mg)",
+        "Aciloc 150mg",
+        "Ranitidine (150mg)",
+        "Paracetamol + Phenylephrine + Chlorpheniramine (500mg + 10mg + 2mg)",
+        "Ranitidine Hydrochloride (150mg)",
+        "Paracetamol + Caffeine (650mg + 50mg)",
+        "Pantoprazole (20mg)"
+      ],
+      "precision": 0.3,
+      "recall": 1.0,
+      "f1_score": 0.462
+    },
+    {
+      "filename": "rx_04_pediatric_antibiotic.png",
+      "document_type": "pediatric_prescription",
+      "provider": "rapidocr_onnx",
+      "confidence": 0.98,
+      "doctor_detected": "Dr. Rajesh Kumar",
+      "doctor_matched": true,
+      "patient_detected": "MasterAryanSharma",
+      "patient_matched": true,
+      "date_detected": "18/11/2026",
+      "date_matched": true,
+      "expected_medicines": [
+        "Augmentin",
+        "Paracetamol",
+        "Cetirizine"
+      ],
+      "detected_medicines": [
+        "Amoxicillin + Clavulanic Acid (500mg + 125mg)",
+        "Amoxicillin + Clavulanic Acid (250mg + 125mg)",
+        "Amoxicillin (500mg)",
+        "Amoxicillin + Clavulanate (500mg + 125mg)"
+      ],
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0
+    },
+    {
+      "filename": "rx_05_noisy_handwriting.png",
+      "document_type": "handwritten_clinic_slip",
+      "provider": "rapidocr_onnx",
+      "confidence": 0.98,
+      "doctor_detected": "Not clearly detected",
+      "doctor_matched": false,
+      "patient_detected": "Suresh Babu",
+      "patient_matched": true,
+      "date_detected": "12/10/2026",
+      "date_matched": true,
+      "expected_medicines": [
+        "Amlodipine",
+        "Dolo",
+        "Cetirizine"
+      ],
+      "detected_medicines": [
+        "Dolo 650mg",
+        "Amlodipine (5mg)",
+        "Cetirizine Hydrochloride (10mg)",
+        "Dolo 250mg Suspension",
+        "Dolo 250mg Suspension (Bottle of 100ml)",
+        "Dolo 250mg Suspension (Bottle of 200ml)"
+      ],
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1_score": 0.667
+    },
+    {
+      "filename": "rx_06_negative_control.png",
+      "document_type": "grocery_receipt_negative_control",
+      "provider": "rapidocr_onnx",
+      "confidence": 0.6,
+      "doctor_detected": "Not clearly detected",
+      "doctor_matched": true,
+      "patient_detected": "Not clearly detected",
+      "patient_matched": true,
+      "date_detected": "20/11/2026",
+      "date_matched": false,
+      "expected_medicines": [],
+      "detected_medicines": [],
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0
+    }
+  ]
+}

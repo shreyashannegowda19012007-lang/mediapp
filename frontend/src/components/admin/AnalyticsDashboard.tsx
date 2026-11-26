@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
+import { clsx } from "clsx";
 import {
   Activity,
   TrendingUp,
@@ -46,24 +47,8 @@ export function AnalyticsDashboard() {
     { name: "Covishield Booster Vial", stock: 2, minThreshold: 10, pharmacy: "Fortis Clinical Hub", status: "Critical" },
   ]);
 
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    api.admin
-      .getAnalytics()
-      .then((res) => {
-        if (res.metrics) setMetrics(res.metrics);
-        if (res.low_stock && res.low_stock.length > 0) {
-          setInventoryAlerts(res.low_stock);
-        }
-      })
-      .catch(() => {
-        // Fallback to rich telemetry demo values
-      });
-  }, []);
-
   // Fulfillment velocity data points (hour by hour)
-  const fulfillmentData = [
+  const [fulfillmentData, setFulfillmentData] = useState([
     { hour: "08:00", orders: 24, avgMins: 16.5 },
     { hour: "10:00", orders: 48, avgMins: 14.1 },
     { hour: "12:00", orders: 72, avgMins: 13.8 },
@@ -71,16 +56,45 @@ export function AnalyticsDashboard() {
     { hour: "16:00", orders: 90, avgMins: 12.9 },
     { hour: "18:00", orders: 110, avgMins: 13.5 },
     { hour: "20:00", orders: 85, avgMins: 14.8 },
-  ];
+  ]);
 
   // Generic savings distribution across key therapeutic categories
-  const savingsCategoryData = [
+  const [savingsCategoryData, setSavingsCategoryData] = useState([
     { category: "Anti-Ulcer (Ranitidine)", savingsPct: 68, brandedPrice: 150, genericPrice: 48 },
     { category: "Antibiotics (Amox/Clav)", savingsPct: 54, brandedPrice: 210, genericPrice: 96 },
     { category: "Cardiovascular (Amlodipine)", savingsPct: 72, brandedPrice: 180, genericPrice: 50 },
     { category: "Diabetes (Metformin)", savingsPct: 62, brandedPrice: 140, genericPrice: 53 },
     { category: "Pain/Analgesic (Paracetamol)", savingsPct: 45, brandedPrice: 35, genericPrice: 19 },
-  ];
+  ]);
+
+  const [timeframe, setTimeframe] = useState<"24h" | "7d" | "30d" | "all">("24h");
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    setIsLoading(true);
+    api.admin
+      .getAnalytics(timeframe)
+      .then((res: any) => {
+        if (res.metrics) {
+          setMetrics(res.metrics);
+          if (res.metrics.hourly_fulfillment && res.metrics.hourly_fulfillment.length > 0) {
+            setFulfillmentData(res.metrics.hourly_fulfillment);
+          }
+          if (res.metrics.category_savings && res.metrics.category_savings.length > 0) {
+            setSavingsCategoryData(res.metrics.category_savings);
+          }
+        }
+        if (res.low_stock && res.low_stock.length > 0) {
+          setInventoryAlerts(res.low_stock);
+        }
+      })
+      .catch(() => {
+        // Fallback to rich telemetry demo values
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [timeframe]);
 
   return (
     <div className="space-y-6">
@@ -103,9 +117,23 @@ export function AnalyticsDashboard() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl">
-          <Calendar className="h-4 w-4" />
-          <span>Last 24 Hours</span>
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold">
+          {(["24h", "7d", "30d", "all"] as const).map((tf) => (
+            <button
+              key={tf}
+              id={`btn-timeframe-${tf}`}
+              type="button"
+              onClick={() => setTimeframe(tf)}
+              className={clsx(
+                "px-3 py-1.5 rounded-lg transition-all cursor-pointer font-bold",
+                timeframe === tf
+                  ? "bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-xs"
+                  : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+              )}
+            >
+              {tf === "24h" ? "24 Hours" : tf === "7d" ? "7 Days" : tf === "30d" ? "30 Days" : "All Time"}
+            </button>
+          ))}
         </div>
       </div>
 

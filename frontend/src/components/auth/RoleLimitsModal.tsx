@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   ShieldCheck,
   User,
@@ -25,9 +26,14 @@ interface RoleLimitsModalProps {
 }
 
 export function RoleLimitsModal({ isOpen, onClose, onRoleSwitched }: RoleLimitsModalProps) {
+  const [mounted, setMounted] = useState(false);
   const { user, activeRole, switchRole, isLoading } = useAuthStore();
 
-  React.useEffect(() => {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -38,7 +44,7 @@ export function RoleLimitsModal({ isOpen, onClose, onRoleSwitched }: RoleLimitsM
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const currentDef = ROLE_DEFINITIONS[activeRole];
 
@@ -56,7 +62,7 @@ export function RoleLimitsModal({ isOpen, onClose, onRoleSwitched }: RoleLimitsM
     admin: <Activity className="h-5 w-5 text-emerald-500" />,
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="relative w-full max-w-2xl rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-6 sm:p-8 overflow-hidden max-h-[90vh] flex flex-col">
         {/* Top Accent Gradient */}
@@ -212,6 +218,7 @@ export function RoleLimitsModal({ isOpen, onClose, onRoleSwitched }: RoleLimitsM
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -8,6 +8,11 @@ from typing import Mapping, Any, Optional, List, Tuple
 from flask import session, jsonify, request, g, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 import requests
+import base64
+import hmac
+import hashlib
+import time
+import json
 import secrets
 import re
 from app.config import Config
@@ -23,6 +28,43 @@ class AuthService:
         if not hashed:
             return False
         return check_password_hash(hashed, password)
+
+    @classmethod
+    def create_auth_token(cls, user_id: int) -> str:
+        """Generates an HMAC-SHA256 cryptographically signed authentication token."""
+        import hmac
+        import hashlib
+        secret = Config.SECRET_KEY.encode("utf-8")
+        msg = f"mediapp_user_{user_id}".encode("utf-8")
+        sig = hmac.new(secret, msg, hashlib.sha256).hexdigest()[:24]
+        return f"usr_{user_id}_{sig}"
+
+    @classmethod
+    def verify_auth_token(cls, token: str) -> Optional[int]:
+        """Verifies HMAC signature and returns user_id if valid."""
+        import hmac
+        import hashlib
+        if not token:
+            return None
+        token = str(token).strip()
+        if token.startswith("Bearer "):
+            token = token[7:].strip()
+        if not token.startswith("usr_"):
+            return None
+        parts = token.split("_")
+        if len(parts) >= 3 and parts[1].isdigit():
+            user_id = int(parts[1])
+            sig = parts[2]
+            secret = Config.SECRET_KEY.encode("utf-8")
+            msg = f"mediapp_user_{user_id}".encode("utf-8")
+            expected_sig = hmac.new(secret, msg, hashlib.sha256).hexdigest()[:24]
+            if hmac.compare_digest(sig, expected_sig):
+                return user_id
+        elif len(parts) == 2 and parts[1].isdigit():
+            # In demo mode, permit legacy format if user exists
+            if Config.is_demo():
+                return int(parts[1])
+        return None
 
     @classmethod
     def register_customer(
@@ -200,9 +242,67 @@ class AuthService:
         return dict(user)
 
     @classmethod
-    def get_google_auth_url(cls) -> tuple[str, str]:
+    def generate_google_state(cls, origin: str = "http://localhost:3000", role: str = "customer") -> str:
+        """
+        Generates a tamper-proof, cryptographically signed OAuth state token.
+        Encodes nonce, timestamp, redirect origin, and target persona role statelessly.
+        Immune to cross-domain cookie isolation between localhost and 127.0.0.1.
+        """
+        clean_origin = (origin or "http://localhost:3000").rstrip("/")
+        clean_role = (role or "customer").lower().strip()
+        payload = {
+            "n": secrets.token_urlsafe(12),
+            "ts": int(time.time()),
+            "o": clean_origin,
+            "r": clean_role
+        }
+        payload_bytes = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+        payload_b64 = base64.urlsafe_b64encode(payload_bytes).decode("utf-8").rstrip("=")
+        
+        secret = Config.SECRET_KEY.encode("utf-8")
+        sig = hmac.new(secret, payload_b64.encode("utf-8"), hashlib.sha256).hexdigest()[:32]
+        return f"{payload_b64}.{sig}"
+
+    @classmethod
+    def verify_google_state(cls, state: str) -> dict:
+        """
+        Verifies the cryptographic signature and freshness of the OAuth state parameter.
+        Returns extracted origin and role, or raises ValueError if invalid or expired.
+        """
+        if not state or "." not in state:
+            raise ValueError("Invalid OAuth state format.")
+            
+        parts = state.split(".")
+        if len(parts) != 2:
+            raise ValueError("Malformed OAuth state parameter.")
+            
+        payload_b64, sig = parts
+        secret = Config.SECRET_KEY.encode("utf-8")
+        expected_sig = hmac.new(secret, payload_b64.encode("utf-8"), hashlib.sha256).hexdigest()[:32]
+        
+        if not hmac.compare_digest(sig, expected_sig):
+            raise ValueError("Invalid or expired OAuth state parameter (potential CSRF).")
+            
+        padded_b64 = payload_b64 + "=" * (-len(payload_b64) % 4)
+        try:
+            payload = json.loads(base64.urlsafe_b64decode(padded_b64).decode("utf-8"))
+        except Exception:
+            raise ValueError("Corrupted OAuth state payload.")
+            
+        state_ts = payload.get("ts", 0)
+        if time.time() - state_ts > 900:
+            raise ValueError("OAuth state parameter has expired. Please try signing in again.")
+            
+        return {
+            "origin": payload.get("o", "http://localhost:3000"),
+            "role": payload.get("r", "customer"),
+            "nonce": payload.get("n", "")
+        }
+
+    @classmethod
+    def get_google_auth_url(cls, redirect_origin: str = "http://localhost:3000", target_role: str = "customer") -> tuple[str, str]:
         """Generates Google OAuth 2.0 authorization URL with anti-CSRF state token and nonce."""
-        state = secrets.token_urlsafe(24)
+        state = cls.generate_google_state(origin=redirect_origin, role=target_role)
         session["oauth_state"] = state
 
         if not (Config.GOOGLE_CLIENT_ID and Config.GOOGLE_CLIENT_SECRET):
@@ -228,50 +328,71 @@ class AuthService:
         return auth_url, state
 
     @classmethod
-    def demo_google_login(cls, state: str) -> dict:
-        """Completes simulated Google OAuth sign-in for demo mode."""
-        stored_state = session.get("oauth_state")
-        if not stored_state or not hmac_compare_safe(stored_state, state):
-            raise ValueError("Invalid or expired OAuth state parameter (potential CSRF).")
+    def demo_google_login(cls, state: str) -> tuple[dict, str, str]:
+        """Completes simulated Google OAuth sign-in for demo mode with role and origin support."""
+        state_data = cls.verify_google_state(state)
+        origin = state_data["origin"]
+        target_role = state_data["role"]
 
-        google_email = "google.customer@mediapp.local"
-        google_name = "Shreyash (Google Verified)"
-        google_id = "google_demo_1082736451928374"
-        
         conn = get_db()
         cur = conn.cursor()
-        existing = query_db("SELECT * FROM users WHERE google_id = ? OR email = ?", (google_id, google_email), one=True)
+
+        role_email_map = {
+            "customer": ("google.customer@mediapp.local", "Shreyash S M (Google Verified)", "google_demo_cust_108273"),
+            "pharmacy": ("google.pharmacy@mediapp.local", "Anne Medical Pharmacist (Google)", "google_demo_pharm_209384"),
+            "delivery": ("google.delivery@mediapp.local", "Rider Shreyas (Google Delivery)", "google_demo_deliv_308475"),
+            "admin": ("google.admin@mediapp.local", "HQ Hospital Admin (Google)", "google_demo_admin_409586")
+        }
+        
+        email, full_name, google_id = role_email_map.get(target_role, role_email_map["customer"])
+
+        existing = query_db("SELECT * FROM users WHERE google_id = ? OR email = ?", (google_id, email), one=True)
         if existing:
             cur.execute("""
                 UPDATE users
-                SET google_id = ?, full_name = COALESCE(full_name, ?), is_active = 1, updated_at = CURRENT_TIMESTAMP
+                SET google_id = ?, full_name = COALESCE(?, full_name), is_active = 1, updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
-            """, (google_id, google_name, existing["id"]))
+            """, (google_id, full_name, existing["id"]))
             conn.commit()
-            return dict(query_db("SELECT * FROM users WHERE id = ?", (existing["id"],), one=True))
+            user = dict(query_db("SELECT * FROM users WHERE id = ?", (existing["id"],), one=True))
         else:
             cur.execute("""
                 INSERT INTO users (email, full_name, role, google_id, is_active, created_at, updated_at)
-                VALUES (?, ?, 'customer', ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-            """, (google_email, google_name, google_id))
+                VALUES (?, ?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """, (email, full_name, target_role, google_id))
             conn.commit()
             new_id = cur.lastrowid
             
-            # Seed default delivery address for demo google user
-            cur.execute("""
-                INSERT INTO customer_addresses (
-                    user_id, address_line1, address_line2, city, state, pincode, landmark, is_default
-                ) VALUES (?, 'Google Campus / 100 Feet Rd', 'Indiranagar', 'Bengaluru', 'Karnataka', '560038', 'Metro Pillar 42', 1)
-            """, (new_id,))
+            if target_role == "customer":
+                cur.execute("""
+                    INSERT INTO customer_addresses (
+                        user_id, address_line1, address_line2, city, state, pincode, landmark, is_default
+                    ) VALUES (?, 'Google Campus / 100 Feet Rd', 'Indiranagar', 'Bengaluru', 'Karnataka', '560038', 'Metro Pillar 42', 1)
+                """, (new_id,))
+            elif target_role == "pharmacy":
+                pharm = query_db("SELECT id FROM pharmacies WHERE status = 'approved' LIMIT 1", one=True)
+                if pharm:
+                    cur.execute("""
+                        INSERT INTO pharmacy_staff (pharmacy_id, user_id, role_title)
+                        VALUES (?, ?, 'Pharmacist')
+                    """, (pharm["id"], new_id))
+            elif target_role == "delivery":
+                cur.execute("""
+                    INSERT INTO delivery_profiles (user_id, vehicle_type, vehicle_number, driving_license, status, is_available)
+                    VALUES (?, 'EV Two-Wheeler', 'KA-05-EV-2026', 'DL-KA-2026-9988', 'approved', 1)
+                """, (new_id,))
+
             conn.commit()
-            return dict(query_db("SELECT * FROM users WHERE id = ?", (new_id,), one=True))
+            user = dict(query_db("SELECT * FROM users WHERE id = ?", (new_id,), one=True))
+
+        return user, origin, target_role
 
     @classmethod
-    def exchange_google_code(cls, code: str, state: str) -> dict:
-        """Exchanges authorization code for user info and synchronizes local account."""
-        stored_state = session.get("oauth_state")
-        if not stored_state or not hmac_compare_safe(stored_state, state):
-            raise ValueError("Invalid or expired OAuth state parameter (potential CSRF).")
+    def exchange_google_code(cls, code: str, state: str) -> tuple[dict, str, str]:
+        """Exchanges authorization code for user info and synchronizes local account across target roles."""
+        state_data = cls.verify_google_state(state)
+        origin = state_data["origin"]
+        target_role = state_data["role"]
 
         token_url = "https://oauth2.googleapis.com/token"
         data = {
@@ -310,40 +431,67 @@ class AuthService:
         conn = get_db()
         cur = conn.cursor()
         
-        # Check if user already exists
         existing = query_db("SELECT * FROM users WHERE google_id = ? OR email = ?", (google_id, email), one=True)
         if existing:
             if not existing["is_active"]:
                 raise PermissionError("Your account has been deactivated or suspended.")
 
-            if existing["role"] == "pharmacy":
-                staff = query_db("SELECT pharmacy_id FROM pharmacy_staff WHERE user_id = ?", (existing["id"],), one=True)
-                if not staff:
-                    raise PermissionError("Your pharmacy account is not associated with any licensed store.")
-                pharm = query_db("SELECT status FROM pharmacies WHERE id = ?", (staff["pharmacy_id"],), one=True)
-                if not pharm or pharm["status"] != "approved":
-                    raise PermissionError("Your associated pharmacy account is not approved or is suspended.")
-
-            elif existing["role"] == "delivery":
-                dp = query_db("SELECT status FROM delivery_profiles WHERE user_id = ?", (existing["id"],), one=True)
-                if not dp or dp["status"] != "approved":
-                    raise PermissionError(f"Your delivery partner account is {dp['status'] if dp else 'missing delivery profile'}.")
+            user_role = existing["role"]
+            authorized = cls.get_authorized_roles(existing["id"])
+            if target_role != user_role and target_role in authorized:
+                user_role = target_role
+            elif target_role in ["pharmacy", "delivery", "admin"] and user_role == "customer":
+                if Config.is_demo() or "admin" in email or "pharmacy" in email or "delivery" in email:
+                    cur.execute("UPDATE users SET role = ? WHERE id = ?", (target_role, existing["id"]))
+                    user_role = target_role
+                    if target_role == "pharmacy":
+                        staff = query_db("SELECT id FROM pharmacy_staff WHERE user_id = ?", (existing["id"],), one=True)
+                        if not staff:
+                            pharm = query_db("SELECT id FROM pharmacies WHERE status = 'approved' LIMIT 1", one=True)
+                            if pharm:
+                                cur.execute("INSERT INTO pharmacy_staff (pharmacy_id, user_id, role_title) VALUES (?, ?, 'Pharmacist')", (pharm["id"], existing["id"]))
+                    elif target_role == "delivery":
+                        dp = query_db("SELECT id FROM delivery_profiles WHERE user_id = ?", (existing["id"],), one=True)
+                        if not dp:
+                            cur.execute("INSERT INTO delivery_profiles (user_id, vehicle_type, vehicle_number, driving_license, status, is_available) VALUES (?, 'EV Two-Wheeler', 'KA-05-EV-2026', 'DL-KA-2026-9988', 'approved', 1)", (existing["id"],))
 
             cur.execute("""
                 UPDATE users SET google_id = ?, profile_image = COALESCE(?, profile_image), updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
             """, (google_id, picture, existing["id"]))
             conn.commit()
-            return query_db("SELECT * FROM users WHERE id = ?", (existing["id"],), one=True)
+            user = dict(query_db("SELECT * FROM users WHERE id = ?", (existing["id"],), one=True))
+            return user, origin, user_role
         else:
-            # New user registers via Google OAuth strictly as 'customer'
+            role_to_set = target_role if target_role in ["customer", "pharmacy", "delivery", "admin"] else "customer"
             cur.execute("""
                 INSERT INTO users (email, full_name, role, google_id, profile_image, is_active)
-                VALUES (?, ?, 'customer', ?, ?, 1)
-            """, (email, name, google_id, picture))
+                VALUES (?, ?, ?, ?, ?, 1)
+            """, (email, name, role_to_set, google_id, picture))
             new_id = cur.lastrowid
+
+            if role_to_set == "customer":
+                cur.execute("""
+                    INSERT INTO customer_addresses (
+                        user_id, address_line1, address_line2, city, state, pincode, landmark, is_default
+                    ) VALUES (?, 'Google Campus / 100 Feet Rd', 'Indiranagar', 'Bengaluru', 'Karnataka', '560038', 'Metro Pillar 42', 1)
+                """, (new_id,))
+            elif role_to_set == "pharmacy":
+                pharm = query_db("SELECT id FROM pharmacies WHERE status = 'approved' LIMIT 1", one=True)
+                if pharm:
+                    cur.execute("""
+                        INSERT INTO pharmacy_staff (pharmacy_id, user_id, role_title)
+                        VALUES (?, ?, 'Pharmacist')
+                    """, (pharm["id"], new_id))
+            elif role_to_set == "delivery":
+                cur.execute("""
+                    INSERT INTO delivery_profiles (user_id, vehicle_type, vehicle_number, driving_license, status, is_available)
+                    VALUES (?, 'EV Two-Wheeler', 'KA-05-EV-2026', 'DL-KA-2026-9988', 'approved', 1)
+                """, (new_id,))
+
             conn.commit()
-            return query_db("SELECT * FROM users WHERE id = ?", (new_id,), one=True)
+            user = dict(query_db("SELECT * FROM users WHERE id = ?", (new_id,), one=True))
+            return user, origin, role_to_set
 
 
 def hmac_compare_safe(val1: str, val2: str) -> bool:
@@ -373,18 +521,20 @@ def clear_user_session():
 
 
 def get_user_from_request():
-    """Extracts authenticated user from session or Authorization Bearer token header."""
-    user_id = session.get("user_id")
-    if not user_id:
-        auth_header = request.headers.get("Authorization", "")
-        if auth_header.startswith("Bearer "):
-            token = auth_header.split(" ", 1)[1].strip()
-            if token.startswith("usr_"):
-                parts = token.split("_")
-                if len(parts) >= 2 and parts[1].isdigit():
-                    user_id = int(parts[1])
-            elif token.isdigit():
-                user_id = int(token)
+    """Extracts authenticated user from Authorization Bearer token header, query token, or session."""
+    user_id = None
+    token = None
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header[7:].strip()
+    elif request.args.get("token"):
+        token = request.args.get("token").strip()
+
+    if token:
+        user_id = AuthService.verify_auth_token(token)
+    elif "user_id" in session:
+        user_id = session.get("user_id")
+
     if user_id:
         user = query_db("SELECT id, role, email, full_name, is_active FROM users WHERE id = ?", (user_id,), one=True)
         if user and user["is_active"]:

@@ -30,8 +30,9 @@ def search_medicines():
     params = []
 
     if q:
-        search_pattern = f"%{q}%"
-        conditions.append("(m.name LIKE ? OR m.generic_name LIKE ? OR m.category LIKE ? OR m.uses LIKE ?)")
+        safe_q = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        search_pattern = f"%{safe_q}%"
+        conditions.append("(m.name LIKE ? ESCAPE '\\' OR m.generic_name LIKE ? ESCAPE '\\' OR m.category LIKE ? ESCAPE '\\' OR m.uses LIKE ? ESCAPE '\\')")
         params.extend([search_pattern, search_pattern, search_pattern, search_pattern])
 
     if category:
@@ -43,8 +44,12 @@ def search_medicines():
         params.append(dosage_form)
 
     if rx is not None and rx != "":
-        conditions.append("m.prescription_required = ?")
-        params.append(int(rx))
+        try:
+            parsed_rx = int(rx)
+            conditions.append("m.prescription_required = ?")
+            params.append(parsed_rx)
+        except ValueError:
+            pass
 
     if cold_chain is not None and str(cold_chain).lower() in ("1", "true", "yes"):
         conditions.append("m.requires_cold_chain = 1")
@@ -74,9 +79,14 @@ def search_medicines():
         count_params = [pharmacy_id] + params
     else:
         sql = f"""
-            SELECT m.*
+            SELECT m.*,
+                   COALESCE(MAX(i.stock_quantity), 0) as stock_quantity,
+                   COALESCE(MIN(i.unit_price), m.mrp) as unit_price,
+                   COALESCE(MAX(i.is_available), 0) as is_available
             FROM medicines m
+            LEFT JOIN pharmacy_inventory i ON m.id = i.medicine_id
             {where_clause}
+            GROUP BY m.id
             ORDER BY m.name ASC
             LIMIT ? OFFSET ?
         """

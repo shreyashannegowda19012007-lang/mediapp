@@ -1,0 +1,1289 @@
+{
+  "acidity_gerd": {
+    "title": "Gastroesophageal Reflux Disease (GERD) & Acid Indigestion",
+    "category": "Gastroenterology",
+    "urgency": "nominal",
+    "symptoms": [
+      "burning sensation in chest after eating spicy food",
+      "acid reflux sour taste in mouth after heavy meal",
+      "heartburn retrosternal burning when lying down",
+      "epigastric burning discomfort regurgitation",
+      "acid regurgitation dyspepsia stomach burn",
+      "severe sour burps and throat burning after dinner",
+      "feeling hot burning bile coming up throat",
+      "stomach acid coming up into esophagus when bending",
+      "indigestion with painful burning behind breastbone",
+      "hyperacidity post-prandial burning sensation"
+    ],
+    "context": "Acid reflux occurs when gastric acid flows retrograde across the lower esophageal sphincter, causing mucosal irritation and burning retrosternal sensation.",
+    "self_care": [
+      "Maintain an upright posture for at least 2 hours following meals.",
+      "Avoid dietary triggers including citrus fruits, caffeinated beverages, chocolates, and high-fat items.",
+      "Elevate the head of your bed by 6 inches during sleep.",
+      "Refrain from large volume dinners within 3 hours of reclining."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Pantoprazole 40mg",
+        "dosage": "1 tablet once daily",
+        "timing": "Strictly 30 minutes before morning breakfast",
+        "duration": "Up to 14 days"
+      },
+      {
+        "molecule": "Antacid Gel (Magaldrate + Simethicone 10ml)",
+        "dosage": "2 teaspoons",
+        "timing": "After meals and before bedtime as needed",
+        "duration": "Up to 5 days"
+      }
+    ],
+    "red_flags": [
+      "Radiation of chest pain to left arm, neck, or jaw",
+      "Difficulty or pain while swallowing (dysphagia/odynophagia)",
+      "Vomiting fresh blood or coffee-ground material",
+      "Unexplained rapid weight loss"
+    ],
+    "referral": "Consult a gastroenterologist if symptoms persist beyond 14 days, recur frequently, or fail to respond to proton pump inhibitors.",
+    "inventory_keywords": [
+      "Pantoprazole",
+      "Antacid",
+      "Omeprazole",
+      "Rabeprazole",
+      "Gelusil"
+    ]
+  },
+  "acute_fever": {
+    "title": "Acute Mild-to-Moderate Febrile Episode",
+    "category": "Infectious & General Medicine",
+    "urgency": "nominal",
+    "symptoms": [
+      "high body temperature 101 fahrenheit feeling warm and shivering",
+      "fever with chills shivering and mild body aches",
+      "temperature spike 100.5 feeling hot feverish fatigue",
+      "pyrexia sweating chills malaise and body warmth",
+      "running temperature with shivering after rain",
+      "mild viral fever with generalized lethargy",
+      "warm forehead body temperature elevated with mild headache",
+      "feverish feeling chills shivering intermittent sweats",
+      "low grade temperature 99 to 101 with tired feeling",
+      "sudden onset feverish chills weakness"
+    ],
+    "context": "Pyrexia is an immune-mediated elevation of body temperature regulated by hypothalamic prostaglandins in response to endogenous or viral pyrogens.",
+    "self_care": [
+      "Rest in a well-ventilated, temperature-neutral room.",
+      "Perform lukewarm water sponging across the forehead and extremities if temperature exceeds 101\u00b0F.",
+      "Maintain rigorous oral hydration with electrolytes, coconut water, and soups (at least 2.5\u20133 liters daily).",
+      "Wear light, breathable cotton clothing."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Paracetamol 650mg",
+        "dosage": "1 tablet every 6 to 8 hours as needed for temperature > 100\u00b0F (Max 3g/day)",
+        "timing": "After food with a full glass of water",
+        "duration": "Not exceeding 3 consecutive days"
+      }
+    ],
+    "red_flags": [
+      "Temperature exceeding 103\u00b0F (39.4\u00b0C) unresponsive to antipyretics",
+      "Rigid stiff neck with altered mental consciousness or confusion",
+      "Petechial, purpuric, or non-blanching skin rash",
+      "Severe persistent vomiting causing inability to retain fluids"
+    ],
+    "referral": "Consult a physician immediately if fever persists beyond 72 hours, drops and rebounds sharply, or presents in immunocompromised individuals.",
+    "inventory_keywords": [
+      "Paracetamol",
+      "Dolo",
+      "Crocin",
+      "Electral"
+    ]
+  },
+  "tension_headache": {
+    "title": "Tension-Type Cephalea & Screen Strain Headache",
+    "category": "Neurology",
+    "urgency": "nominal",
+    "symptoms": [
+      "dull band-like ache pressing around temples and forehead",
+      "tight pressure squeezing head after long day of computer screen work",
+      "bilateral forehead ache tightness around scalp and neck",
+      "tension headache stress tight band around skull",
+      "dull persistent aching across temples and back of head",
+      "screen fatigue headache pressure on both sides of head",
+      "forehead squeezing ache after stressful office work",
+      "neck stiffness and dull pressing headache at the end of the day",
+      "scalp tenderness and band-like constriction around head",
+      "mild throbbing at temples from eye strain and lack of sleep"
+    ],
+    "context": "Tension-type headache results from sustained hypercontraction of pericranial muscles and cervical fascia, often exacerbated by ergonomic screen strain and psychological stress.",
+    "self_care": [
+      "Apply a cold or warm compress across the forehead and posterior neck muscles.",
+      "Practice the 20-20-20 screen rule: every 20 minutes look at an object 20 feet away for 20 seconds.",
+      "Perform gentle cervical spine stretching and shoulder rolls.",
+      "Ensure adequate hydration and minimum 7 hours of restorative sleep."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Paracetamol 500mg or Ibuprofen 400mg",
+        "dosage": "1 tablet as a single dose (Max 2 doses/day)",
+        "timing": "Post-prandial (strictly with or after meals for ibuprofen)",
+        "duration": "Maximum 48 hours to prevent medication overuse headache"
+      }
+    ],
+    "red_flags": [
+      "Sudden explosive thunderclap headache reaching peak intensity in seconds",
+      "New onset focal neurological deficits (unilateral numbness, facial drooping, slurred speech)",
+      "Headache accompanied by papilledema, visual field loss, or projectile vomiting",
+      "Onset after recent head trauma"
+    ],
+    "referral": "Schedule an in-person neurological evaluation if headaches occur more than 3 times weekly, progressively worsen, or awaken you from sleep.",
+    "inventory_keywords": [
+      "Paracetamol",
+      "Ibuprofen",
+      "Saridon",
+      "Balm"
+    ]
+  },
+  "common_cold_rhinitis": {
+    "title": "Acute Upper Respiratory Catarrh & Rhinitis",
+    "category": "ENT & Respiratory",
+    "urgency": "nominal",
+    "symptoms": [
+      "runny nose watery eyes sneezing and nasal congestion",
+      "blocked nose stuffy sinuses clear nasal drip sneezing",
+      "rhinorrhea head heaviness sneezing scratching throat",
+      "coryza stuffy nose sneezing frequent tissue use",
+      "nasal blockage difficulty breathing through nose with watery discharge",
+      "constant sneezing with ticklish nose and watery eyes",
+      "head fullness with congested nasal passages and sniffles",
+      "post-nasal drip runny nose slight scratchy throat cold",
+      "congested nostrils mouth breathing due to block and sneezing",
+      "acute head cold with clear fluid draining from nose"
+    ],
+    "context": "Acute rhinitis is a self-limiting viral infection of the nasopharyngeal mucosa leading to hypersecretion of mucus, mucosal edema, and reflex sneezing.",
+    "self_care": [
+      "Inhale steam with plain boiled water or menthol crystals twice daily for 10 minutes.",
+      "Perform isotonic saline nasal irrigations or sprays to clear crusting and mucosal allergens.",
+      "Drink warm fluids including ginger tea, warm water with lemon, and clear broths.",
+      "Use a clean humidified environment."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Cetirizine 10mg",
+        "dosage": "1 tablet once daily at night",
+        "timing": "Before sleep (causes mild sedation)",
+        "duration": "Up to 5 days"
+      },
+      {
+        "molecule": "Saline Nasal Drops (0.9% NaCl)",
+        "dosage": "2-3 drops into each nostril",
+        "timing": "3 times daily before meals",
+        "duration": "As needed"
+      }
+    ],
+    "red_flags": [
+      "Stridor, audible wheezing, or marked shortness of breath",
+      "High fever persisting beyond day 4 with severe facial bone tenderness",
+      "Purulent thick greenish discharge with unilateral maxillary dental pain",
+      "Swelling or redness around the eyes"
+    ],
+    "referral": "Consult an ENT specialist if sinus pressure intensifies beyond 7 days, ear discharge develops, or breathing becomes laboured.",
+    "inventory_keywords": [
+      "Cetirizine",
+      "Saline Nasal",
+      "Cheston",
+      "Sinarest"
+    ]
+  },
+  "acute_bronchial_cough": {
+    "title": "Acute Tracheobronchial Cough (Dry or Productive)",
+    "category": "Pulmonology",
+    "urgency": "nominal",
+    "symptoms": [
+      "persistent dry tickling cough keeping me awake at night",
+      "hacking dry cough throat irritation without phlegm",
+      "wet chesty cough with thick white mucus phlegm",
+      "productive cough throat clearing mucus in chest",
+      "cough fits tickle in trachea barking dry cough",
+      "throat tickle causing uncontrollable coughing paroxysms",
+      "rattling chest sound with coughing up phlegm",
+      "dry irritation in windpipe causing constant hacking",
+      "coughing spells worse when lying flat at night",
+      "intermittent productive cough following viral illness"
+    ],
+    "context": "Acute cough is a protective vagal reflex mediated by hypersensitive airway receptors following viral mucosal sloughing, mucosal hypersecretion, or post-nasal drip.",
+    "self_care": [
+      "Consume 1 teaspoon of natural honey with warm water or herbal infusion (not in infants < 1 year).",
+      "Maintain continuous humidification of ambient sleeping quarters.",
+      "Avoid aerosolized irritants, tobacco smoke, and sudden cold air exposure.",
+      "Stay adequately hydrated to lower phlegm viscosity."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Dextromethorphan (Dry Cough) OR Ambroxol + Guaifenesin (Wet Cough)",
+        "dosage": "5-10ml measured with oral dosing cup",
+        "timing": "Three times daily after food",
+        "duration": "Not exceeding 5 to 7 days"
+      }
+    ],
+    "red_flags": [
+      "Hemoptysis (expectorating streaks of fresh blood or rusty sputum)",
+      "Resting respiratory rate > 24 breaths/min with oxygen saturation < 94%",
+      "Audible musical wheezing with intercostal retractions",
+      "Significant pleuritic chest pain aggravated by deep inspiration"
+    ],
+    "referral": "Seek an urgent pulmonology consult if cough lingers longer than 3 weeks, produces colored purulent sputum with fever, or coexists with asthma/COPD.",
+    "inventory_keywords": [
+      "Cough Syrup",
+      "Ambroxol",
+      "Dextromethorphan",
+      "Benadryl",
+      "Ascoril"
+    ]
+  },
+  "generalized_pain_myalgia": {
+    "title": "Acute Musculoskeletal Strain & Generalized Myalgia",
+    "category": "Orthopedics & Rheumatology",
+    "urgency": "nominal",
+    "symptoms": [
+      "generalized body ache muscle soreness after physical exertion",
+      "sore muscles stiffness in back and limbs after heavy lifting",
+      "lower back muscular strain ache from poor posture",
+      "joint and muscle aching after workout fatigue",
+      "diffuse myalgia back stiffness heavy limbs soreness",
+      "stiff painful shoulders and back after long drive or lifting",
+      "dull aching in calf muscles and thighs after unaccustomed exercise",
+      "musculoskeletal soreness tender muscle knots in upper back",
+      "body fatigue aching all over after strenuous manual labour",
+      "mild lower lumbar muscular spasm after twisting"
+    ],
+    "context": "Myalgia typically stems from microscopic structural disruptions of myofibers following eccentric mechanical loading, localized lactic acid accumulation, or viral immune responses.",
+    "self_care": [
+      "Practice the R.I.C.E. protocol (Rest, Ice for first 48h, Compression, Elevation) for localized sprains.",
+      "Apply warm compresses or heating pads after 48 hours to promote microvascular hyperemia.",
+      "Engage in non-ballistic gentle mobility stretches.",
+      "Avoid heavy spinal axial loading until acute spasm abates."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Paracetamol 650mg + Topical Diclofenac Gel 1.16%",
+        "dosage": "1 oral tablet every 8 hours PRN; apply gel gently 3 times daily without vigorous friction",
+        "timing": "Oral tablet with meals",
+        "duration": "Up to 5 days"
+      }
+    ],
+    "red_flags": [
+      "Bowel or bladder incontinence with saddle anesthesia (Cauda Equina emergency)",
+      "Inability to bear any weight on the affected limb with visible osseous deformity",
+      "Erythematous, hot, markedly swollen joint suggesting septic arthritis",
+      "Severe progressive neurological weakness (foot drop, hand grip loss)"
+    ],
+    "referral": "Consult an orthopedic specialist or physiotherapist if pain does not resolve within 7 days, radiates below the knee, or causes progressive weakness.",
+    "inventory_keywords": [
+      "Diclofenac",
+      "Paracetamol",
+      "Volini",
+      "Moov",
+      "Pain Relief"
+    ]
+  },
+  "ligament_sprain_cramp": {
+    "title": "Acute Ligament Sprain, Tendon Strain & Muscle Cramps",
+    "category": "Orthopedics & Sports Medicine",
+    "urgency": "nominal",
+    "symptoms": [
+      "twisted ankle ligament sprain painful weight bearing",
+      "sprained ankle swollen bruised ligament pain walking",
+      "acute muscle cramp sudden sharp spasm in calf",
+      "muscle twitching and cramping after sports or exertion",
+      "ligament tear sprain swelling and joint tenderness",
+      "sharp nocturnal calf cramp charley horse sudden pain",
+      "painful muscle spasm and tendon strain after twisting",
+      "swollen tender ankle after stepping on uneven ground",
+      "hamstring pull strain sharp sudden muscle pain during run",
+      "muscle twitching cramp localized fasciculation fatigue"
+    ],
+    "context": "Ligament sprains involve stretching or partial tearing of joint-stabilizing collagenous fibers, while muscle cramps stem from localized ionic depletion, neuromuscular hyper-excitability, or mechanical overload.",
+    "self_care": [
+      "Immobilize the joint and avoid painful weight bearing during the initial 48 hours.",
+      "Apply crushed ice packs wrapped in a cloth for 15-20 minutes every 3-4 hours.",
+      "Apply an elastic crepe compression bandage firmly but without restricting peripheral arterial pulses.",
+      "Elevate the injured limb above heart level whenever sitting or lying down."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Ibuprofen 400mg OR Paracetamol 650mg",
+        "dosage": "1 tablet every 8 hours PRN for inflammatory pain",
+        "timing": "Strictly after food",
+        "duration": "Up to 3 to 5 days"
+      },
+      {
+        "molecule": "Magnesium Glycinate 250mg OR Oral Electrolytes",
+        "dosage": "1 tablet / sachet daily for cramping",
+        "timing": "With evening meal",
+        "duration": "Up to 7 days"
+      }
+    ],
+    "red_flags": [
+      "Immediate inability to take four steps both immediately after the injury and in the examination room (Ottawa Ankle Rules)",
+      "Severe localized osseous tenderness over the posterior edge or tip of lateral/medial malleolus",
+      "Rapid massive joint effusion (hemarthrosis) or gross angular limb deformity",
+      "Cold, pale, pulseless foot or severe numbness in distal toes"
+    ],
+    "referral": "Seek orthopedic evaluation and radiography (X-ray) if you cannot bear weight, or if joint instability and severe swelling persist beyond 4 days.",
+    "inventory_keywords": [
+      "Volini",
+      "Crepe Bandage",
+      "Ibuprofen",
+      "Relispray",
+      "Moov"
+    ]
+  },
+  "allergic_dermatitis_urticaria": {
+    "title": "Allergic Rhinitis, Pruritus & Urticarial Wheals",
+    "category": "Dermatology & Allergy",
+    "urgency": "nominal",
+    "symptoms": [
+      "itchy red hives raised welts on skin with intense itching",
+      "allergic skin rash itching red spots after dust or pollen exposure",
+      "urticaria itchy wheals spreading over arms and torso",
+      "intense pruritus itchy skin bumps without blisters",
+      "allergic itching watery eyes allergic reaction to environmental dust",
+      "raised red mosquito-like bumps that itch intensely and move around",
+      "skin flare up with red itchy patches after wearing synthetic clothes",
+      "sudden allergic itching all over body with scratch marks",
+      "allergic hive outbreak with burning itch on neck and limbs",
+      "pruritic erythematous plaques triggered by pet dander"
+    ],
+    "context": "Urticaria and allergic pruritus occur due to mast cell degranulation releasing histamine and leukotrienes, inducing dermal capillary vasodilation and localized interstitial edema.",
+    "self_care": [
+      "Apply cool, moist compresses or colloidal oatmeal lotion to soothe inflamed skin.",
+      "Take lukewarm showers using hypoallergenic, fragrance-free syndet cleansing bars.",
+      "Wear loose-fitting, soft natural cotton clothing to minimize mechanical friction.",
+      "Refrain from scratching to prevent secondary bacterial impetiginization."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Levocetirizine 5mg",
+        "dosage": "1 tablet once daily at night",
+        "timing": "After dinner before sleep",
+        "duration": "3 to 5 days"
+      },
+      {
+        "molecule": "Calamine Lotion 15%",
+        "dosage": "Topical application over affected areas",
+        "timing": "Apply a thin film 2 to 3 times daily",
+        "duration": "As needed"
+      }
+    ],
+    "red_flags": [
+      "Angioedema of the tongue, uvula, lips, or periorbital tissues",
+      "Feeling of throat tightness, hoarse voice, or difficulty swallowing",
+      "Stridor, wheezing, lightheadedness, or acute hypotension (Anaphylaxis)",
+      "Rapidly progressing bullae or mucosal desquamation (SJS/TEN)"
+    ],
+    "referral": "Seek emergency medical care immediately if swelling of the face/throat occurs. Consult an allergist/dermatologist if hives recur for more than 6 weeks.",
+    "inventory_keywords": [
+      "Levocetirizine",
+      "Calamine",
+      "Cetirizine",
+      "Allegra"
+    ]
+  },
+  "acute_gastroenteritis_diarrhea": {
+    "title": "Acute Non-Invasive Gastroenteritis & Osmotic Diarrhea",
+    "category": "Gastroenterology",
+    "urgency": "nominal",
+    "symptoms": [
+      "watery loose motions frequent watery stools and abdominal cramps",
+      "diarrhea 4 to 5 times loose watery stools dehydration stomach rumbling",
+      "loose bowels acute diarrhea after eating outside street food",
+      "frequent watery bowel movements with belly gurgling and mild cramps",
+      "mild stomach bug with loose watery stools and fatigue",
+      "digestive upset with urgent frequent watery motions",
+      "stomach cramping followed by loose watery stool episodes",
+      "mild traveler diarrhea without blood or high fever",
+      "watery stool frequency increased with dry mouth and thirst",
+      "hyperactive bowel sounds with sudden loose stools"
+    ],
+    "context": "Acute infectious or foodborne diarrhea involves hypersecretion of electrolytes and blunted mucosal fluid absorption across enterocytes, leading to potential dehydration.",
+    "self_care": [
+      "Initiate aggressive oral rehydration solution (WHO-ORS) therapy: 200\u2013300ml after every loose stool.",
+      "Follow the modified BRAT diet (Bananas, Rice congee, Applesauce, Toast, Boiled potatoes).",
+      "Avoid lactose/dairy products, high-sugar fruit juices, alcohol, and spicy greasy meals.",
+      "Wash hands thoroughly with soap before food handling."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "WHO Oral Rehydration Salts (ORS) + Zinc Gluconate 20mg",
+        "dosage": "Dissolve 1 sachet in exactly 1 liter clean drinking water; sip regularly throughout the day",
+        "timing": "Ad libitum after each loose bowel movement",
+        "duration": "Until stools form normally (3-5 days)"
+      },
+      {
+        "molecule": "Probiotic Spores (Bacillus clausii or Saccharomyces boulardii)",
+        "dosage": "1 mini-bottle or sachet twice daily",
+        "timing": "With meals",
+        "duration": "5 days"
+      }
+    ],
+    "red_flags": [
+      "Presence of macroscopic red blood or black tarry melena in stools",
+      "Signs of severe dehydration: sunken eyes, skin tenting, lethargy, no urine for > 8 hours",
+      "High fever (> 102\u00b0F) with intense localized abdominal rebound tenderness",
+      "Intractable vomiting preventing any oral fluid intake"
+    ],
+    "referral": "Consult a physician promptly if diarrhea continues beyond 48 hours, develops bloody dysentery, or manifests in elderly or diabetic individuals.",
+    "inventory_keywords": [
+      "Electral",
+      "ORS",
+      "Probiotic",
+      "Zincovit",
+      "Enterogermina"
+    ]
+  },
+  "acute_emesis_nausea": {
+    "title": "Acute Functional Nausea, Emesis & Gastric Upset",
+    "category": "Gastroenterology",
+    "urgency": "nominal",
+    "symptoms": [
+      "severe nausea vomiting and food poisoning queasiness",
+      "nausea feeling like throwing up queasy stomach after food",
+      "stomach unsettled wanting to vomit retching feeling sick",
+      "nauseous sensation queasiness in gut loss of appetite",
+      "upset stomach with waves of nausea and sour burping",
+      "queasy abdomen feeling sick with urge to vomit",
+      "post-meal nausea with stomach fullness and retching tendency",
+      "food poisoning vomiting and nausea after spoiled meal",
+      "unsettled belly with excessive salivation and nausea",
+      "sour stomach nausea feeling nauseated after heavy oily lunch"
+    ],
+    "context": "Nausea is regulated via afferent vagal stimulation of the chemoreceptor trigger zone (CTZ) and vomiting center in the medulla oblongata, mediated by dopamine D2 and 5-HT3 receptors.",
+    "self_care": [
+      "Sip clear, cold, or room-temperature liquids in tiny quantities (1-2 tablespoons every 10 minutes).",
+      "Consume mild ginger infusions or chew crystallized ginger.",
+      "Rest in an elevated semi-fowler position; avoid lying completely flat immediately after drinking.",
+      "Avoid strong culinary aromas, greasy foods, and overly sweet liquids."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Domperidone 10mg",
+        "dosage": "1 tablet (Max 3 tablets in 24 hours)",
+        "timing": "Strictly 15 to 30 minutes before meals",
+        "duration": "Short-term use up to 48 hours only"
+      }
+    ],
+    "red_flags": [
+      "Projectile vomiting or vomiting containing hematin (coffee-ground emesis)",
+      "Severe localized pain in right lower quadrant (McBurney point) or epigastrium",
+      "Concomitant stiff neck, photophobia, or sudden confusion",
+      "Complete inability to retain oral fluids for more than 12 hours"
+    ],
+    "referral": "Seek immediate medical consultation if vomiting is intractable, accompanied by severe abdominal distension, or follows head injury.",
+    "inventory_keywords": [
+      "Domperidone",
+      "Ondansetron",
+      "Vomikind",
+      "Antacid"
+    ]
+  },
+  "cardiovascular_chest_emergency": {
+    "title": "Suspected Acute Coronary Syndrome (ACS) / Cardiac Emergency",
+    "category": "Cardiology / Emergency",
+    "urgency": "emergency",
+    "symptoms": [
+      "crushing chest pain radiating to left arm shoulder jaw with cold sweats",
+      "heavy pressure on chest like an elephant sitting on my sternum diaphoresis",
+      "acute squeezing retrosternal chest pain shortness of breath dizziness",
+      "severe chest tightness radiating to jaw left arm sweating profusely",
+      "sudden crushing chest ache breathlessness cold clammy skin lightheadedness",
+      "angina pain spreading to back and left shoulder with nausea",
+      "intense chest constriction cannot breathe properly clutching chest",
+      "severe central chest pain with profuse cold sweating and syncope feeling",
+      "crushing sternal pressure nausea and pain shooting down left arm",
+      "acute cardiac chest pain breathless pale and clammy"
+    ],
+    "context": "Crushing retrosternal chest pain with radiation and diaphoresis is a hallmark of acute myocardial ischemia or coronary arterial occlusion requiring emergent revascularization.",
+    "self_care": [
+      "CALL EMERGENCY SERVICES (112 / 911 / LOCAL AMBULANCE) IMMEDIATELY.",
+      "Cease all physical activity and sit in a comfortable resting position on the floor or chair.",
+      "Loosen all tight clothing around the neck and chest.",
+      "Do NOT attempt to drive yourself to the hospital."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Aspirin 300mg (Dispersible/Chewable) - ONLY if advised by emergency dispatch and no allergy",
+        "dosage": "1 tablet chewed thoroughly immediately",
+        "timing": "STAT emergency dose while awaiting ambulance",
+        "duration": "Single emergency dose"
+      }
+    ],
+    "red_flags": [
+      "Crushing chest pressure lasting > 5 minutes",
+      "Radiation to left shoulder, arm, jaw, neck, or interscapular back",
+      "Diaphoresis (drenching cold sweat), syncope, or profound dyspnea",
+      "Hypotension, cyanosis, or gray pallor"
+    ],
+    "referral": "EMERGENCY: Proceed to the nearest cardiac catheterization / emergency resuscitation facility immediately. Call emergency emergency medical services without delay.",
+    "inventory_keywords": [
+      "Ecosprin",
+      "Aspirin",
+      "Sorbitrate"
+    ]
+  },
+  "neurological_stroke_emergency": {
+    "title": "Suspected Acute Cerebrovascular Event / Stroke",
+    "category": "Neurology / Emergency",
+    "urgency": "emergency",
+    "symptoms": [
+      "sudden facial drooping slurred speech weakness in right arm cannot raise arm",
+      "loss of speech facial droop right side body paralysis sudden numbness",
+      "cannot speak properly slurred words arm weakness drooping mouth",
+      "acute weakness in left arm and leg face drooping difficulty finding words",
+      "sudden loss of balance double vision slurred garbled speech",
+      "facial asymmetry one side of mouth drooping arm drifting down",
+      "sudden hemiparesis cannot lift arm speech completely garbled",
+      "stroke symptoms face droop arm weak speech slurred sudden onset",
+      "sudden blindness in one eye with unilateral limb weakness",
+      "acute neurological deficit facial paralysis slurred pronunciation"
+    ],
+    "context": "Acute focal neurological deficit (FAST criteria) signifies acute focal cerebral ischemia or intracranial hemorrhage demanding urgent neuroimaging and thrombolysis within the therapeutic window.",
+    "self_care": [
+      "CALL EMERGENCY SERVICES (112 / 911) IMMEDIATELY.",
+      "Record the EXACT time the symptoms first appeared (Time of Onset).",
+      "Keep the patient lying flat on their side (recovery position) to prevent aspiration.",
+      "Do NOT administer any oral fluids, food, or aspirin until imaging rules out hemorrhage."
+    ],
+    "otc_regimen": [],
+    "red_flags": [
+      "Face: One side of the face droops when smiling",
+      "Arms: One arm drifts downward when both arms are extended forward",
+      "Speech: Slurred, incomprehensible, or absent speech",
+      "Time: Critical time window (thrombolysis within 4.5 hours)"
+    ],
+    "referral": "CRITICAL EMERGENCY: Transport immediately to a designated Comprehensive Stroke Center for urgent non-contrast head CT and emergency revascularization.",
+    "inventory_keywords": []
+  },
+  "acute_constipation": {
+    "title": "Acute Functional Colonic Stasis & Constipation",
+    "category": "Gastroenterology",
+    "urgency": "nominal",
+    "symptoms": [
+      "hard dry stools straining hard to pass stool haven't pooped in 3 days",
+      "constipation painful defecation dry hard pellet like bowel movements",
+      "infrequent stools feeling of incomplete rectal evacuation bloating",
+      "unable to pass stool for three days abdominal fullness and straining",
+      "hard lumpy stools requiring excessive straining and discomfort",
+      "sluggish bowel hard dry feces difficult bowel clearance",
+      "bowel sluggishness lower abdominal bloated feeling hard stools",
+      "severe straining at toilet dry compacted bowel movements",
+      "lack of bowel movement for several days with mild colic",
+      "rectal fullness with hard dry difficulty passing stool"
+    ],
+    "context": "Functional constipation arises from delayed colonic transit and excessive water reabsorption across the colon, commonly aggravated by low dietary fiber, sedentary habits, or dehydration.",
+    "self_care": [
+      "Increase daily soluble and insoluble dietary fiber to 25\u201330g (whole grains, oats, prunes, psyllium, leafy greens).",
+      "Drink at least 2.5 to 3 liters of water across the day, especially a glass of warm water upon waking.",
+      "Engage in 30 minutes of aerobic physical movement or brisk walking daily.",
+      "Do not ignore or suppress the gastrocolic defecation urge after breakfast."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Ispaghula / Psyllium Husk (Organic Bulk Laxative)",
+        "dosage": "1 to 2 tablespoons in a full glass (250ml) of lukewarm water",
+        "timing": "At bedtime, followed immediately by another full glass of water",
+        "duration": "Up to 7 days"
+      },
+      {
+        "molecule": "Lactulose Solution 10g/15ml (Osmotic Laxative)",
+        "dosage": "15ml once daily",
+        "timing": "After dinner",
+        "duration": "3 to 5 days"
+      }
+    ],
+    "red_flags": [
+      "Complete obstipation with inability to pass flatus and progressive vomiting (bowel obstruction)",
+      "Unexplained hematochezia (bright red blood coating or mixed in stool)",
+      "New onset constipation in patients over 50 years with involuntary weight loss",
+      "Severe unrelenting colic with tense abdominal distension"
+    ],
+    "referral": "Consult a physician if laxatives are required for more than 7 days continuously or if alternating constipation and diarrhea occurs.",
+    "inventory_keywords": [
+      "Lactulose",
+      "Psyllium",
+      "Isabgol",
+      "Cremaffin",
+      "Dulcolax"
+    ]
+  },
+  "acute_pharyngitis_sore_throat": {
+    "title": "Acute Catarrhal Pharyngitis & Throat Odynophagia",
+    "category": "ENT",
+    "urgency": "nominal",
+    "symptoms": [
+      "sore throat scratchy pain when swallowing hot food or water",
+      "raw scratchy throat redness irritation painful swallowing",
+      "pharynx inflammation painful swallowing rasping voice",
+      "burning throat pain with difficulty swallowing and dry cough",
+      "throat tickle and raw pain every time I swallow saliva",
+      "inflamed red pharynx with scratchy sensation and dryness",
+      "throat rawness and stinging discomfort post viral cold",
+      "scratchiness in throat worse in the morning with mild voice strain",
+      "stinging painful throat irritated mucosal sensation",
+      "dry inflamed throat making swallowing uncomfortable"
+    ],
+    "context": "Pharyngitis is inflammation of the mucosal lining of the posterior pharynx, commonly triggered by respiratory viruses (adenovirus, rhinovirus) leading to local vascular congestion and sensory nerve irritation.",
+    "self_care": [
+      "Perform warm salt water gargles (1/2 teaspoon table salt in 200ml warm water) 3 to 4 times daily.",
+      "Sip soothing warm fluids such as chamomile tea, warm water with turmeric and honey.",
+      "Use a cool-mist room humidifier to keep mucosal membranes lubricated.",
+      "Rest your vocal cords and avoid whispering, clearing your throat violently, or smoking."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Amylmetacresol + Dichlorobenzyl Alcohol Lozenges",
+        "dosage": "1 lozenge dissolved slowly in the mouth every 3 to 4 hours (Max 8/day)",
+        "timing": "Between meals as needed for soothing",
+        "duration": "Up to 3 days"
+      },
+      {
+        "molecule": "Povidone-Iodine 0.5% OR Chlorhexidine 0.2% Gargle Solution",
+        "dosage": "Dilute 1:1 with warm water and gargle for 30 seconds",
+        "timing": "Twice daily after meals",
+        "duration": "Up to 5 days"
+      }
+    ],
+    "red_flags": [
+      "Inability to swallow even saliva with drooling (trismus / peritonsillar quinsy)",
+      "Difficulty breathing, inspiratory stridor, or cyanosis (epiglottitis)",
+      "High fever with exudative white patches on tonsils and tender anterior cervical lymph nodes",
+      "Inability to fully open the mouth"
+    ],
+    "referral": "Consult an ENT physician if throat pain is strictly unilateral, accompanied by high fever without cough (Centor criteria for Strep), or persists beyond 5 days.",
+    "inventory_keywords": [
+      "Strepsils",
+      "Betadine Gargle",
+      "Lozenges",
+      "Paracetamol"
+    ]
+  },
+  "aphthous_stomatitis": {
+    "title": "Recurrent Minor Aphthous Stomatitis & Mouth Ulcers",
+    "category": "Oral Medicine & Dermatology",
+    "urgency": "nominal",
+    "symptoms": [
+      "painful mouth ulcer inside lower lip stinging when eating salty food",
+      "canker sore inner cheek burning with spicy sour foods",
+      "small round white sore with red border inside mouth tongue",
+      "aphthous ulcer on inside of cheek painful tender to touch",
+      "painful stinging shallow sore on buccal mucosa",
+      "white mouth ulcer making chewing painful on right cheek",
+      "small sensitive canker sore under the tongue with sharp sting",
+      "burning mouth lesion provoked by spicy curries and citrus",
+      "tender mucosal ulcer on labial mucosa with erythematous halo",
+      "painful mouth sore caused by accidental cheek bite"
+    ],
+    "context": "Aphthous ulcers are painful non-keratinized mucosal erosions characterized by local immune-mediated T-cell destruction, often provoked by minor local trauma, stress, or micronutrient deficiencies.",
+    "self_care": [
+      "Avoid spicy, acidic, citrus, sharp, and very salty foods that provoke severe burning.",
+      "Use an ultra-soft bristle toothbrush and avoid sodium lauryl sulfate (SLS)-containing toothpastes.",
+      "Rinse the mouth gently with warm salt water after meals.",
+      "Ensure adequate dietary intake of B-complex vitamins, zinc, and iron."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Choline Salicylate 8.7% + Benzalkonium Chloride Gel",
+        "dosage": "Apply a pea-sized amount with clean fingertip over the ulcer",
+        "timing": "3 to 4 times daily, 15 minutes before food intake",
+        "duration": "Up to 5 days"
+      },
+      {
+        "molecule": "B-Complex + Zinc Multivitamin Capsules",
+        "dosage": "1 capsule daily",
+        "timing": "After breakfast",
+        "duration": "15 to 30 days"
+      }
+    ],
+    "red_flags": [
+      "Non-healing oral ulcer persisting for greater than 3 weeks (rule out malignancy)",
+      "Extremely large (> 1cm) major aphthae with irregular margins and tissue scarring",
+      "Ulcers accompanied by genital lesions, uveitis, or joint pain (Beh\u00e7et syndrome)",
+      "Constitutional symptoms including high fever, night sweats, and marked lymphadenopathy"
+    ],
+    "referral": "Consult a dental surgeon or oral pathologist if any oral lesion does not re-epithelialize within 21 days or recurs with high frequency.",
+    "inventory_keywords": [
+      "Orajel",
+      "Zincovit",
+      "B-Complex",
+      "Mucopain",
+      "Smyle"
+    ]
+  },
+  "odontalgia_toothache": {
+    "title": "Dental Caries Associated Odontalgia & Gingival Discomfort",
+    "category": "Dentistry",
+    "urgency": "nominal",
+    "symptoms": [
+      "throbbing toothache in lower molar sensitive to cold water",
+      "tooth pain when chewing sharp throb in decayed tooth",
+      "dental sensitivity sharp pain when drinking iced juice or tea",
+      "aching tooth cavity throbbing jaw pain on right side",
+      "sharp pain in back molar on biting food cavity tenderness",
+      "pulsating dental pain radiating along jawline",
+      "painful tooth with sensitivity to hot and cold liquids",
+      "dull constant ache in molar with gum tenderness",
+      "localized toothache keeping me awake with throbbing",
+      "dental pain triggered by sweet foods and cold air"
+    ],
+    "context": "Odontogenic pain results from bacterial demineralization of enamel exposing dentinal tubules or causing inflammation of the neurovascular dental pulp (pulpitis).",
+    "self_care": [
+      "Rinse gently with warm salt water to dislodge impacted food particles from the cavity.",
+      "Avoid extreme temperatures in foods and beverages (neither freezing nor boiling hot).",
+      "Never place an undiluted aspirin or tablet directly against the gum tissue (causes chemical burns).",
+      "Maintain meticulous gentle flossing around the affected tooth."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Ibuprofen 400mg OR Paracetamol 650mg",
+        "dosage": "1 tablet every 8 hours as needed",
+        "timing": "Strictly with food",
+        "duration": "Maximum 48 hours while awaiting dental appointment"
+      },
+      {
+        "molecule": "Clove Oil (Eugenol) Drops",
+        "dosage": "1 drop applied on a tiny sterile cotton pellet directly onto the cavity",
+        "timing": "PRN for immediate numbing",
+        "duration": "Emergency temporary relief only"
+      }
+    ],
+    "red_flags": [
+      "Facial or submandibular swelling with difficulty swallowing or breathing (Ludwig angina)",
+      "Spreading redness, trismus (inability to open jaw > 2 fingers)",
+      "High fever, chills, and purulent fluctuant drainage from the gum",
+      "Swelling extending up towards the orbit/eye"
+    ],
+    "referral": "MANDATORY DENTAL CONSULTATION: Over-the-counter analgesics only provide temporary symptomatic suppression; a formal dental examination and definitive restoration/root canal therapy is required.",
+    "inventory_keywords": [
+      "Ibuprofen",
+      "Paracetamol",
+      "Clove Oil",
+      "Ketorol"
+    ]
+  },
+  "tinea_fungal_infection": {
+    "title": "Superficial Cutaneous Dermatomycosis (Tinea / Ringworm)",
+    "category": "Dermatology",
+    "urgency": "nominal",
+    "symptoms": [
+      "circular itchy red ring rash on inner thighs and groin",
+      "ringworm itchy spreading ring with raised border on body",
+      "fungal skin infection itchy scaling circular patches",
+      "itchy red circular lesions with clear center on torso or groin",
+      "tinea cruris jock itch red itchy scaly rash in skin folds",
+      "ring-shaped scaly itchy rash spreading outward on skin",
+      "pruritic red annular plaques with raised active borders",
+      "scaling itchy rash in underarms and groin exacerbated by sweat",
+      "annular erythematous rash with central clearing and peeling",
+      "fungal ring on skin with intense itching after gym"
+    ],
+    "context": "Tinea is a superficial dermatophyte infection (Trichophyton, Microsporum) that metabolizes keratin in the stratum corneum, thriving in warm, occluded, moist body areas.",
+    "self_care": [
+      "Keep the affected skin thoroughly clean and dry; pat dry with a dedicated clean towel (do not share towels).",
+      "Wear loose, breathable cotton undergarments and change them daily.",
+      "Do NOT apply topical steroid creams (e.g. betamethasone/clobetasol) which aggravate fungal proliferation (tinea incognito).",
+      "Avoid synthetic, tight-fitting clothing and footwear."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Clotrimazole 1% OR Terbinafine 1% Cream",
+        "dosage": "Apply a thin layer covering the lesion plus a 2cm healthy border",
+        "timing": "Twice daily on clean, dry skin",
+        "duration": "Continue for a full 2 to 3 weeks (at least 1 week after visible clearance)"
+      },
+      {
+        "molecule": "Antifungal Dusting Powder (Clotrimazole 1%)",
+        "dosage": "Dust into skin folds, socks, and undergarments",
+        "timing": "Morning after bathing",
+        "duration": "Throughout warm/humid periods"
+      }
+    ],
+    "red_flags": [
+      "Rapid secondary bacterial infection with purulent oozing, honey-colored crusts, and warm cellulitis",
+      "Extensive involvement of the facial skin, palms, soles, or diffuse erythroderma",
+      "Involvement of immunocompromised, transplant, or advanced diabetic patients",
+      "Failure of lesions to improve after 2 weeks of compliant topical therapy"
+    ],
+    "referral": "Consult a dermatologist if the rash does not respond to topical therapy, involves fingernails/toenails (onychomycosis), or requires systemic oral antifungal evaluation.",
+    "inventory_keywords": [
+      "Clotrimazole",
+      "Terbinafine",
+      "Candid",
+      "Ketoconazole"
+    ]
+  },
+  "asthenopia_dry_eyes": {
+    "title": "Computer Vision Syndrome & Evaporative Tear Deficiency",
+    "category": "Ophthalmology",
+    "urgency": "nominal",
+    "symptoms": [
+      "dry gritty eyes burning sensation after staring at screens",
+      "tired burning eyes red gritty feeling like sand in eyes",
+      "eye strain blurred vision towards evening after computer work",
+      "dry itchy eyes watering paradoxically tired heavy eyelids",
+      "gritty sandy feeling in eyes burning screen fatigue",
+      "stinging eyes redness and irritation from prolonged monitor use",
+      "burning ocular discomfort with photophobia after laptop work",
+      "heavy tired eyes with foreign body sensation and redness",
+      "sandy gritty eyes feeling dry and tired under air conditioning",
+      "blurring of vision after 8 hours of coding with dry burning eyes"
+    ],
+    "context": "Prolonged digital display use decreases spontaneous blink rate by up to 60%, destabilizing the precorneal tear film lipid layer and inducing evaporative ocular surface microtrauma.",
+    "self_care": [
+      "Strictly follow the 20-20-20 rule: look away every 20 minutes at an object 20 feet away for 20 seconds.",
+      "Position computer monitors slightly below eye level (15\u201320 degrees) to minimize exposed ocular surface area.",
+      "Avoid direct airflow from fans, air conditioners, or heaters pointed directly at the face.",
+      "Remember to take voluntary, complete, firm blinks frequently."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Carboxymethylcellulose 0.5% OR Sodium Hyaluronate 0.1% Lubricant Eye Drops",
+        "dosage": "1 to 2 drops into the lower conjunctival sac of each eye",
+        "timing": "3 to 4 times daily as needed for dry ocular comfort",
+        "duration": "Safe for regular daily use"
+      }
+    ],
+    "red_flags": [
+      "Severe deep ocular pain with nausea and rainbow halos around lights (acute angle closure)",
+      "Sudden loss of visual acuity or severe persistent blurred vision",
+      "Copious purulent discharge gluing eyelids together in the morning (bacterial conjunctivitis)",
+      "Corneal ulceration or visible cloudy white spots on the cornea"
+    ],
+    "referral": "Schedule a formal ophthalmological slit-lamp examination if dry eye symptoms persist, worsen despite lubricants, or impair daily visual tasks.",
+    "inventory_keywords": [
+      "Carboxymethylcellulose",
+      "Refresh Tears",
+      "Tears Naturale",
+      "Eye Drops"
+    ]
+  },
+  "meteorism_bloating": {
+    "title": "Functional Intestinal Meteorism & Gaseous Distension",
+    "category": "Gastroenterology",
+    "urgency": "nominal",
+    "symptoms": [
+      "excessive gas flatulence stomach feeling bloated and tight like balloon",
+      "gassy bloated belly loud rumbling trapped intestinal gas",
+      "abdominal distension burping gas pains relieved by passing wind",
+      "feeling very full and bloated with gas cramps after meals",
+      "trapped gas in abdomen tight distended stomach loud gurgling",
+      "constant belching and flatulence with uncomfortable abdominal bloating",
+      "tight inflated feeling in gut with crampy gas discomfort",
+      "stomach swelling like a balloon with loud intestinal rumbling",
+      "bloated belly after beans and lentils with excessive flatus",
+      "cramping abdominal discomfort relieved immediately upon passing flatus"
+    ],
+    "context": "Intestinal meteorism arises from microbial fermentation of poorly absorbed oligosaccharides (FODMAPs) or aerophagia, generating excessive hydrogen and methane in the bowel lumen.",
+    "self_care": [
+      "Eat slowly and chew food thoroughly; avoid swallowing air by drinking through straws or talking while chewing.",
+      "Temporarily reduce high-fermentation foods (carbonated sodas, beans, cabbage, artificial polyol sweeteners).",
+      "Take a gentle 15-minute walk following heavy meals to stimulate gastrointestinal peristalsis.",
+      "Sip warm herbal infusions of peppermint, fennel seeds, or ginger."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Simethicone 80mg to 125mg (Defoaming Agent)",
+        "dosage": "1 chewable tablet chewed thoroughly",
+        "timing": "After meals and at bedtime as needed",
+        "duration": "Up to 3 to 5 days"
+      },
+      {
+        "molecule": "Digestive Enzyme Complex with Alpha-Galactosidase",
+        "dosage": "1 capsule with the first bite of gas-producing meals",
+        "timing": "With meals",
+        "duration": "As needed"
+      }
+    ],
+    "red_flags": [
+      "Progressive severe abdominal distension with intractable vomiting and obstipation (obstruction)",
+      "Unexplained rapid weight loss, anemia, or anorexia",
+      "Persistent nocturnal abdominal pain awakening you from sleep",
+      "Fecal blood or tarry black stools"
+    ],
+    "referral": "Consult a gastroenterologist if bloating is chronic (> 4 weeks), progressively worsening, or accompanied by alterations in bowel frequency.",
+    "inventory_keywords": [
+      "Simethicone",
+      "Pudinhara",
+      "Digestive Enzyme",
+      "Gas-X",
+      "Unienzyme"
+    ]
+  },
+  "heat_exhaustion_dehydration": {
+    "title": "Acute Thermal Strain & Exertional Dehydration",
+    "category": "Emergency & General Medicine",
+    "urgency": "nominal",
+    "symptoms": [
+      "dizzy weak thirsty sweating heavily after being out in hot sun",
+      "heat exhaustion dizzy headache extreme thirst dark yellow urine",
+      "fatigue dizziness after working in heat faint feeling dehydrated",
+      "feeling faint weak profuse sweating dry lips muscle cramps in heat",
+      "excessive sweating thirst dizziness heat weakness after outdoor walking",
+      "hot climate fatigue with severe thirst and postural lightheadedness",
+      "cramping calves and dizziness after sports under hot afternoon sun",
+      "dark amber urine extreme thirst and weak legs after heat exposure",
+      "lightheadedness upon standing up after sweating in hot humid weather",
+      "dehydration headache and dry mouth after prolonged sun exposure"
+    ],
+    "context": "Heat exhaustion results from excessive dermal fluid and electrolyte depletion via sweating under thermal stress without adequate salt and water replacement.",
+    "self_care": [
+      "Move immediately to a cool, air-conditioned, or shaded environment.",
+      "Lie down with feet slightly elevated above heart level.",
+      "Loosen or remove tight, heavy garments.",
+      "Apply cool wet cloths to the neck, axillae, and groin; fan the skin actively."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "WHO-Formula Oral Rehydration Salts (ORS)",
+        "dosage": "Dissolve 1 sachet in exactly 1 liter of cool drinking water; drink 500ml over the first hour, then sip steadily",
+        "timing": "Immediate oral intake",
+        "duration": "Until thirst subsides and urine turns pale straw colored"
+      }
+    ],
+    "red_flags": [
+      "Body temperature exceeding 104\u00b0F (40\u00b0C) with hot, red, dry skin (HEAT STROKE - MEDICAL EMERGENCY)",
+      "Altered mental status, delirium, confusion, seizures, or loss of consciousness",
+      "Inability to tolerate oral fluids due to persistent vomiting",
+      "Rapid, bounding pulse transitioning to weak thready hypotension"
+    ],
+    "referral": "EMERGENCY: If mental status is altered or skin is hot and dry, immediately activate emergency services (112 / 911). Heat stroke has high mortality without rapid active cooling.",
+    "inventory_keywords": [
+      "Electral",
+      "ORS",
+      "Enerzal",
+      "Glucose"
+    ]
+  },
+  "minor_dermal_burns": {
+    "title": "Superficial First-Degree Thermal Burn & Minor Scald",
+    "category": "Dermatology & Trauma",
+    "urgency": "nominal",
+    "symptoms": [
+      "minor burn on finger from hot cooking oil red stinging skin",
+      "small superficial scald on hand from boiling water red painful",
+      "hot pan burn on palm red tender skin without big blisters",
+      "finger burned on hot iron stinging red minor burn",
+      "scalded hand with hot tea redness and burning sensation",
+      "superficial kitchen burn on forearm painful erythematous skin",
+      "red tender burning spot on skin after accidental steam contact",
+      "small hot oil splash on hand stinging red without deep tissue loss",
+      "minor thermal burn redness and local pain from hot stove",
+      "surface scald from hot soup on finger painful and red"
+    ],
+    "context": "First-degree burns involve localized thermal injury restricted to the epidermal layer, presenting with erythema, capillary dilatation, and intense pain due to exposed cutaneous nerve endings.",
+    "self_care": [
+      "IMMEDIATELY cool the burn under gently running cool (not freezing) tap water for 15 to 20 minutes.",
+      "Do NOT apply ice, iced water, butter, toothpaste, or oil (ice causes localized frostbite and tissue ischemia).",
+      "Do NOT puncture, squeeze, or de-roof any intact blisters.",
+      "Cover the area loosely with a sterile, non-adherent dressing."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Silver Sulfadiazine 1% Cream OR Povidone-Iodine 5% Ointment",
+        "dosage": "Apply a sterile 1-2mm layer over the cooled burn area",
+        "timing": "Once or twice daily under sterile non-stick gauze",
+        "duration": "Until re-epithelialization occurs (5 to 7 days)"
+      },
+      {
+        "molecule": "Paracetamol 650mg",
+        "dosage": "1 tablet every 8 hours PRN for burn pain",
+        "timing": "After food",
+        "duration": "48 hours"
+      }
+    ],
+    "red_flags": [
+      "Burn area larger than the palm of the patient's hand",
+      "Burns involving critical structures: face, eyes, hands, joints, feet, or perineum",
+      "Full-thickness injury: leathery, white, blackened, or painless charred skin (Third-degree)",
+      "Chemical or electrical burns (require mandatory hospital observation)"
+    ],
+    "referral": "Proceed immediately to a hospital burn center or emergency room if burns are extensive, circumferential, involve children, or show purulent signs of infection.",
+    "inventory_keywords": [
+      "Silverex",
+      "Burnol",
+      "Betadine Ointment",
+      "Paracetamol"
+    ]
+  },
+  "motion_sickness_kinetosis": {
+    "title": "Vestibular Kinetosis & Motion Sickness",
+    "category": "Neurology & Travel Medicine",
+    "urgency": "nominal",
+    "symptoms": [
+      "nausea and dizziness when traveling in car hills or bus motion sickness",
+      "car sickness nausea vomiting during long road trips in ghats",
+      "seasickness motion sickness queasy stomach during boat ferry ride",
+      "travel sickness dizziness cold sweating urge to vomit in moving vehicle",
+      "nauseous and dizzy in moving car looking at road turns",
+      "vertigo and stomach queasiness during flight turbulence or road turns",
+      "car travel nausea cold clammy forehead and vomiting feeling",
+      "motion sickness headache and dizziness in backseat of car",
+      "motion induced vomiting sensation on winding mountain roads",
+      "air sickness dizziness and gastric churning during flight"
+    ],
+    "context": "Motion sickness arises from sensory mismatch between visual vestibular proprioceptive signals entering the central nervous system during passive locomotion.",
+    "self_care": [
+      "Sit in the front passenger seat of cars or near the wing section in airplanes.",
+      "Focus your gaze straight ahead on the distant horizon; avoid reading books or looking at screens.",
+      "Ensure adequate ventilation with cool, fresh air.",
+      "Avoid heavy, greasy, or spicy meals immediately prior to and during travel."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Dimenhydrinate 50mg OR Cinnarizine 25mg",
+        "dosage": "1 tablet taken orally",
+        "timing": "Strictly 30 to 60 minutes BEFORE commencing travel journey",
+        "duration": "Repeat every 8 hours only if journey continues"
+      }
+    ],
+    "red_flags": [
+      "Persistent spinning vertigo that does NOT cease hours after travel ends",
+      "Sudden unilateral sensorineural hearing loss, tinnitus, or ear fullness",
+      "Focal neurological signs: ataxia, diplopia, dysarthria, or extremity weakness",
+      "Severe unrelenting vomiting resulting in hemodynamic instability"
+    ],
+    "referral": "Consult a neurologist or neurotologist if vertigo occurs spontaneously at rest, is accompanied by hearing loss, or fails to resolve.",
+    "inventory_keywords": [
+      "Cinnarizine",
+      "Stugeron",
+      "Domperidone",
+      "Avomine"
+    ]
+  },
+  "sleep_onset_insomnia": {
+    "title": "Acute Situational Sleep-Onset Insomnia",
+    "category": "Psychiatry & Sleep Medicine",
+    "urgency": "nominal",
+    "symptoms": [
+      "trouble falling asleep tossing and turning in bed racing thoughts",
+      "cannot fall asleep insomnia lying awake for hours anxiety",
+      "difficulty initiating sleep waking up repeatedly tired morning",
+      "sleeplessness tossing in bed for hours cannot shut mind off",
+      "acute insomnia sleep disturbance after stress or schedule change",
+      "restless sleep inability to drift off until 3am mental exhaustion",
+      "lying awake staring at ceiling restless mind sleep difficulty",
+      "jet lag insomnia delayed sleep onset after travel or night shift",
+      "disturbed sleep latency lying in dark bed unable to sleep",
+      "stress induced sleeplessness tired but wired feeling in bed"
+    ],
+    "context": "Acute insomnia is characterized by cortical hyperarousal, increased nocturnal autonomic activation, and disruption of circadian melatonin signaling, frequently provoked by acute life stress or blue-light exposure.",
+    "self_care": [
+      "Practice strict digital hygiene: power down all smartphones, tablets, and LED displays 60 minutes prior to bedtime.",
+      "Ensure the bedroom is pitch-dark, quiet, and cool (approx. 18\u201320\u00b0C).",
+      "Follow the 20-minute stimulus control rule: if still awake after 20 minutes, get out of bed, go to a dim room, read a physical book, and return only when sleepy.",
+      "Eliminate caffeine intake after 2:00 PM."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Melatonin 3mg to 5mg (Circadian Hormone)",
+        "dosage": "1 tablet orally",
+        "timing": "30 to 60 minutes before scheduled bedtime",
+        "duration": "Short-term use up to 7 to 10 days"
+      }
+    ],
+    "red_flags": [
+      "Loud irregular snoring punctuated by witnessed apneas, gasping, and morning headaches (Obstructive Sleep Apnea)",
+      "Insomnia accompanied by severe depressive thoughts, self-harm ideation, or manic episodes",
+      "Restless legs syndrome with unbearable crawling sensations relieved only by movement",
+      "Chronic unremitting insomnia lasting > 3 months"
+    ],
+    "referral": "Consult a sleep specialist or psychiatrist if sleeplessness persists beyond 4 weeks, significantly impairs daytime occupational functioning, or coexists with mood disorders.",
+    "inventory_keywords": [
+      "Melatonin",
+      "Sleep Aid",
+      "Zincovit"
+    ]
+  },
+  "impacted_cerumen_ear": {
+    "title": "Impacted Cerumen & Non-Infectious Aural Fullness",
+    "category": "ENT",
+    "urgency": "nominal",
+    "symptoms": [
+      "ear feels blocked muffled hearing wax buildup in ear canal",
+      "ear fullness sensation like cotton plugged in ear dull hearing",
+      "earwax blockage muffled ear sound after bathing or swimming",
+      "plugged feeling in ear with mild itchiness and hardened wax",
+      "ear plugged with wax cannot hear clearly out of one ear",
+      "aural fullness muffled perception of sound in right ear",
+      "hardened earwax obstruction causing decreased hearing",
+      "stuffy ear canal sensation after water entered ear while swimming",
+      "ear itching and fullness from excessive dry wax accumulation",
+      "cotton-bud pushed wax deep into ear causing muffled blockage"
+    ],
+    "context": "Impacted cerumen occurs when physiological epithelial migration fails or when foreign objects (cotton swabs) mechanically compact glandular secretions against the tympanic membrane.",
+    "self_care": [
+      "NEVER insert cotton buds, bobby pins, or sharp instruments into the external auditory meatus (causes tympanic perforation and canal lacerations).",
+      "Wipe the external pinna gently with a soft damp cloth.",
+      "Keep the ear canal dry during showering by placing a cotton ball lightly coated with petroleum jelly at the outer meatus.",
+      "Avoid forceful ear syringing without prior otoscopic examination."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Paradichlorobenzene + Benzocaine + Chlorbutol Ear Drops (Ceruminolytic)",
+        "dosage": "3 to 4 drops instilled into the affected ear with head tilted for 5 minutes",
+        "timing": "Twice daily",
+        "duration": "3 to 5 days to soften wax prior to natural expulsion"
+      }
+    ],
+    "red_flags": [
+      "Purulent, foul-smelling, or bloody otorrhea draining from the canal",
+      "Severe excruciating otalgia radiating to temporomandibular joint or mastoid bone",
+      "Acute vertigo, severe dizziness, or facial weakness",
+      "History of known tympanic membrane perforation or tympanostomy tubes"
+    ],
+    "referral": "Consult an ENT specialist for professional micro-suction or gentle syringing if wax does not clear in 5 days or if pain/discharge supervenes.",
+    "inventory_keywords": [
+      "Ear Drops",
+      "Waxolve",
+      "Clearwax",
+      "Otorex"
+    ]
+  },
+  "acne_vulgaris": {
+    "title": "Mild-to-Moderate Inflammatory Acne Vulgaris",
+    "category": "Dermatology",
+    "urgency": "nominal",
+    "symptoms": [
+      "pimples on face red bumps with whiteheads on forehead and chin",
+      "acne breakout pustules and blackheads on oily cheeks",
+      "inflammatory pimples red tender facial spots during stress",
+      "facial acne bumps oily skin clogged pores on nose and forehead",
+      "painful red pimples flare up on chin and jawline with pus",
+      "clogged pores with blackheads and pustular acne on oily face",
+      "recurrent acne breakouts with tender inflamed red papules",
+      "stubborn pimples and whiteheads across T-zone of face",
+      "comedones and inflammatory red bumps on cheeks",
+      "skin breakout with oily complexion and painful tender spots"
+    ],
+    "context": "Acne vulgaris is a multifactorial disorder of the pilosebaceous unit driven by follicular hyperkeratinization, Cutibacterium acnes colonization, androgenic sebum oversecretion, and localized inflammation.",
+    "self_care": [
+      "Cleanse the face twice daily using a gentle foaming cleanser containing 1\u20132% salicylic acid.",
+      "Do NOT pop, squeeze, or manually pick at pimples (induces deep dermis scarring and post-inflammatory hyperpigmentation).",
+      "Use strictly non-comedogenic, oil-free moisturizers and broad-spectrum gel sunscreens.",
+      "Wash pillowcases and phone screens regularly to minimize bacterial transfer."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Benzoyl Peroxide 2.5% Gel OR Clindamycin 1% Topical Gel",
+        "dosage": "Apply a thin film as spot treatment directly on active inflammatory papules",
+        "timing": "Once daily at night on clean, dry skin",
+        "duration": "4 to 6 weeks for visible follicular clearing"
+      }
+    ],
+    "red_flags": [
+      "Deep, painful, fluctuant cystic nodules forming interconnecting sinus tracts (Acne Conglobata)",
+      "Systemic symptoms including acute fever, joint aches, and ulcerating lesions (Acne Fulminans)",
+      "Extensive hypertrophic or keloidal scarring developing across the jawline and back",
+      "Sudden severe virilization in females (hirsutism, deepening voice, irregular menses)"
+    ],
+    "referral": "Consult a dermatologist if inflammatory lesions fail to improve after 6 weeks, leave residual deep pitted scars, or require oral isotretinoin evaluation.",
+    "inventory_keywords": [
+      "Benzoyl Peroxide",
+      "Clindamycin",
+      "Salicylic Acid",
+      "Acne Gel"
+    ]
+  },
+  "mild_dysuria": {
+    "title": "Mild Lower Urinary Tract Irritation & Early Dysuria",
+    "category": "Urology & Nephrology",
+    "urgency": "nominal",
+    "symptoms": [
+      "burning sensation when passing urine mild irritation in urinary passage",
+      "stinging burning during urination needing to pee frequently in small drops",
+      "mild dysuria burning sensation at end of urination slightly cloudy",
+      "urinary frequency with stinging burning feeling in urethra",
+      "mild burning while urinating drinking less water discomfort",
+      "urethral stinging upon passing urine without high fever",
+      "burning micturition with frequent urge to empty bladder",
+      "concentrated dark urine with painful stinging during urination",
+      "discomfort in lower abdomen with burning sensation when peeing",
+      "frequent visits to bathroom with stinging urethral irritation"
+    ],
+    "context": "Mild dysuria reflects urothelial mucosal inflammation, frequently secondary to concentrated acidic urine, minor ascending bacterial colonization (E. coli), or local urethral irritation.",
+    "self_care": [
+      "Increase fluid intake immediately: drink 3 to 3.5 liters of clean water and tender coconut water throughout the day.",
+      "Do not hold urine; void frequently to mechanically flush bacteria out of the urinary tract.",
+      "Maintain strict hygiene: wipe strictly from front to back after voiding in females.",
+      "Avoid bladder irritants including coffee, strong tea, alcohol, and spicy condiments."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Disodium Hydrogen Citrate Solution (Urinary Alkalinizer)",
+        "dosage": "2 teaspoons (10ml) diluted in a full glass of drinking water",
+        "timing": "Three times daily after food",
+        "duration": "Up to 3 days for symptomatic relief of burning"
+      }
+    ],
+    "red_flags": [
+      "High spiking fever with shaking chills and rigors",
+      "Unilateral flank/back pain over costovertebral angle (suspected acute pyelonephritis)",
+      "Frank macroscopic hematuria (visible blood or blood clots in urine)",
+      "New onset urinary incontinence or complete inability to pass urine (acute urinary retention)"
+    ],
+    "referral": "MANDATORY PHYSICIAN CONSULTATION: Schedule a formal urinalysis (urine routine & microscopy + culture sensitivity). If symptoms persist beyond 48 hours or if you are pregnant/male/diabetic, antibiotic therapy requires a licensed doctor prescription.",
+    "inventory_keywords": [
+      "Cital",
+      "Citrate",
+      "Alkastone",
+      "Urinary Alkalinizer"
+    ]
+  },
+  "solar_erythema_sunburn": {
+    "title": "Actinic Erythema (Sunburn) & Heat Rash (Miliaria)",
+    "category": "Dermatology",
+    "urgency": "nominal",
+    "symptoms": [
+      "sunburn on shoulders red hot skin peeling after beach vacation",
+      "red painful sunburn after staying in hot sun without sunscreen",
+      "prickly heat rash tiny itchy red bumps in neck and back sweating",
+      "miliaria rubra heat rash itching stinging bumps in sweaty areas",
+      "painful hot red skin peeling from sun exposure on beach",
+      "sunburnt arms and back red inflamed skin tender to shirt contact",
+      "prickly stinging heat bumps on chest and shoulders in humid weather",
+      "acute solar erythema with warm hypersensitive skin after trekking",
+      "itchy red sweat bumps around collarbone and inner elbows",
+      "erythematous hot skin with tight burning sensation after sunburn"
+    ],
+    "context": "Sunburn is acute UV-B mediated keratinocyte apoptosis and cutaneous prostaglandin release, while miliaria arises from occlusion of eccrine sweat ducts in hot, humid conditions.",
+    "self_care": [
+      "Apply cold, damp compresses to sunburnt skin for 15 minutes several times daily.",
+      "Moisturize frequently with pure aloe vera gel or calamine lotion.",
+      "Stay in cool, air-conditioned, well-ventilated spaces and drink plenty of water.",
+      "Wear loose, soft cotton clothing; avoid tight friction against the burned areas."
+    ],
+    "otc_regimen": [
+      {
+        "molecule": "Pure Aloe Vera Gel 99% + Calamine Lotion 15%",
+        "dosage": "Apply generously over the affected skin areas",
+        "timing": "3 to 4 times daily as needed",
+        "duration": "Until erythema and tenderness resolve (3 to 5 days)"
+      },
+      {
+        "molecule": "Paracetamol 650mg",
+        "dosage": "1 tablet every 8 hours PRN for skin tenderness",
+        "timing": "With food",
+        "duration": "48 hours"
+      }
+    ],
+    "red_flags": [
+      "Extensive blister formation covering more than 20% of the body surface area",
+      "High fever, chills, dizziness, confusion, or severe heat exhaustion symptoms",
+      "Secondary bacterial superinfection with purulent crusts or red streaking",
+      "Severe facial swelling"
+    ],
+    "referral": "Consult a dermatologist or urgent care clinic if blistering is extensive, covers the face, or if signs of systemic toxicity develop.",
+    "inventory_keywords": [
+      "Aloe Vera",
+      "Calamine",
+      "Sunscreen",
+      "Paracetamol"
+    ]
+  }
+}

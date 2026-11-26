@@ -7,9 +7,10 @@ import { api, Prescription } from "@/lib/api";
 
 interface CartDrawerProps {
   onOrderPlaced?: (orderId: number) => void;
+  onOpenUploadRx?: () => void;
 }
 
-export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
+export function CartDrawer({ onOrderPlaced, onOpenUploadRx }: CartDrawerProps) {
   const { cart, isOpen, setIsOpen, updateQuantity, removeItem, clearCart } = useCartStore();
   const [address, setAddress] = useState("Flat 402, Green Glen Layout, Bellandur, Bengaluru 560103");
   const [paymentMethod, setPaymentMethod] = useState<"COD" | "UPI" | "CARD">("COD");
@@ -17,10 +18,12 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
   const [selectedRxId, setSelectedRxId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   const items = cart?.items || [];
-  const pricing = cart?.pricing || { subtotal: 0, delivery_fee: 30, tax: 0, discount: 0, total: 30 };
+  const pricing = cart?.pricing || { subtotal: 0, delivery_fee: 0, tax: 0, discount: 0, total: 0 };
   const hasRx = cart?.has_prescription_items || false;
+  const hasOutOfStock = items.some((it) => (it.stock_quantity ?? 0) < it.quantity || !it.is_available);
 
   useEffect(() => {
     if (isOpen) {
@@ -52,11 +55,29 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
     }
   }, [isOpen, hasRx, selectedRxId]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, setIsOpen]);
+
   if (!isOpen) return null;
 
+  const isAddressValid = address.trim().length >= 10;
+
   const handleCheckout = async () => {
+    if (!isAddressValid) {
+      setCheckoutError("Please provide a valid delivery address with at least 10 characters.");
+      setTimeout(() => setCheckoutError(null), 4000);
+      return;
+    }
+
     if (hasRx && !selectedRxId) {
-      alert("This order contains prescription-only (Rx) medicines. Please upload or link a prescription.");
+      setCheckoutError("This order contains prescription-only (Rx) medicines. Please upload or link a prescription.");
+      setTimeout(() => setCheckoutError(null), 4000);
       return;
     }
 
@@ -92,7 +113,8 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
         setIsOpen(false);
       }, 2500);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Checkout failed");
+      setCheckoutError(err instanceof Error ? err.message : "Checkout failed");
+      setTimeout(() => setCheckoutError(null), 4000);
     } finally {
       setIsSubmitting(false);
     }
@@ -107,7 +129,12 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
       />
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between">
+        <div
+          id="cart-drawer-panel"
+          role="dialog"
+          aria-label="Patient shopping cart"
+          className="w-screen max-w-md bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between"
+        >
           {/* Header */}
           <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -141,6 +168,20 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
                 <p className="text-xs text-emerald-700 dark:text-emerald-400">
                   Order Reference: <strong>{orderSuccess}</strong>. Pharmacist review and cold-chain pack scheduled.
                 </p>
+                <div className="pt-2">
+                  <button
+                    id="btn-view-tracking-now"
+                    type="button"
+                    onClick={() => {
+                      setOrderSuccess(null);
+                      setIsOpen(false);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
+                  >
+                    <span>View Order Tracking Now</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             ) : items.length === 0 ? (
               <div className="text-center py-16 space-y-3">
@@ -180,10 +221,33 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
                         </select>
                       </div>
                     ) : (
-                      <div className="p-2 rounded-lg bg-amber-500/20 text-amber-900 dark:text-amber-200 text-[11px]">
-                        No uploaded prescription found on this account. Please upload your doctor&apos;s prescription via the Upload Rx button before completing checkout.
+                      <div className="p-2.5 rounded-lg bg-amber-500/20 text-amber-900 dark:text-amber-200 text-[11px] space-y-2">
+                        <p>No uploaded prescription found on this account. A valid doctor&apos;s prescription is required before completing checkout.</p>
+                        {onOpenUploadRx && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsOpen(false);
+                              onOpenUploadRx();
+                            }}
+                            className="w-full py-1.5 px-3 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer"
+                          >
+                            Upload Doctor Prescription Now
+                          </button>
+                        )}
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* Out of Stock Warning */}
+                {hasOutOfStock && (
+                  <div className="p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-xs text-rose-800 dark:text-rose-300 flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
+                    <div>
+                      <strong className="block font-semibold">Insufficient Pharmacy Inventory</strong>
+                      Certain items in your cart exceed available stock. Please adjust quantities or remove unavailable formulations before placing your order.
+                    </div>
                   </div>
                 )}
 
@@ -261,15 +325,28 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
 
                 {/* Delivery Address Input */}
                 <div className="space-y-1.5 pt-2">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Clinical Delivery Address
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Clinical Delivery Address
+                    </label>
+                    <span className="text-[10px] text-slate-400">Min 10 characters</span>
+                  </div>
                   <textarea
+                    id="cart-delivery-address"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     rows={2}
-                    className="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
+                    className={`w-full text-xs rounded-xl border p-2.5 text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-sky-500 transition-colors ${
+                      address.trim().length > 0 && !isAddressValid
+                        ? "border-rose-400 dark:border-rose-800 bg-rose-50/30 dark:bg-rose-950/20"
+                        : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"
+                    }`}
                   />
+                  {!isAddressValid && (
+                    <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">
+                      Please enter a complete clinical delivery address (at least 10 characters).
+                    </p>
+                  )}
                 </div>
 
                 {/* Payment Method Selector */}
@@ -315,6 +392,21 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
                       <span>Card</span>
                     </button>
                   </div>
+
+                  {/* Payment Verification Information Preview */}
+                  {paymentMethod === "UPI" && (
+                    <div className="p-2.5 rounded-xl bg-sky-50 dark:bg-sky-950/30 border border-sky-100 dark:border-sky-900/40 text-[11px] text-sky-800 dark:text-sky-300 space-y-0.5">
+                      <div className="font-semibold">UPI Express Checkout</div>
+                      <p className="text-slate-500 dark:text-slate-400">Direct instant transfer via Google Pay, PhonePe, or Paytm UPI VPA.</p>
+                    </div>
+                  )}
+
+                  {paymentMethod === "CARD" && (
+                    <div className="p-2.5 rounded-xl bg-sky-50 dark:bg-sky-950/30 border border-sky-100 dark:border-sky-900/40 text-[11px] text-sky-800 dark:text-sky-300 space-y-0.5">
+                      <div className="font-semibold">Secure Card Checkout</div>
+                      <p className="text-slate-500 dark:text-slate-400">PCI-DSS Level 1 compliant clinical billing (Debit / Credit card).</p>
+                    </div>
+                  )}
                 </div>
               </>
             )}
@@ -348,13 +440,30 @@ export function CartDrawer({ onOrderPlaced }: CartDrawerProps) {
                 </div>
               </div>
 
+              {checkoutError && (
+                <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs font-semibold text-rose-700 dark:text-rose-400">
+                  {checkoutError}
+                </div>
+              )}
+
               <button
+                id="btn-cart-checkout"
                 type="button"
                 onClick={handleCheckout}
-                disabled={isSubmitting}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-semibold text-sm shadow-md transition-all cursor-pointer disabled:opacity-50"
+                disabled={isSubmitting || hasOutOfStock || (hasRx && !selectedRxId) || !isAddressValid}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-semibold text-sm shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span>{isSubmitting ? "Placing Clinical Order..." : "Confirm & Place Order"}</span>
+                <span>
+                  {isSubmitting
+                    ? "Placing Clinical Order..."
+                    : hasOutOfStock
+                    ? "Adjust Stock to Place Order"
+                    : !isAddressValid
+                    ? "Valid Address Required"
+                    : hasRx && !selectedRxId
+                    ? "Prescription Required"
+                    : "Confirm & Place Order"}
+                </span>
                 <ArrowRight className="h-4 w-4" />
               </button>
             </div>

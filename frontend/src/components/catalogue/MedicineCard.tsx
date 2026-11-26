@@ -21,6 +21,8 @@ export function MedicineCard({ medicine }: MedicineCardProps) {
   const [authError, setAuthError] = useState<string | null>(null);
 
   const isColdChain =
+    Boolean(medicine.requires_cold_chain) ||
+    Boolean(medicine.cold_chain) ||
     medicine.category.toLowerCase().includes("insulin") ||
     medicine.category.toLowerCase().includes("vaccine") ||
     medicine.category.toLowerCase().includes("biological") ||
@@ -28,7 +30,9 @@ export function MedicineCard({ medicine }: MedicineCardProps) {
 
   const price = medicine.unit_price ?? medicine.mrp;
   const hasDiscount = medicine.mrp > price;
-  const isOutOfStock = (medicine.stock_quantity ?? 10) <= 0 || medicine.is_available === 0;
+  const isOutOfStock =
+    (medicine.stock_quantity !== undefined ? medicine.stock_quantity <= 0 : false) ||
+    medicine.is_available === 0;
   const cleanGenericName = medicine.generic_name ? medicine.generic_name.split("|")[0].trim() : "";
 
   const handleAddToCart = async () => {

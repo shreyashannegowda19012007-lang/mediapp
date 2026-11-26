@@ -61,11 +61,15 @@ export function MedicineCatalogue() {
       <div className="relative rounded-3xl border border-sky-100 dark:border-slate-800 bg-gradient-to-b from-sky-500/10 via-sky-500/5 to-transparent p-6 sm:p-8 backdrop-blur-xs">
         <div className="max-w-3xl mx-auto space-y-4">
           <div className="text-center space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 mb-1">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span>Nearby Dispensary • Deliverable Instantly (45 Mins) • Apollo Hospital Central Dispensary (1.2 km)</span>
+            </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-              Medicine Catalogue
+              Live Medicine Stock &amp; Express Delivery
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-              Search by medicine brand, active generic molecule, or ailment.
+              Search by medicine brand, active generic molecule, or ailment. In-stock medicines available for instant cold-chain dispatch.
             </p>
           </div>
 
@@ -101,6 +105,7 @@ export function MedicineCatalogue() {
               onClick={() => {
                 setRxFilter(undefined);
                 setColdChainOnly(false);
+                setPage(1);
               }}
               className={clsx(
                 "px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer",
@@ -116,6 +121,7 @@ export function MedicineCatalogue() {
               onClick={() => {
                 setRxFilter(0);
                 setColdChainOnly(false);
+                setPage(1);
               }}
               className={clsx(
                 "inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer",
@@ -131,6 +137,7 @@ export function MedicineCatalogue() {
               onClick={() => {
                 setRxFilter(1);
                 setColdChainOnly(false);
+                setPage(1);
               }}
               className={clsx(
                 "inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer",
@@ -143,7 +150,10 @@ export function MedicineCatalogue() {
             </button>
 
             <button
-              onClick={() => setColdChainOnly(!coldChainOnly)}
+              onClick={() => {
+                setColdChainOnly(!coldChainOnly);
+                setPage(1);
+              }}
               className={clsx(
                 "inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer",
                 coldChainOnly
@@ -162,7 +172,10 @@ export function MedicineCatalogue() {
       {categories.length > 0 && (
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
           <button
-            onClick={() => setSelectedCategory("")}
+            onClick={() => {
+              setSelectedCategory("");
+              setPage(1);
+            }}
             className={clsx(
               "px-3 py-1.5 text-xs font-medium rounded-xl whitespace-nowrap border transition-all cursor-pointer",
               selectedCategory === ""
@@ -175,7 +188,10 @@ export function MedicineCatalogue() {
           {categories.map((cat) => (
             <button
               key={cat.category}
-              onClick={() => setSelectedCategory(cat.category === selectedCategory ? "" : cat.category)}
+              onClick={() => {
+                setSelectedCategory(cat.category === selectedCategory ? "" : cat.category);
+                setPage(1);
+              }}
               className={clsx(
                 "px-3 py-1.5 text-xs font-medium rounded-xl whitespace-nowrap border transition-all cursor-pointer",
                 selectedCategory === cat.category
@@ -215,11 +231,13 @@ export function MedicineCatalogue() {
             Try adjusting your search query, or clear your therapeutic category filters.
           </p>
           <button
+            id="btn-reset-filters"
             onClick={() => {
               setSearchQuery("");
               setSelectedCategory("");
               setRxFilter(undefined);
               setColdChainOnly(false);
+              setPage(1);
             }}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sky-600 text-white text-xs font-semibold hover:bg-sky-700 transition-all cursor-pointer"
           >

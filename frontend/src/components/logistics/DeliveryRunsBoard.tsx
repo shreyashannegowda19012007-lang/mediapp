@@ -13,6 +13,7 @@ export function DeliveryRunsBoard({ onRunClaimed }: DeliveryRunsBoardProps) {
   const [loading, setLoading] = useState(true);
   const [claimingId, setClaimingId] = useState<number | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fetchRuns = async () => {
     try {
@@ -28,6 +29,10 @@ export function DeliveryRunsBoard({ onRunClaimed }: DeliveryRunsBoardProps) {
 
   useEffect(() => {
     fetchRuns();
+    const interval = setInterval(() => {
+      fetchRuns();
+    }, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleAcceptRun = async (orderId: number) => {
@@ -38,7 +43,8 @@ export function DeliveryRunsBoard({ onRunClaimed }: DeliveryRunsBoardProps) {
       await fetchRuns();
       if (onRunClaimed) onRunClaimed();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to claim delivery run.");
+      setErrorMessage(err instanceof Error ? err.message : "Failed to claim delivery run.");
+      setTimeout(() => setErrorMessage(null), 4000);
     } finally {
       setClaimingId(null);
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -83,6 +89,13 @@ export function DeliveryRunsBoard({ onRunClaimed }: DeliveryRunsBoardProps) {
         </div>
       )}
 
+      {errorMessage && (
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-800 dark:text-rose-300 font-semibold">
+          <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
       {loading ? (
         <div className="py-8 text-center text-xs text-slate-400">Loading transit queue...</div>
       ) : runs.length === 0 ? (
@@ -122,6 +135,7 @@ export function DeliveryRunsBoard({ onRunClaimed }: DeliveryRunsBoardProps) {
               </div>
 
               <button
+                id={`btn-claim-run-${run.id}`}
                 type="button"
                 onClick={() => handleAcceptRun(run.id)}
                 disabled={claimingId === run.id}
