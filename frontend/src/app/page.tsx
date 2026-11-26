@@ -16,6 +16,7 @@ export type PortalType = "landing" | "customer" | "pharmacy" | "admin" | "delive
 export default function Home() {
   const [currentPortal, setCurrentPortal] = useState<PortalType>("landing");
   const [isRxModalOpen, setIsRxModalOpen] = useState(false);
+  const [authNotice, setAuthNotice] = useState<string | null>(null);
   const { fetchSession, switchRole } = useAuthStore();
   const { fetchCart, isOpen: isCartOpen, setIsOpen: setIsCartOpen } = useCartStore();
 
@@ -42,6 +43,7 @@ export default function Home() {
         fetchCart();
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (authError) {
+        setAuthNotice(authError);
         console.warn("MediApp Auth Notice:", authError);
         window.history.replaceState({}, document.title, window.location.pathname);
       }
@@ -63,6 +65,19 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#070b14] text-slate-100 font-sans">
+      {authNotice && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-lg w-full px-4">
+          <div className="bg-[#0f172a]/95 border border-amber-500/40 text-amber-200 px-4 py-3 rounded-xl shadow-2xl flex items-center justify-between text-xs font-semibold backdrop-blur-md">
+            <span>Authentication Notice: {authNotice}</span>
+            <button
+              onClick={() => setAuthNotice(null)}
+              className="text-slate-400 hover:text-white ml-3 text-sm font-bold cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
       {/* 1. Landing Page with 4 Portal Cards */}
       {currentPortal === "landing" && (
         <PortalLandingView onSelectPortal={handleSelectPortal} />

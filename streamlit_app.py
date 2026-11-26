@@ -98,6 +98,9 @@ def _detect_streamlit_redirect_uri() -> str:
 
 GOOGLE_CLIENT_ID = _get_oauth_setting("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = _get_oauth_setting("GOOGLE_CLIENT_SECRET")
+# Normalize font ambiguity in Google Client Secret (capital I vs lowercase l)
+if GOOGLE_CLIENT_SECRET and "Joxltnbws" in GOOGLE_CLIENT_SECRET:
+    GOOGLE_CLIENT_SECRET = GOOGLE_CLIENT_SECRET.replace("Joxltnbws", "JoxItnbws")
 GOOGLE_REDIRECT_URI = _detect_streamlit_redirect_uri()
 GOOGLE_OAUTH_CONFIGURED = bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET)
 
@@ -132,19 +135,28 @@ elif "code" in _qp and GOOGLE_OAUTH_CONFIGURED:
         _matched_role = "delivery"
 
     try:
-        _token_res = requests.post(
-            "https://oauth2.googleapis.com/token",
-            data={
-                "code": _auth_code,
-                "client_id": GOOGLE_CLIENT_ID,
-                "client_secret": GOOGLE_CLIENT_SECRET,
-                "redirect_uri": GOOGLE_REDIRECT_URI,
-                "grant_type": "authorization_code",
-            },
-            timeout=10.0,
-        )
+        _token_url = "https://oauth2.googleapis.com/token"
+        _token_payload = {
+            "code": _auth_code,
+            "client_id": GOOGLE_CLIENT_ID,
+            "client_secret": GOOGLE_CLIENT_SECRET,
+            "redirect_uri": GOOGLE_REDIRECT_URI,
+            "grant_type": "authorization_code",
+        }
+        _token_res = requests.post(_token_url, data=_token_payload, timeout=10.0)
+        # Resilient font ambiguity retry: if invalid_client, swap lowercase l / uppercase I
+        if _token_res.status_code != 200 and "invalid_client" in _token_res.text:
+            alt_secret = (
+                GOOGLE_CLIENT_SECRET.replace("Joxltnbws", "JoxItnbws")
+                if "Joxltnbws" in GOOGLE_CLIENT_SECRET
+                else GOOGLE_CLIENT_SECRET.replace("JoxItnbws", "Joxltnbws")
+            )
+            if alt_secret != GOOGLE_CLIENT_SECRET:
+                _token_payload["client_secret"] = alt_secret
+                _token_res = requests.post(_token_url, data=_token_payload, timeout=10.0)
+
         if _token_res.status_code != 200:
-            raise ValueError(f"Token exchange failed: {_token_res.text}")
+            raise ValueError(f"Token exchange failed: {_token_res.text.strip()}")
         _access_token = _token_res.json().get("access_token")
         _userinfo_res = requests.get(
             "https://www.googleapis.com/oauth2/v3/userinfo",
@@ -1002,15 +1014,21 @@ template_html = """<!DOCTYPE html>
 
     function initiateGoogleAuth(role = "customer") {
       const targetUrl = ROLE_GOOGLE_URLS[role] || ROLE_GOOGLE_URLS["customer"] || "";
-      if (targetUrl) {
-        try {
-          window.top.location.href = targetUrl;
-        } catch (e) {
-          window.location.href = targetUrl;
-        }
-      } else {
-        showToast("Google OAuth credentials missing. Please configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Streamlit Cloud Secrets.", false);
+      if (!targetUrl) {
         alert("Google OAuth is not configured on this Streamlit deployment.\\n\\nPlease add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Streamlit Cloud Dashboard (Settings -> Secrets).");
+        return;
+      }
+      // Direct escape from Streamlit iframe to top-level tab
+      try {
+        const link = document.createElement("a");
+        link.href = targetUrl;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (err) {
+        window.open(targetUrl, "_blank", "noopener,noreferrer");
       }
     }
 
@@ -1058,10 +1076,10 @@ template_html = """<!DOCTYPE html>
         });
       } else {
         const signInBtn = (role = "customer") => `
-          <button onclick="initiateGoogleAuth('${role}')" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700/80 hover:border-slate-600 text-slate-200 hover:text-white text-xs font-semibold transition-all shadow-xs cursor-pointer">
+          <a href="${ROLE_GOOGLE_URLS[role] || ROLE_GOOGLE_URLS['customer'] || '#'}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700/80 hover:border-slate-600 text-slate-200 hover:text-white text-xs font-semibold transition-all shadow-xs cursor-pointer">
             ${googleSvg}
             <span>Continue with Google</span>
-          </button>
+          </a>
         `;
         if (landingAuth) landingAuth.innerHTML = signInBtn("customer");
         if (customerAuth) customerAuth.innerHTML = signInBtn("customer");
@@ -1479,6 +1497,10 @@ template_html = """<!DOCTYPE html>
       if (INITIAL_PORTAL && INITIAL_PORTAL !== "landing") {
         switchPortal(INITIAL_PORTAL);
       }
+      const oauthErr = __OAUTH_ERROR__;
+      if (oauthErr) {
+        showToast("Google Sign-In: " + oauthErr, false);
+      }
     });
   </script>
 </body>
@@ -1490,6 +1512,7 @@ final_html = final_html.replace("__PHARMACIES_JSON__", json.dumps(pharmacies_dat
 final_html = final_html.replace("__GOOGLE_USER_JSON__", json.dumps(google_user))
 final_html = final_html.replace("__ROLE_GOOGLE_URLS__", json.dumps(role_google_urls))
 final_html = final_html.replace("__INITIAL_PORTAL__", target_role)
+final_html = final_html.replace("__OAUTH_ERROR__", json.dumps(oauth_error or ""))
 
 # 5. Render Full-Bleed Application Viewport with 100% localhost visual parity
 components.html(final_html, height=1350, scrolling=True)
