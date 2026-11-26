@@ -54,12 +54,13 @@ init_backend()
 
 from app.database import query_db
 
-# 1b. Google OAuth 2.0 Configuration & Callback Handler (Streamlit Secrets -> .env fallback)
+# 1b. Google OAuth 2.0 Configuration & Callback Handler (Streamlit Secrets -> .env)
 def _get_oauth_setting(key: str, default: str = "") -> str:
     try:
         if key in st.secrets:
-            return str(st.secrets[key]).strip()
-        # Also support nested [auth.google] TOML secrets if configured
+            val = str(st.secrets[key]).strip()
+            if val:
+                return val
         if "auth" in st.secrets:
             auth_sec = st.secrets["auth"]
             if key == "STREAMLIT_GOOGLE_REDIRECT_URI" and "redirect_uri" in auth_sec:
@@ -75,16 +76,21 @@ def _get_oauth_setting(key: str, default: str = "") -> str:
                     return str(g_sec[nested_key]).strip()
     except Exception:
         pass
-    return os.getenv(key, default).strip()
+    env_val = os.getenv(key, "").strip()
+    if env_val:
+        return env_val
+    return default
 
 def _detect_streamlit_redirect_uri() -> str:
     explicit = _get_oauth_setting("STREAMLIT_GOOGLE_REDIRECT_URI")
     if explicit:
         return explicit
     try:
-        host = st.context.headers.get("Host", "").strip()
-        if host:
-            scheme = "http" if ("localhost" in host or "127.0.0.1" in host) else "https"
+        host = st.context.headers.get("Host", "").strip().lower()
+        if "medi-app.streamlit.app" in host:
+            return "https://medi-app.streamlit.app/"
+        if host and ("localhost" in host or "127.0.0.1" in host):
+            scheme = "http"
             return f"{scheme}://{host}/"
     except Exception:
         pass
@@ -99,12 +105,15 @@ if "google_user" not in st.session_state:
     st.session_state["google_user"] = None
 if "oauth_error" not in st.session_state:
     st.session_state["oauth_error"] = None
+if "target_role" not in st.session_state:
+    st.session_state["target_role"] = "landing"
 
 # Handle OAuth redirects on top-level Streamlit URL
 _qp = st.query_params
 if "logout" in _qp:
     st.session_state["google_user"] = None
     st.session_state["oauth_error"] = None
+    st.session_state["target_role"] = "landing"
     st.query_params.clear()
     st.rerun()
 elif "error" in _qp:
@@ -113,6 +122,15 @@ elif "error" in _qp:
     st.rerun()
 elif "code" in _qp and GOOGLE_OAUTH_CONFIGURED:
     _auth_code = str(_qp.get("code"))
+    _state_param = str(_qp.get("state", ""))
+    _matched_role = "customer"
+    if "role_pharmacy" in _state_param:
+        _matched_role = "pharmacy"
+    elif "role_admin" in _state_param:
+        _matched_role = "admin"
+    elif "role_delivery" in _state_param:
+        _matched_role = "delivery"
+
     try:
         _token_res = requests.post(
             "https://oauth2.googleapis.com/token",
@@ -140,8 +158,10 @@ elif "code" in _qp and GOOGLE_OAUTH_CONFIGURED:
             "name": _profile.get("name") or _profile.get("email", "Google User").split("@")[0],
             "email": _profile.get("email", ""),
             "picture": _profile.get("picture", ""),
+            "role": _matched_role,
             "provider": "google",
         }
+        st.session_state["target_role"] = _matched_role
         st.session_state["oauth_error"] = None
     except Exception as _oauth_exc:
         st.session_state["oauth_error"] = str(_oauth_exc)
@@ -150,6 +170,7 @@ elif "code" in _qp and GOOGLE_OAUTH_CONFIGURED:
 
 google_user = st.session_state.get("google_user")
 oauth_error = st.session_state.get("oauth_error")
+target_role = st.session_state.get("target_role", "landing")
 
 def get_role_google_url(role="customer"):
     if not GOOGLE_OAUTH_CONFIGURED:
@@ -165,7 +186,13 @@ def get_role_google_url(role="customer"):
     }
     return "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(_oauth_params)
 
-google_auth_url = get_role_google_url("customer")
+role_google_urls = {
+    "customer": get_role_google_url("customer"),
+    "pharmacy": get_role_google_url("pharmacy"),
+    "admin": get_role_google_url("admin"),
+    "delivery": get_role_google_url("delivery"),
+}
+google_auth_url = role_google_urls["customer"]
 
 # 2. Hide Streamlit Chrome & Margins for Full-Bleed Application Viewport
 st.markdown("""
@@ -953,9 +980,10 @@ template_html = """<!DOCTYPE html>
     const MEDICINES = __MEDICINES_JSON__;
     const PHARMACIES = __PHARMACIES_JSON__;
     const USER = __GOOGLE_USER_JSON__;
-    const GOOGLE_AUTH_URL = "__GOOGLE_AUTH_URL__";
+    const ROLE_GOOGLE_URLS = __ROLE_GOOGLE_URLS__;
+    const INITIAL_PORTAL = "__INITIAL_PORTAL__";
 
-    let currentPortal = "landing";
+    let currentPortal = INITIAL_PORTAL || "landing";
     let cart = [];
     let activeCategory = "All";
     let searchQuery = "";
@@ -972,14 +1000,28 @@ template_html = """<!DOCTYPE html>
       lucide.createIcons();
     }
 
+    function initiateGoogleAuth(role = "customer") {
+      const targetUrl = ROLE_GOOGLE_URLS[role] || ROLE_GOOGLE_URLS["customer"] || "";
+      if (targetUrl) {
+        try {
+          window.top.location.href = targetUrl;
+        } catch (e) {
+          window.location.href = targetUrl;
+        }
+      } else {
+        showToast("Google OAuth credentials missing. Please configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Streamlit Cloud Secrets.", false);
+        alert("Google OAuth is not configured on this Streamlit deployment.\\n\\nPlease add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Streamlit Cloud Dashboard (Settings -> Secrets).");
+      }
+    }
+
     function handlePortalCardClick(portalRole) {
-      // If user is logged in, navigate straight to that portal
-      if (USER && USER.email) {
+      // If user is logged in for this role, navigate straight to that portal
+      if (USER && USER.email && (USER.role === portalRole || currentPortal === portalRole)) {
         switchPortal(portalRole);
         return;
       }
-      // If user is not logged in, clicking the card navigates directly into the portal view
-      switchPortal(portalRole);
+      // If not authenticated, directly redirect to Google OAuth for this persona
+      initiateGoogleAuth(portalRole);
     }
 
     // 2. Auth Header Hydration
@@ -1015,17 +1057,17 @@ template_html = """<!DOCTYPE html>
           el.innerText = "Enter Portal";
         });
       } else {
-        const signInBtn = `
-          <a href="${GOOGLE_AUTH_URL}" target="_top" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700/80 hover:border-slate-600 text-slate-200 hover:text-white text-xs font-semibold transition-all shadow-xs">
+        const signInBtn = (role = "customer") => `
+          <button onclick="initiateGoogleAuth('${role}')" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700/80 hover:border-slate-600 text-slate-200 hover:text-white text-xs font-semibold transition-all shadow-xs cursor-pointer">
             ${googleSvg}
             <span>Continue with Google</span>
-          </a>
+          </button>
         `;
-        if (landingAuth) landingAuth.innerHTML = signInBtn;
-        if (customerAuth) customerAuth.innerHTML = signInBtn;
-        if (pharmacyAuth) pharmacyAuth.innerHTML = signInBtn;
-        if (adminAuth) adminAuth.innerHTML = signInBtn;
-        if (deliveryAuth) deliveryAuth.innerHTML = signInBtn;
+        if (landingAuth) landingAuth.innerHTML = signInBtn("customer");
+        if (customerAuth) customerAuth.innerHTML = signInBtn("customer");
+        if (pharmacyAuth) pharmacyAuth.innerHTML = signInBtn("pharmacy");
+        if (adminAuth) adminAuth.innerHTML = signInBtn("admin");
+        if (deliveryAuth) deliveryAuth.innerHTML = signInBtn("delivery");
       }
     }
 
@@ -1434,6 +1476,9 @@ template_html = """<!DOCTYPE html>
       renderPharmacyInventory();
       renderAdminPharmacies();
       lucide.createIcons();
+      if (INITIAL_PORTAL && INITIAL_PORTAL !== "landing") {
+        switchPortal(INITIAL_PORTAL);
+      }
     });
   </script>
 </body>
@@ -1443,7 +1488,8 @@ template_html = """<!DOCTYPE html>
 final_html = template_html.replace("__MEDICINES_JSON__", json.dumps(medicines_data))
 final_html = final_html.replace("__PHARMACIES_JSON__", json.dumps(pharmacies_data))
 final_html = final_html.replace("__GOOGLE_USER_JSON__", json.dumps(google_user))
-final_html = final_html.replace("__GOOGLE_AUTH_URL__", google_auth_url)
+final_html = final_html.replace("__ROLE_GOOGLE_URLS__", json.dumps(role_google_urls))
+final_html = final_html.replace("__INITIAL_PORTAL__", target_role)
 
 # 5. Render Full-Bleed Application Viewport with 100% localhost visual parity
 components.html(final_html, height=1350, scrolling=True)
