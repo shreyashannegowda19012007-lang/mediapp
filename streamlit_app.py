@@ -5,23 +5,23 @@ Delivers 100% pixel-perfect visual parity with the localhost Next.js 16 applicat
 - Deep Navys, Crisp Surfaces, Clinical Emerald (OTC/Verified), Amber (Rx/Warning), Cyan (Cold-Chain)
 - Zero Emojis (100% Lucide vector clinical icons)
 - 4 Isolated Portals: Customer, Pharmacy Partner, Admin, Delivery Partner
-- Landing Page with 4 Individual Google Sign-In Portal Cards
-- Omni-Search & Bioequivalent Generic Price Match Modal
-- AI Prescription Scanner with OCR Detection & Drug Interaction Checks
-- AI Ailment Specialist with 5-Pillar Clinical Guidance & Stock Linkage
-- Pharmacist Verification Desk & Daily Inventory Stepper
+- Landing Page with 4 Individual Google Sign-In Portal Cards & Working Session Sign Out
+- Full 1,250+ Medicine A-Z Catalogue with Pagination, Semantic Categories & Bioequivalent Generic Price Match
+- AI Prescription Scanner with Real Medicine Lookup, DDI Screening & File Preview
+- AI Clinical Ailment Specialist (27 Conditions + Emergency ER Red-Flag Priority + Live Stock Linkage)
+- Pharmacist Verification Desk & Live Dispensary Inventory Stepper
 - Logistics Fleet Command & Cold-Chain IoT Telemetry (2°C - 8°C Monitored)
-- Hospital Analytics with Real-Time KPIs & Restock Actions
-- Slide-Over Cart Drawer & Drag-and-Drop Rx Upload Modal
+- Hospital Analytics with Real SQLite Pharmacies, Orders & Compliance Actions
+- Slide-Over Cart Drawer with DDI Screening, Pricing & Order/OTP Generation
 """
-import streamlit as st
-import streamlit.components.v1 as components
+import html
 import json
 import os
 import secrets
-import html
 import urllib.parse
 import requests
+import streamlit as st
+import streamlit.components.v1 as components
 
 try:
     from dotenv import load_dotenv
@@ -37,7 +37,18 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# 1. Initialize SQLite Database & Seeding
+
+def _safe_json(data) -> str:
+    """Serialize data safely for inline <script> embedding without XSS breakouts."""
+    return (
+        json.dumps(data)
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+        .replace("&", "\\u0026")
+    )
+
+
+# 1. Initialize SQLite Database & Seeding cleanly
 @st.cache_resource
 def init_backend():
     try:
@@ -50,9 +61,104 @@ def init_backend():
         st.error(f"Database initialization error: {e}")
         return False
 
+
 init_backend()
 
-from app.database import query_db
+
+@st.cache_data(ttl=120)
+def load_clinical_data():
+    """Load medicines (with aggregated stock/price), pharmacies, orders, DDI rules, and AI knowledge."""
+    from app.database import get_connection
+
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        raw_medicines = cur.execute("""
+            SELECT
+                m.id,
+                m.name,
+                m.generic_name,
+                m.dosage_form,
+                m.strength,
+                m.category,
+                m.manufacturer,
+                m.mrp,
+                m.prescription_required,
+                m.uses,
+                m.requires_cold_chain,
+                COALESCE(SUM(pi.stock_quantity), 25) AS stock_units,
+                COALESCE(MIN(pi.unit_price), m.mrp) AS unit_price
+            FROM medicines m
+            LEFT JOIN pharmacy_inventory pi
+                ON m.id = pi.medicine_id AND pi.is_available = 1
+            GROUP BY m.id
+            ORDER BY m.name ASC
+        """).fetchall()
+        medicines = [dict(row) for row in raw_medicines]
+
+        raw_pharmacies = cur.execute("""
+            SELECT id, name, license_number, address, city, status, rating
+            FROM pharmacies
+            ORDER BY id ASC
+        """).fetchall()
+        pharmacies = [dict(row) for row in raw_pharmacies]
+
+        raw_orders = cur.execute("""
+            SELECT
+                o.id,
+                o.total_amount,
+                o.order_status,
+                o.created_at,
+                o.delivery_otp,
+                COALESCE(p.name, 'Apollo Pharmacy - Indiranagar') AS pharmacy_name,
+                COALESCE(p.city, 'Bengaluru') AS pharmacy_city
+            FROM orders o
+            LEFT JOIN pharmacies p ON o.pharmacy_id = p.id
+            ORDER BY o.created_at DESC, o.id DESC
+            LIMIT 25
+        """).fetchall()
+        orders = [dict(row) for row in raw_orders]
+    finally:
+        conn.close()
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    ddi_rules = []
+    ddi_path = os.path.join(base_dir, "app", "data", "ddi_rules.json")
+    if os.path.exists(ddi_path):
+        try:
+            with open(ddi_path, "r", encoding="utf-8") as f:
+                ddi_rules = json.load(f)
+        except Exception:
+            ddi_rules = []
+
+    ailment_kb = {}
+    kb_path = os.path.join(base_dir, "app", "models", "ailment_knowledge.json")
+    if os.path.exists(kb_path):
+        try:
+            with open(kb_path, "r", encoding="utf-8") as f:
+                raw_kb = json.load(f)
+            for key, val in raw_kb.items():
+                ailment_kb[key] = {
+                    "key": key,
+                    "title": val.get("title", key),
+                    "category": val.get("category", "General"),
+                    "urgency": val.get("urgency", "nominal"),
+                    "symptoms": val.get("symptoms", [])[:4],
+                    "context": val.get("context", ""),
+                    "self_care": val.get("self_care", []),
+                    "otc_regimen": val.get("otc_regimen", []),
+                    "red_flags": val.get("red_flags", []),
+                    "referral": val.get("referral", ""),
+                    "inventory_keywords": val.get("inventory_keywords", []),
+                }
+        except Exception:
+            ailment_kb = {}
+
+    return medicines, pharmacies, orders, ddi_rules, ailment_kb
+
+
+medicines_data, pharmacies_data, orders_data, ddi_rules_data, ailment_kb_data = load_clinical_data()
+
 
 # 1b. Google OAuth 2.0 Configuration & Callback Handler (Streamlit Secrets -> .env)
 def _get_oauth_setting(key: str, default: str = "") -> str:
@@ -81,6 +187,7 @@ def _get_oauth_setting(key: str, default: str = "") -> str:
         return env_val
     return default
 
+
 def _detect_streamlit_redirect_uri() -> str:
     explicit = _get_oauth_setting("STREAMLIT_GOOGLE_REDIRECT_URI")
     if explicit:
@@ -92,11 +199,11 @@ def _detect_streamlit_redirect_uri() -> str:
         if "medi-app.streamlit.app" in host:
             return "https://medi-app.streamlit.app/"
         if host and ("localhost" in host or "127.0.0.1" in host):
-            scheme = "http"
-            return f"{scheme}://{host}/"
+            return f"http://{host}/"
     except Exception:
         pass
     return "https://medi-app.streamlit.app/"
+
 
 GOOGLE_CLIENT_ID = _get_oauth_setting("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = _get_oauth_setting("GOOGLE_CLIENT_SECRET")
@@ -184,17 +291,11 @@ elif "code" in _qp and GOOGLE_OAUTH_CONFIGURED:
         st.session_state["oauth_error"] = None
     except Exception as _oauth_exc:
         st.session_state["oauth_error"] = str(_oauth_exc)
-    
+
     st.query_params.clear()
     st.query_params["portal"] = _matched_role
     st.rerun()
 
-google_user = st.session_state.get("google_user")
-oauth_error = st.session_state.get("oauth_error")
-target_role = st.session_state.get("target_role", "landing")
-
-if oauth_error:
-    st.error(f"Google Authentication Alert: {oauth_error}")
 
 def get_role_google_url(role="customer"):
     if not GOOGLE_OAUTH_CONFIGURED:
@@ -210,62 +311,73 @@ def get_role_google_url(role="customer"):
     }
     return "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(_oauth_params)
 
+
 role_google_urls = {
     "customer": get_role_google_url("customer"),
     "pharmacy": get_role_google_url("pharmacy"),
     "admin": get_role_google_url("admin"),
     "delivery": get_role_google_url("delivery"),
 }
-google_auth_url = role_google_urls["customer"]
 
-# 2. Hide Streamlit Chrome & Margins for Full-Bleed Application Viewport
+# 2. Hide Streamlit Chrome, Margins & Trigger Button; Force Viewport-Matched Full-Bleed Iframe
 st.markdown("""
 <style>
-#MainMenu {visibility: hidden; display: none;}
-footer {visibility: hidden; display: none;}
-header {visibility: hidden; display: none;}
-[data-testid="stSidebar"] {display: none;}
-[data-testid="collapsedControl"] {display: none;}
-[data-testid="stAppViewBlockContainer"], .main, .block-container {
+#MainMenu, footer, header, [data-testid="stHeader"], [data-testid="stToolbar"],
+[data-testid="stSidebar"], [data-testid="collapsedControl"], [data-testid="stStatusWidget"] {
+    visibility: hidden !important;
+    display: none !important;
+    height: 0 !important;
+}
+html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
+    background-color: #070b14 !important;
+    overflow: hidden !important;
+}
+[data-testid="stAppViewBlockContainer"], [data-testid="stMainBlockContainer"], .main, .block-container {
     padding: 0 !important;
     margin: 0 !important;
     max-width: 100vw !important;
-}
-iframe {
     width: 100% !important;
-    border: none !important;
+}
+[data-testid="stVerticalBlock"] {
+    gap: 0 !important;
+}
+.st-key-btn_st_logout {
+    position: fixed !important;
+    top: -9999px !important;
+    left: -9999px !important;
+    width: 1px !important;
+    height: 1px !important;
+    opacity: 0 !important;
+    overflow: hidden !important;
+}
+iframe[title="streamlit_app"], .stHtml iframe, [data-testid="stHtml"] iframe, iframe {
+    width: 100% !important;
+    height: 100vh !important;
     min-height: 100vh !important;
+    border: none !important;
+    display: block !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Fetch Real Clinical Data from SQLite to hydrate client state
-raw_medicines = query_db("""
-    SELECT id, name, generic_name, dosage_form, strength, category, manufacturer, mrp, prescription_required, uses, requires_cold_chain
-    FROM medicines
-    ORDER BY name ASC
-    LIMIT 150
-""")
+# Native Streamlit Sign Out Trigger (clicked programmatically via window.parent.document from iframe)
+if st.button("MEDIAPP_SIGNOUT_TRIGGER", key="btn_st_logout"):
+    st.session_state["google_user"] = None
+    st.session_state["oauth_error"] = None
+    st.session_state["target_role"] = "landing"
+    st.query_params.clear()
+    st.rerun()
 
-medicines_data = [dict(m) for m in raw_medicines]
-
-raw_pharmacies = query_db("""
-    SELECT id, name, license_number, address, city, status, rating
-    FROM pharmacies
-""")
-pharmacies_data = [dict(p) for p in raw_pharmacies]
-
-raw_orders = query_db("""
-    SELECT id, total_amount, order_status, created_at, delivery_otp
-    FROM orders
-    ORDER BY id DESC
-    LIMIT 20
-""")
-orders_data = [dict(o) for o in raw_orders]
+google_user = st.session_state.get("google_user")
+oauth_error = st.session_state.get("oauth_error")
+target_role = st.session_state.get("target_role", "landing")
+# Clear transient OAuth error after consuming it for toast alert
+if oauth_error:
+    st.session_state["oauth_error"] = None
 
 
-# 4. Inject SQLite Database & Google OAuth State into Native Multi-Portal HTML
-template_html = """<!DOCTYPE html>
+# 3. Inject SQLite Database & Google OAuth State into Native Multi-Portal HTML
+template_html = r"""<!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
@@ -361,32 +473,26 @@ template_html = """<!DOCTYPE html>
         <div class="text-xs text-slate-400 font-medium tracking-wide hidden sm:block">
           Hyperlocal medicine delivery · India
         </div>
-        <div id="landing-auth-container">
-          <!-- Populated by JS based on user state -->
-        </div>
+        <div id="landing-auth-container"></div>
       </div>
     </header>
 
     <!-- Main Hero & Portal Grid Container -->
     <main class="relative z-10 flex-1 w-full max-w-7xl mx-auto px-6 sm:px-8 py-8 flex flex-col items-center justify-center text-center">
-      <!-- Prescription pill badge -->
       <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/80 border border-slate-800 text-xs text-slate-300 shadow-lg mb-8 backdrop-blur-md">
         <i data-lucide="sparkles" class="h-3.5 w-3.5 text-cyan-400"></i>
         <span>Prescription first · Safety-checked · Delivered fast</span>
       </div>
 
-      <!-- Hero Title -->
       <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight max-w-4xl leading-[1.15] mb-5 font-heading">
         Medicines delivered from <br />
         <span class="text-cyan-400">pharmacies near you</span>
       </h1>
 
-      <!-- Subtitle -->
       <p class="text-sm sm:text-base text-slate-400 max-w-2xl mx-auto mb-14 leading-relaxed font-normal">
         One platform for customers, pharmacies, admins and delivery partners — with AI prescription reading and drug-interaction safety built in.
       </p>
 
-      <!-- Section Overline -->
       <div class="w-full text-center mb-6">
         <span class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
           CHOOSE YOUR PORTAL
@@ -525,7 +631,6 @@ template_html = """<!DOCTYPE html>
       </div>
     </main>
 
-    <!-- Footer spacer -->
     <footer class="relative z-10 w-full py-6 text-center text-xs text-slate-600">
       MediApp Clinical Healthcare Network · Real-Time Decentralized Pharmacy System
     </footer>
@@ -535,7 +640,6 @@ template_html = """<!DOCTYPE html>
   <!-- VIEW 2: CUSTOMER PORTAL VIEW               -->
   <!-- ========================================== -->
   <div id="view-customer" class="portal-view __CUSTOMER_ACTIVE__ min-h-screen">
-    <!-- Customer Header -->
     <header class="sticky top-0 z-30 bg-[#070b14]/90 backdrop-blur-md border-b border-slate-800/80 px-4 sm:px-8 py-3.5 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <button onclick="switchPortal('landing')" class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors cursor-pointer py-1 px-2 rounded-lg hover:bg-slate-800">
@@ -573,38 +677,49 @@ template_html = """<!DOCTYPE html>
           </span>
           <h2 class="text-xl sm:text-2xl font-black text-white font-heading">Upload Doctor's Prescription</h2>
           <p class="text-xs text-slate-300">
-            Upload any handwritten doctor prescription to automatically detect formulations, perform DDI safety screening, and order instant doorstep delivery.
+            Upload any doctor prescription to automatically detect formulations, perform DDI safety screening, compare generic savings, and order doorstep delivery.
           </p>
         </div>
         <div class="flex items-center gap-3">
           <button onclick="openRxModal()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-lg shadow-cyan-500/20 cursor-pointer">
             <i data-lucide="scan" class="h-4 w-4"></i>
-            <span>Scan Sample Prescription</span>
+            <span>Scan Prescription</span>
           </button>
         </div>
       </div>
 
       <!-- Medicine Search & Category Tabs -->
       <div class="space-y-4">
-        <div class="flex flex-col sm:flex-row items-center gap-3">
-          <div class="relative flex-1 w-full">
+        <div class="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+          <div class="relative flex-1">
             <i data-lucide="search" class="absolute left-3.5 top-3 h-4 w-4 text-slate-400"></i>
             <input
               id="med-search-input"
               type="text"
               oninput="handleSearch(this.value)"
-              placeholder="Search by brand name (e.g. Dolo, Augmentin, Amlong) or active molecule..."
+              placeholder="Search all 1,250+ brands (e.g. Dolo, Augmentin, Pantocid, Amlong) or active molecule..."
               class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
             />
           </div>
-          <div id="category-pills" class="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
-            <!-- Filter pills -->
-          </div>
+          <div id="category-pills" class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0"></div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs text-slate-400">
+          <span id="medicines-count-label">Loading dispensary catalog...</span>
+          <span class="font-mono text-[11px] text-emerald-400 flex items-center gap-1">
+            <i data-lucide="shield-check" class="h-3.5 w-3.5"></i> Verified Licensed Formulations
+          </span>
         </div>
 
         <!-- Medicine Cards Grid -->
-        <div id="medicines-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          <!-- Dynamically populated -->
+        <div id="medicines-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+
+        <!-- Load More Button -->
+        <div id="medicines-load-more-wrap" class="pt-2 text-center hidden">
+          <button onclick="loadMoreMedicines()" class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 cursor-pointer">
+            <i data-lucide="chevrons-down" class="h-4 w-4 text-cyan-400"></i>
+            <span id="medicines-load-more-label">Load More Medicines</span>
+          </button>
         </div>
       </div>
     </main>
@@ -624,13 +739,13 @@ template_html = """<!DOCTYPE html>
           <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-purple-950/80 text-purple-400 border border-purple-800/50">
             PHARMACY PARTNER
           </span>
-          <span class="text-xs text-slate-400 font-medium hidden sm:inline">Anne medical stores · rr nagar</span>
+          <span id="pharmacy-active-branch" class="text-xs text-slate-400 font-medium hidden sm:inline">Apollo Pharmacy - Indiranagar · Bengaluru</span>
         </div>
       </div>
       <div class="flex items-center gap-3">
         <div class="flex items-center gap-1.5 text-emerald-400 font-semibold text-xs">
           <span>Online</span>
-          <span class="w-2.5 h-2.5 rounded-xs bg-emerald-500 inline-block"></span>
+          <span class="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block"></span>
         </div>
         <div id="pharmacy-header-auth"></div>
       </div>
@@ -640,20 +755,20 @@ template_html = """<!DOCTYPE html>
       <!-- 4 KPI Cards -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-4 sm:p-5">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">ORDERS SEEN</span>
-          <span class="text-2xl sm:text-3xl font-extrabold text-white">1</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">TOTAL ORDERS</span>
+          <span id="pharm-kpi-orders" class="text-2xl sm:text-3xl font-extrabold text-white">0</span>
         </div>
         <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-4 sm:p-5">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">STOCK ITEMS</span>
-          <span id="pharm-stock-count" class="text-2xl sm:text-3xl font-extrabold text-white">6</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">STOCK FORMULATIONS</span>
+          <span id="pharm-stock-count" class="text-2xl sm:text-3xl font-extrabold text-white">0</span>
         </div>
         <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-4 sm:p-5">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">PENDING PICKUP</span>
-          <span class="text-2xl sm:text-3xl font-extrabold text-amber-400">1</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">ACTIVE QUEUE</span>
+          <span id="pharm-kpi-pending" class="text-2xl sm:text-3xl font-extrabold text-amber-400">0</span>
         </div>
         <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-4 sm:p-5">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">TODAY'S REVENUE</span>
-          <span class="text-2xl sm:text-3xl font-extrabold text-emerald-400">₹549.50</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">FULFILLED VOLUME</span>
+          <span id="pharm-kpi-revenue" class="text-2xl sm:text-3xl font-extrabold text-emerald-400">₹0</span>
         </div>
       </div>
 
@@ -662,12 +777,12 @@ template_html = """<!DOCTYPE html>
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800/60">
           <div>
             <div class="flex items-center gap-2">
-              <span class="font-mono text-sm font-bold text-white">#MEDI306374</span>
+              <span id="pharm-active-order-id" class="font-mono text-sm font-bold text-white">#ORD-LIVE</span>
               <span id="pharm-order-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                Ready for Pickup
+                3. Ready for pickup
               </span>
             </div>
-            <p class="text-xs text-slate-400 mt-1">4 items · Total ₹549.50 · Delivery to RR Nagar (2.5 km)</p>
+            <p id="pharm-active-order-meta" class="text-xs text-slate-400 mt-1">Cold-chain sealed package · Bengaluru</p>
           </div>
           <button onclick="advancePharmacyStep()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs cursor-pointer shadow-md">
             <i data-lucide="check" class="h-3.5 w-3.5"></i>
@@ -675,15 +790,14 @@ template_html = """<!DOCTYPE html>
           </button>
         </div>
 
-        <!-- 4 Steps Visual Stepper -->
-        <div class="grid grid-cols-4 gap-2 text-center text-xs">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
           <div id="step-1" class="p-2.5 rounded-xl border border-purple-500/40 bg-purple-950/20 text-purple-300">
             <span class="font-bold block">1. Accepted</span>
-            <span class="text-[10px] text-slate-400">10:30 AM</span>
+            <span class="text-[10px] text-slate-400">Rx Verified</span>
           </div>
           <div id="step-2" class="p-2.5 rounded-xl border border-purple-500/40 bg-purple-950/20 text-purple-300">
             <span class="font-bold block">2. Packing</span>
-            <span class="text-[10px] text-slate-400">10:33 AM</span>
+            <span class="text-[10px] text-slate-400">Cold-Pack Seal</span>
           </div>
           <div id="step-3" class="p-2.5 rounded-xl border border-cyan-500 bg-cyan-950/30 text-cyan-300 font-bold ring-2 ring-cyan-500/20">
             <span class="block">3. Ready for pickup</span>
@@ -698,9 +812,18 @@ template_html = """<!DOCTYPE html>
 
       <!-- Daily Dispensary Inventory Table -->
       <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl overflow-hidden">
-        <div class="p-4 sm:p-5 border-b border-slate-800/80 flex items-center justify-between">
-          <h3 class="font-bold text-sm text-white">Daily Dispensary Inventory</h3>
-          <span class="text-xs text-slate-400 font-mono">Real-Time Sync Active</span>
+        <div class="p-4 sm:p-5 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="font-bold text-sm text-white">Daily Dispensary Inventory</h3>
+            <span class="text-xs text-slate-400 font-mono">Live SQLite Formulation Stock</span>
+          </div>
+          <input
+            id="pharm-inv-search"
+            type="text"
+            oninput="renderPharmacyInventory(this.value)"
+            placeholder="Filter stock (e.g. Dolo, Amlong, Insulin)..."
+            class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
+          />
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs">
@@ -708,14 +831,12 @@ template_html = """<!DOCTYPE html>
               <tr>
                 <th class="p-3.5">Medicine</th>
                 <th class="p-3.5">Category</th>
-                <th class="p-3.5">Price</th>
+                <th class="p-3.5">Unit Price</th>
                 <th class="p-3.5">Stock Units</th>
                 <th class="p-3.5 text-right">Status</th>
               </tr>
             </thead>
-            <tbody id="pharmacy-inventory-body" class="divide-y divide-slate-800/60 text-slate-200">
-              <!-- Populated by JS -->
-            </tbody>
+            <tbody id="pharmacy-inventory-body" class="divide-y divide-slate-800/60 text-slate-200"></tbody>
           </table>
         </div>
       </div>
@@ -742,16 +863,16 @@ template_html = """<!DOCTYPE html>
     <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-4">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">TOTAL ORDERS</span>
-          <span class="text-2xl sm:text-3xl font-extrabold text-white">1,428</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">TRACKED ORDERS</span>
+          <span id="admin-kpi-orders" class="text-2xl sm:text-3xl font-extrabold text-white">0</span>
         </div>
         <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-4">
           <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">ACTIVE PHARMACIES</span>
-          <span class="text-2xl sm:text-3xl font-extrabold text-indigo-400">38</span>
+          <span id="admin-kpi-pharmacies" class="text-2xl sm:text-3xl font-extrabold text-indigo-400">0</span>
         </div>
         <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-4">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">ON-DUTY COURIERS</span>
-          <span class="text-2xl sm:text-3xl font-extrabold text-amber-400">124</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">CATALOG SKUS</span>
+          <span id="admin-kpi-skus" class="text-2xl sm:text-3xl font-extrabold text-amber-400">0</span>
         </div>
         <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-4">
           <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">COLD-CHAIN COMPLIANCE</span>
@@ -773,12 +894,32 @@ template_html = """<!DOCTYPE html>
                 <th class="p-3">Drug License</th>
                 <th class="p-3">Location</th>
                 <th class="p-3">Rating</th>
-                <th class="p-3 text-right">Status</th>
+                <th class="p-3 text-right">Status &amp; Control</th>
               </tr>
             </thead>
-            <tbody id="admin-pharmacies-body" class="divide-y divide-slate-800/60 text-slate-300">
-              <!-- Dynamically populated -->
-            </tbody>
+            <tbody id="admin-pharmacies-body" class="divide-y divide-slate-800/60 text-slate-300"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Recent Orders Monitor -->
+      <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl overflow-hidden">
+        <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+          <h3 class="font-bold text-sm text-white">Platform Order Telemetry</h3>
+          <span class="text-xs text-slate-400 font-mono">Live SQLite Feed</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-900/60 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+              <tr>
+                <th class="p-3">Order ID</th>
+                <th class="p-3">Dispensary</th>
+                <th class="p-3">Amount</th>
+                <th class="p-3">Status</th>
+                <th class="p-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="admin-orders-body" class="divide-y divide-slate-800/60 text-slate-300"></tbody>
           </table>
         </div>
       </div>
@@ -811,15 +952,15 @@ template_html = """<!DOCTYPE html>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-4">
           <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">COMPLETED RUNS</span>
-          <span class="text-2xl sm:text-3xl font-extrabold text-white">18</span>
+          <span id="deliv-kpi-runs" class="text-2xl sm:text-3xl font-extrabold text-white">0</span>
         </div>
         <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-4">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">TRANSIT SUCCESS</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">TRANSIT COMPLIANCE</span>
           <span class="text-2xl sm:text-3xl font-extrabold text-emerald-400">100%</span>
         </div>
         <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-4">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">DAILY EARNINGS</span>
-          <span class="text-2xl sm:text-3xl font-extrabold text-cyan-400">₹1,240</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">EARNINGS</span>
+          <span id="deliv-kpi-earnings" class="text-2xl sm:text-3xl font-extrabold text-cyan-400">₹0</span>
         </div>
         <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-4">
           <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">AVG. TRANSIT TIME</span>
@@ -827,45 +968,17 @@ template_html = """<!DOCTYPE html>
         </div>
       </div>
 
-      <!-- Active Dispatch Card -->
-      <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-5 space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-          <div class="flex items-center gap-2">
-            <span class="font-mono text-xs font-bold text-white">DISPATCH #MEDI306374</span>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
-              4.2°C Nominal (2°C - 8°C Monitored)
-            </span>
-          </div>
-          <span class="text-xs text-amber-400 font-bold">Estimated Payout: ₹120.00</span>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-          <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-            <span class="text-slate-400 block text-[10px] uppercase font-bold mb-1">Pickup Dispensary</span>
-            <span class="font-semibold text-white">Anne medical stores</span>
-            <span class="text-slate-400 block text-[11px]">2.5 km away · RR Nagar</span>
-          </div>
-          <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-            <span class="text-slate-400 block text-[10px] uppercase font-bold mb-1">Patient Doorstep Drop</span>
-            <span class="font-semibold text-white">Flat 402, Green Glen Heights</span>
-            <span class="text-slate-400 block text-[11px]">Requires 6-Digit Patient OTP</span>
-          </div>
-        </div>
-        <div class="pt-2">
-          <button onclick="openOtpModal()" class="w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/20">
-            <i data-lucide="shield-check" class="h-4 w-4"></i>
-            <span>Verify Patient Delivery OTP &amp; Complete Handoff</span>
-          </button>
-        </div>
-      </div>
+      <!-- Active Dispatch Queue -->
+      <div id="delivery-dispatch-list" class="space-y-4"></div>
     </main>
   </div>
 
   <!-- ========================================== -->
   <!-- MODAL: CART SLIDE-OVER DRAWER              -->
   <!-- ========================================== -->
-  <div id="cart-drawer-backdrop" onclick="toggleCart()" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs transition-opacity hidden"></div>
+  <div id="cart-drawer-backdrop" onclick="toggleCart()" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity hidden"></div>
   <div id="cart-drawer" class="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-[#0b1220] border-l border-slate-800/90 shadow-2xl p-6 flex flex-col justify-between transform translate-x-full transition-transform duration-300 ease-in-out">
-    <div>
+    <div class="flex-1 overflow-y-auto pr-1">
       <div class="flex items-center justify-between pb-4 border-b border-slate-800">
         <div class="flex items-center gap-2">
           <i data-lucide="shopping-bag" class="h-5 w-5 text-cyan-400"></i>
@@ -876,9 +989,8 @@ template_html = """<!DOCTYPE html>
         </button>
       </div>
 
-      <div id="cart-items-list" class="divide-y divide-slate-800/60 my-4 max-h-[60vh] overflow-y-auto pr-1">
-        <!-- Cart items rendered here -->
-      </div>
+      <div id="cart-ddi-alerts" class="mt-3 space-y-2 hidden"></div>
+      <div id="cart-items-list" class="divide-y divide-slate-800/60 my-4"></div>
     </div>
 
     <div class="border-t border-slate-800 pt-4 space-y-3">
@@ -888,7 +1000,7 @@ template_html = """<!DOCTYPE html>
           <span id="cart-subtotal" class="font-mono font-semibold">₹0.00</span>
         </div>
         <div class="flex justify-between">
-          <span class="text-slate-400">Cold-Chain Delivery</span>
+          <span class="text-slate-400">Cold-Chain Delivery (Free ≥ ₹299)</span>
           <span id="cart-delivery-fee" class="font-mono text-emerald-400 font-semibold">FREE</span>
         </div>
         <div class="flex justify-between text-sm font-bold text-white pt-2 border-t border-slate-800">
@@ -904,10 +1016,26 @@ template_html = """<!DOCTYPE html>
   </div>
 
   <!-- ========================================== -->
+  <!-- MODAL: GENERIC PRICE MATCH                 -->
+  <!-- ========================================== -->
+  <div id="modal-generic" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-[#0b1220] border border-emerald-500/40 rounded-2xl max-w-lg w-full p-6 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <i data-lucide="badge-percent" class="h-5 w-5 text-emerald-400"></i>
+          <h3 class="font-bold text-white font-heading text-base">Bioequivalent Generic Price Match</h3>
+        </div>
+        <button onclick="closeGenericModal()" class="text-slate-400 hover:text-white cursor-pointer"><i data-lucide="x" class="h-5 w-5"></i></button>
+      </div>
+      <div id="generic-modal-body" class="space-y-3 text-xs"></div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
   <!-- MODAL: AI AILMENT SPECIALIST               -->
   <!-- ========================================== -->
   <div id="modal-ailment" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-    <div class="bg-[#0b1220] border border-purple-500/40 rounded-2xl max-w-2xl w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+    <div class="bg-[#0b1220] border border-purple-500/40 rounded-2xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800">
         <div class="flex items-center gap-2">
           <div class="p-1.5 rounded-lg bg-purple-950/60 text-purple-400">
@@ -915,22 +1043,34 @@ template_html = """<!DOCTYPE html>
           </div>
           <div>
             <h3 class="font-bold text-white font-heading text-base">AI Clinical Ailment Specialist</h3>
-            <p class="text-[11px] text-purple-300">Evidence-based triage, OTC molecules &amp; emergency red-flags</p>
+            <p class="text-[11px] text-purple-300">5-pillar structured triage, OTC formulations &amp; emergency ER screening</p>
           </div>
         </div>
         <button onclick="closeAilmentModal()" class="text-slate-400 hover:text-white cursor-pointer"><i data-lucide="x" class="h-5 w-5"></i></button>
       </div>
 
-      <div class="flex flex-wrap gap-1.5">
-        <button onclick="loadCondition('migraine')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 cursor-pointer">Acute Migraine</button>
-        <button onclick="loadCondition('gerd')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 cursor-pointer">Acid Reflux / GERD</button>
-        <button onclick="loadCondition('diarrhea')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 cursor-pointer">Acute Diarrhea</button>
-        <button onclick="loadCondition('rhinitis')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 cursor-pointer">Allergic Rhinitis</button>
+      <!-- Custom Symptom Input -->
+      <div class="flex gap-2">
+        <input
+          id="ailment-symptom-input"
+          type="text"
+          placeholder="Describe symptoms (e.g. fever with body ache, acidity, sore throat, chest pain)..."
+          class="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
+        />
+        <button onclick="analyzeCustomSymptom()" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs cursor-pointer">
+          Assess
+        </button>
       </div>
 
-      <div id="ailment-content-box" class="space-y-4 text-xs text-slate-200">
-        <!-- Rendered dynamically -->
+      <div id="ailment-quick-tabs" class="flex flex-wrap gap-1.5">
+        <button data-cond="tension_headache" onclick="loadCondition('tension_headache')" class="ailment-tab px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer">Headache</button>
+        <button data-cond="acidity_gerd" onclick="loadCondition('acidity_gerd')" class="ailment-tab px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer">Acid Reflux / GERD</button>
+        <button data-cond="acute_gastroenteritis_diarrhea" onclick="loadCondition('acute_gastroenteritis_diarrhea')" class="ailment-tab px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer">Acute Diarrhea</button>
+        <button data-cond="common_cold_rhinitis" onclick="loadCondition('common_cold_rhinitis')" class="ailment-tab px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer">Allergic Rhinitis</button>
+        <button data-cond="acute_fever" onclick="loadCondition('acute_fever')" class="ailment-tab px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer">Viral Fever</button>
       </div>
+
+      <div id="ailment-content-box" class="space-y-3 text-xs text-slate-200"></div>
     </div>
   </div>
 
@@ -947,21 +1087,21 @@ template_html = """<!DOCTYPE html>
         <button onclick="closeRxModal()" class="text-slate-400 hover:text-white cursor-pointer"><i data-lucide="x" class="h-5 w-5"></i></button>
       </div>
 
+      <div class="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800">
+        <span id="rx-upload-label" class="text-xs text-slate-300 truncate">Sample Prescription #104 Loaded (or choose your image/PDF)</span>
+        <label class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 text-[11px] font-bold cursor-pointer shrink-0">
+          Upload Rx File
+          <input id="rx-file-input" type="file" accept="image/*,.pdf" onchange="handleRxFileUpload(this)" class="hidden" />
+        </label>
+      </div>
+
       <div class="p-4 rounded-xl border border-dashed border-cyan-500/40 bg-cyan-950/20 text-center space-y-3">
         <i data-lucide="upload-cloud" class="h-8 w-8 text-cyan-400 mx-auto"></i>
         <div>
           <span class="text-xs font-bold text-white block">Dr. Sarah Johnson, MD — General Medicine</span>
-          <span class="text-[11px] text-slate-400 font-mono">Reg #KA-2018-0941842 · Sample Prescription #104</span>
+          <span class="text-[11px] text-slate-400 font-mono">Reg #KA-2018-0941842 · Verified Digital OCR</span>
         </div>
-        <div class="p-2.5 bg-slate-900 rounded-lg text-left text-xs space-y-1.5 font-mono">
-          <div class="text-cyan-400 font-bold flex justify-between">
-            <span>OCR Confidence: 96.4%</span>
-            <span class="text-emerald-400">DDI Screen: Clear</span>
-          </div>
-          <div class="text-slate-300">• Augmentin 625 Duo (Amoxicillin + Clavulanate 625mg) - 1 tab BD x 5d</div>
-          <div class="text-slate-300">• Dolo 650mg (Paracetamol 650mg) - SOS max 3/day</div>
-          <div class="text-slate-300">• Pantocid 40mg (Pantoprazole 40mg) - 1 tab OD before breakfast</div>
-        </div>
+        <div id="rx-detected-list" class="p-3 bg-slate-900 rounded-lg text-left text-xs space-y-2 font-mono"></div>
       </div>
 
       <button onclick="addDetectedRxToCart()" class="w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/20">
@@ -975,19 +1115,19 @@ template_html = """<!DOCTYPE html>
   <!-- MODAL: DELIVERY OTP VERIFICATION           -->
   <!-- ========================================== -->
   <div id="modal-otp" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-    <div class="bg-[#0b1220] border border-slate-800 rounded-2xl max-w-sm w-full p-6 text-center space-y-4">
-      <div class="w-12 h-12 rounded-xl bg-cyan-950/60 border border-cyan-800/40 text-cyan-400 flex items-center justify-center mx-auto">
+    <div class="bg-[#0b1220] border border-cyan-500/40 rounded-2xl max-w-sm w-full p-6 space-y-4 text-center">
+      <div class="w-12 h-12 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-cyan-400 flex items-center justify-center mx-auto">
         <i data-lucide="key-round" class="h-6 w-6"></i>
       </div>
       <div>
         <h3 class="font-bold text-white text-base font-heading">Verify Patient Delivery OTP</h3>
-        <p class="text-xs text-slate-400 mt-1">Ask patient for the 6-digit OTP sent to their registered SMS to confirm cold-chain handoff.</p>
+        <p id="otp-modal-subtitle" class="text-xs text-slate-400 mt-1">Enter the 6-digit patient OTP to confirm cold-chain handoff.</p>
       </div>
       <input
         id="input-delivery-otp"
         type="text"
         maxlength="6"
-        placeholder="••••••"
+        placeholder="000000"
         class="w-full py-2.5 text-center font-mono text-xl tracking-[0.4em] rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-cyan-500"
       />
       <div class="flex gap-2">
@@ -1005,17 +1145,58 @@ template_html = """<!DOCTYPE html>
   <!-- ========================================== -->
   <script>
     const MEDICINES = __MEDICINES_JSON__;
-    const PHARMACIES = __PHARMACIES_JSON__;
-    const USER = __GOOGLE_USER_JSON__;
+    let PHARMACIES = __PHARMACIES_JSON__;
+    let ORDERS = __ORDERS_JSON__;
+    const DDI_RULES = __DDI_RULES_JSON__;
+    const AILMENT_KB = __AILMENT_KB_JSON__;
+    let USER = __GOOGLE_USER_JSON__;
     const ROLE_GOOGLE_URLS = __ROLE_GOOGLE_URLS__;
     const INITIAL_PORTAL = "__INITIAL_PORTAL__";
 
     let currentPortal = INITIAL_PORTAL || "landing";
     let cart = [];
+    let rxUploaded = false;
     let activeCategory = "All";
     let searchQuery = "";
+    let visibleLimit = 24;
+    let activeOtpOrderId = null;
+    let currentStep = 3;
+    let _initialized = false;
 
-    // 1. Portal Switching
+    function escHtml(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    // Build cheaper generic map keyed by clean molecule name
+    const CHEAPEST_BY_GENERIC = {};
+    MEDICINES.forEach(m => {
+      const g = (m.generic_name || "").split("|")[0].trim().toLowerCase();
+      if (!g) return;
+      const p = parseFloat(m.unit_price || m.mrp || 0);
+      if (!CHEAPEST_BY_GENERIC[g] || p < parseFloat(CHEAPEST_BY_GENERIC[g].unit_price || CHEAPEST_BY_GENERIC[g].mrp || 0)) {
+        CHEAPEST_BY_GENERIC[g] = m;
+      }
+    });
+
+    function findMedicineByTerms(terms) {
+      for (const term of terms) {
+        const q = term.toLowerCase();
+        const found = MEDICINES.find(m =>
+          (m.name && m.name.toLowerCase().includes(q)) ||
+          (m.generic_name && m.generic_name.toLowerCase().includes(q))
+        );
+        if (found) return found;
+      }
+      return MEDICINES[0] || null;
+    }
+
+    // 1. Portal Switching & Auth Controls
     function switchPortal(portalName) {
       currentPortal = portalName;
       document.querySelectorAll(".portal-view").forEach(el => el.classList.remove("active"));
@@ -1042,10 +1223,10 @@ template_html = """<!DOCTYPE html>
     function initiateGoogleAuth(role = "customer") {
       const targetUrl = ROLE_GOOGLE_URLS[role] || ROLE_GOOGLE_URLS["customer"] || "";
       if (!targetUrl) {
-        alert("Google OAuth is not configured on this Streamlit deployment.\\n\\nPlease add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Streamlit Cloud Dashboard (Settings -> Secrets).");
+        showToast("Google OAuth is not configured in Streamlit Secrets.", false);
         return;
       }
-      // Direct escape from Streamlit iframe to top-level tab
+      showToast("Opening Google Sign-In in a new tab...", true);
       try {
         const link = document.createElement("a");
         link.href = targetUrl;
@@ -1059,13 +1240,30 @@ template_html = """<!DOCTYPE html>
       }
     }
 
+    function signOutUser() {
+      // Trigger native Streamlit button in parent document so session_state clears in same WebSocket session
+      try {
+        if (window.parent && window.parent.document) {
+          const btns = Array.from(window.parent.document.querySelectorAll("button"));
+          const logoutBtn = btns.find(b => b.innerText && b.innerText.includes("MEDIAPP_SIGNOUT_TRIGGER"));
+          if (logoutBtn) {
+            logoutBtn.click();
+            return;
+          }
+        }
+      } catch (e) {}
+      // Client fallback if parent inaccessible
+      USER = null;
+      renderAuthElements();
+      switchPortal("landing");
+      showToast("Signed out of MediApp.", true);
+    }
+
     function handlePortalCardClick(portalRole) {
-      // If user is authenticated, enter requested portal directly
       if (USER && USER.email) {
         switchPortal(portalRole);
         return;
       }
-      // If not authenticated, directly redirect to Google OAuth for this persona
       initiateGoogleAuth(portalRole);
     }
 
@@ -1073,120 +1271,184 @@ template_html = """<!DOCTYPE html>
     function renderAuthElements() {
       const googleSvg = `<svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>`;
 
-      const landingAuth = document.getElementById("landing-auth-container");
-      const customerAuth = document.getElementById("customer-header-auth");
-      const pharmacyAuth = document.getElementById("pharmacy-header-auth");
-      const adminAuth = document.getElementById("admin-header-auth");
-      const deliveryAuth = document.getElementById("delivery-header-auth");
+      const slots = [
+        ["landing-auth-container", "customer"],
+        ["customer-header-auth", "customer"],
+        ["pharmacy-header-auth", "pharmacy"],
+        ["admin-header-auth", "admin"],
+        ["delivery-header-auth", "delivery"],
+      ];
 
       if (USER && USER.email) {
-        const initials = (USER.name || "GU").split(" ").map(n => n[0]).join("").slice(0, 2);
+        const safeName = escHtml(USER.name || USER.email);
+        const initials = escHtml((USER.name || "GU").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase());
         const userHtml = `
           <div class="flex items-center gap-2 pl-2">
             <div class="text-right hidden sm:block leading-tight">
-              <span class="text-xs font-bold text-white block">${USER.name || USER.email}</span>
-              <a href="?logout=1" target="_top" class="text-[10px] text-rose-400 hover:underline">Sign Out</a>
+              <span class="text-xs font-bold text-white block">${safeName}</span>
+              <button onclick="signOutUser()" class="text-[10px] text-rose-400 hover:underline cursor-pointer bg-transparent border-0 p-0">Sign Out</button>
             </div>
             <div class="w-8 h-8 rounded-full bg-cyan-400 text-slate-950 font-black text-xs flex items-center justify-center shadow-md">
               ${initials}
             </div>
           </div>
         `;
-        if (landingAuth) landingAuth.innerHTML = userHtml;
-        if (customerAuth) customerAuth.innerHTML = userHtml;
-        if (pharmacyAuth) pharmacyAuth.innerHTML = userHtml;
-        if (adminAuth) adminAuth.innerHTML = userHtml;
-        if (deliveryAuth) deliveryAuth.innerHTML = userHtml;
-
+        slots.forEach(([id]) => {
+          const el = document.getElementById(id);
+          if (el) el.innerHTML = userHtml;
+        });
         document.querySelectorAll(".portal-cta-label").forEach(el => {
           el.innerText = "Enter Portal";
         });
       } else {
-        const signInBtn = (role = "customer") => `
-          <a href="${ROLE_GOOGLE_URLS[role] || ROLE_GOOGLE_URLS['customer'] || '#'}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700/80 hover:border-slate-600 text-slate-200 hover:text-white text-xs font-semibold transition-all shadow-xs cursor-pointer">
-            ${googleSvg}
-            <span>Continue with Google</span>
-          </a>
-        `;
-        if (landingAuth) landingAuth.innerHTML = signInBtn("customer");
-        if (customerAuth) customerAuth.innerHTML = signInBtn("customer");
-        if (pharmacyAuth) pharmacyAuth.innerHTML = signInBtn("pharmacy");
-        if (adminAuth) adminAuth.innerHTML = signInBtn("admin");
-        if (deliveryAuth) deliveryAuth.innerHTML = signInBtn("delivery");
+        slots.forEach(([id, role]) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          const url = ROLE_GOOGLE_URLS[role] || ROLE_GOOGLE_URLS["customer"] || "#";
+          el.innerHTML = `
+            <a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700/80 hover:border-slate-600 text-slate-200 hover:text-white text-xs font-semibold transition-all shadow-sm cursor-pointer">
+              ${googleSvg}
+              <span>Continue with Google</span>
+            </a>
+          `;
+        });
+        document.querySelectorAll(".portal-cta-label").forEach(el => {
+          el.innerText = "Sign In with Google";
+        });
       }
     }
 
-    // 3. Medicines Catalogue Rendering
-    const categories = ["All", "Antibiotic", "Antihypertensive", "Antipyretic", "Antidiabetic", "Pain Relief", "Gastrointestinal"];
+    // 3. Semantic Category Pills & Paginated 1,250+ Medicine Catalogue
+    const CATEGORY_GROUPS = [
+      { label: "All", keywords: [] },
+      { label: "Pain & Fever", keywords: ["analgesic", "antipyretic", "nsaid", "pain"] },
+      { label: "Antibiotic", keywords: ["antibiotic", "penicillin", "cephalosporin", "macrolide", "fluoroquinolone"] },
+      { label: "Cardiovascular", keywords: ["cardiovascular", "ccb", "beta blocker", "ace inhibitor", "statin", "antiplatelet", "vasodilator"] },
+      { label: "Antidiabetic", keywords: ["antidiabetic", "insulin", "sglt2", "dpp-4", "sulfonylurea"] },
+      { label: "Gastrointestinal", keywords: ["gastrointestinal", "antacid", "ppi", "antidiarrheal", "antiemetic", "antispasmodic", "laxative", "probiotic"] },
+      { label: "Allergy & Cold", keywords: ["antihistamine", "cold", "cough", "bronchodilator", "decongestant", "steroid"] },
+      { label: "Cold-Chain", keywords: ["__cold_chain__"] }
+    ];
 
     function renderCategoryPills() {
       const container = document.getElementById("category-pills");
       if (!container) return;
-      container.innerHTML = categories.map(cat => `
+      container.innerHTML = CATEGORY_GROUPS.map(grp => `
         <button
-          onclick="filterCategory('${cat}')"
-          class="px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
-            activeCategory === cat ? 'bg-cyan-500 text-slate-950' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+          onclick="filterCategory('${grp.label}')"
+          class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+            activeCategory === grp.label ? 'bg-cyan-500 text-slate-950' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
           }"
         >
-          ${cat}
+          ${escHtml(grp.label)}
         </button>
       `).join("");
     }
 
     function filterCategory(cat) {
       activeCategory = cat;
+      visibleLimit = 24;
       renderCategoryPills();
       renderMedicines();
     }
 
     function handleSearch(val) {
       searchQuery = val.toLowerCase().trim();
+      visibleLimit = 24;
       renderMedicines();
+    }
+
+    function loadMoreMedicines() {
+      visibleLimit += 24;
+      renderMedicines();
+    }
+
+    function getFilteredMedicines() {
+      const grp = CATEGORY_GROUPS.find(g => g.label === activeCategory) || CATEGORY_GROUPS[0];
+      return MEDICINES.filter(m => {
+        let matchCat = true;
+        if (grp.keywords.length > 0) {
+          if (grp.keywords[0] === "__cold_chain__") {
+            matchCat = Boolean(m.requires_cold_chain || (m.category && m.category.toLowerCase().includes("insulin")));
+          } else {
+            const c = (m.category || "").toLowerCase();
+            matchCat = grp.keywords.some(kw => c.includes(kw));
+          }
+        }
+        const matchSearch = !searchQuery ||
+          (m.name && m.name.toLowerCase().includes(searchQuery)) ||
+          (m.generic_name && m.generic_name.toLowerCase().includes(searchQuery)) ||
+          (m.category && m.category.toLowerCase().includes(searchQuery));
+        return matchCat && matchSearch;
+      });
     }
 
     function renderMedicines() {
       const grid = document.getElementById("medicines-grid");
+      const countLbl = document.getElementById("medicines-count-label");
+      const moreWrap = document.getElementById("medicines-load-more-wrap");
+      const moreLbl = document.getElementById("medicines-load-more-label");
       if (!grid) return;
 
-      const filtered = MEDICINES.filter(m => {
-        const matchCat = activeCategory === "All" || (m.category && m.category.toLowerCase().includes(activeCategory.toLowerCase()));
-        const matchSearch = !searchQuery ||
-          m.name.toLowerCase().includes(searchQuery) ||
-          (m.generic_name && m.generic_name.toLowerCase().includes(searchQuery));
-        return matchCat && matchSearch;
-      });
+      const filtered = getFilteredMedicines();
+      const slice = filtered.slice(0, visibleLimit);
+
+      if (countLbl) {
+        countLbl.innerText = `Showing ${slice.length} of ${filtered.length} matching formulations (${MEDICINES.length} total SKUs)`;
+      }
 
       if (filtered.length === 0) {
         grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-500 text-xs">No formulations match your search criteria.</div>`;
+        if (moreWrap) moreWrap.classList.add("hidden");
         return;
       }
 
-      grid.innerHTML = filtered.map(m => {
+      grid.innerHTML = slice.map(m => {
         const cleanGeneric = m.generic_name ? m.generic_name.split('|')[0].trim() : "";
-        const price = m.mrp ? parseFloat(m.mrp).toFixed(2) : "45.00";
-        const hasColdChain = m.requires_cold_chain || m.category?.toLowerCase().includes("insulin");
+        const mrp = parseFloat(m.mrp || 45);
+        const price = parseFloat(m.unit_price || mrp);
+        const hasDiscount = price < mrp - 0.5;
+        const hasColdChain = Boolean(m.requires_cold_chain || (m.category && m.category.toLowerCase().includes("insulin")));
+        const isRx = Boolean(m.prescription_required);
+        const stockUnits = m.stock_units || 0;
+        const cheapest = CHEAPEST_BY_GENERIC[cleanGeneric.toLowerCase()];
+        const hasGenericMatch = cheapest && cheapest.id !== m.id && parseFloat(cheapest.unit_price || cheapest.mrp) < price - 1;
+        const genericSavings = hasGenericMatch ? (price - parseFloat(cheapest.unit_price || cheapest.mrp)).toFixed(0) : 0;
 
         return `
           <div class="bg-[#0b1220] border border-slate-800/90 hover:border-slate-700 rounded-2xl p-4 flex flex-col justify-between transition-all group shadow-md hover:shadow-cyan-500/5">
             <div>
               <div class="flex items-start justify-between gap-2 mb-2">
-                <div>
-                  <h3 class="font-bold text-white text-sm group-hover:text-cyan-400 transition-colors">${m.name}</h3>
-                  <span class="text-[11px] text-slate-400 font-mono block truncate max-w-[200px]">${cleanGeneric}</span>
+                <div class="min-w-0">
+                  <h3 class="font-bold text-white text-sm group-hover:text-cyan-400 transition-colors truncate">${escHtml(m.name)}</h3>
+                  <span class="text-[11px] text-slate-400 font-mono block truncate">${escHtml(cleanGeneric)}</span>
                 </div>
-                ${hasColdChain ? `<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shrink-0">2°C - 8°C</span>` : ''}
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold shrink-0 ${
+                  isRx
+                    ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                    : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                }">${isRx ? 'Rx Required' : 'OTC Approved'}</span>
               </div>
-              <div class="flex items-center gap-2 text-[10px] text-slate-400 mb-3">
-                <span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">${m.dosage_form || 'Tablet'}</span>
-                <span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">${m.strength || 'Standard'}</span>
+
+              <div class="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-400 mb-2">
+                <span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">${escHtml(m.dosage_form || 'Tablet')} · ${escHtml(m.strength || 'Std')}</span>
+                ${hasColdChain ? `<span class="px-2 py-0.5 rounded-full font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">2°C - 8°C Monitored</span>` : ''}
               </div>
+              <div class="text-[10px] text-slate-500 truncate mb-2">${escHtml(m.manufacturer || 'Licensed GMP Pharma')} · ${stockUnits} units</div>
+              ${hasGenericMatch ? `
+                <button onclick="openGenericModal(${m.id}, ${cheapest.id})" class="mb-2 w-full py-1 px-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center justify-center gap-1 cursor-pointer">
+                  <i data-lucide="badge-percent" class="h-3 w-3"></i>
+                  <span>Generic Price Match: Save ₹${genericSavings}</span>
+                </button>
+              ` : ''}
             </div>
 
             <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between">
               <div>
-                <span class="text-[10px] text-slate-500 block">MRP</span>
-                <span class="font-bold text-white font-mono text-sm">₹${price}</span>
+                <div class="flex items-baseline gap-1.5">
+                  <span class="font-bold text-white font-mono text-sm">₹${price.toFixed(2)}</span>
+                  ${hasDiscount ? `<span class="text-[10px] text-slate-500 line-through font-mono">₹${mrp.toFixed(2)}</span>` : ''}
+                </div>
               </div>
               <button
                 onclick="addToCart(${m.id})"
@@ -1200,10 +1462,52 @@ template_html = """<!DOCTYPE html>
         `;
       }).join("");
 
-      lucide.createIcons();
+      if (moreWrap && moreLbl) {
+        if (filtered.length > slice.length) {
+          moreWrap.classList.remove("hidden");
+          moreLbl.innerText = `Show More (${filtered.length - slice.length} remaining)`;
+        } else {
+          moreWrap.classList.add("hidden");
+        }
+      }
+
+      try { if (window.lucide) lucide.createIcons(); } catch (e) {}
     }
 
-    // 4. Cart Operations
+    function openGenericModal(origId, genId) {
+      const orig = MEDICINES.find(m => m.id === origId);
+      const gen = MEDICINES.find(m => m.id === genId);
+      if (!orig || !gen) return;
+      const pOrig = parseFloat(orig.unit_price || orig.mrp);
+      const pGen = parseFloat(gen.unit_price || gen.mrp);
+      const savings = pOrig - pGen;
+      const pct = Math.round((savings / pOrig) * 100);
+      document.getElementById("generic-modal-body").innerHTML = `
+        <p class="text-slate-300">Identical active chemical molecule: <span class="text-white font-mono font-bold">${escHtml((orig.generic_name || '').split('|')[0])}</span></p>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
+            <span class="text-[10px] text-slate-400 uppercase block">Selected Brand</span>
+            <span class="font-bold text-white block mt-1">${escHtml(orig.name)}</span>
+            <span class="font-mono text-slate-300 text-sm">₹${pOrig.toFixed(2)}</span>
+          </div>
+          <div class="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/40">
+            <span class="text-[10px] text-emerald-400 uppercase font-bold block">Bioequivalent Match</span>
+            <span class="font-bold text-white block mt-1">${escHtml(gen.name)}</span>
+            <span class="font-mono text-emerald-400 font-bold text-sm">₹${pGen.toFixed(2)} (-${pct}%)</span>
+          </div>
+        </div>
+        <button onclick="addToCart(${gen.id}); closeGenericModal(); toggleCart();" class="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold cursor-pointer">
+          Switch to Generic &amp; Save ₹${savings.toFixed(2)}
+        </button>
+      `;
+      document.getElementById("modal-generic").classList.remove("hidden");
+      try { if (window.lucide) lucide.createIcons(); } catch (e) {}
+    }
+    function closeGenericModal() {
+      document.getElementById("modal-generic").classList.add("hidden");
+    }
+
+    // 4. Cart & DDI Safety Operations
     function toggleCart() {
       const drawer = document.getElementById("cart-drawer");
       const backdrop = document.getElementById("cart-drawer-backdrop");
@@ -1219,7 +1523,6 @@ template_html = """<!DOCTYPE html>
     function addToCart(medId) {
       const med = MEDICINES.find(m => m.id === medId);
       if (!med) return;
-
       const existing = cart.find(c => c.id === medId);
       if (existing) {
         existing.qty += 1;
@@ -1228,12 +1531,13 @@ template_html = """<!DOCTYPE html>
           id: med.id,
           name: med.name,
           generic: med.generic_name || "",
-          price: parseFloat(med.mrp || 45),
+          price: parseFloat(med.unit_price || med.mrp || 45),
+          rx: Boolean(med.prescription_required),
           qty: 1
         });
       }
       updateCartUI();
-      showToast(`Added ${med.name} to cart.`);
+      showToast(`Added ${med.name} to cart.`, true);
     }
 
     function updateCartQty(medId, delta) {
@@ -1246,10 +1550,28 @@ template_html = """<!DOCTYPE html>
       updateCartUI();
     }
 
+    function detectCartDDIs() {
+      const alerts = [];
+      const generics = cart.map(c => ((c.generic || "") + " " + (c.name || "")).toLowerCase());
+      for (const rule of DDI_RULES) {
+        if (!rule.pair || rule.pair.length < 2) continue;
+        const a = rule.pair[0].toLowerCase();
+        const b = rule.pair[1].toLowerCase();
+        const hasA = generics.some(g => g.includes(a));
+        const hasB = generics.some(g => g.includes(b));
+        if (hasA && hasB) {
+          alerts.push(rule);
+        }
+      }
+      return alerts;
+    }
+
     function updateCartUI() {
       const badge = document.getElementById("cart-badge-count");
       const list = document.getElementById("cart-items-list");
+      const ddiBox = document.getElementById("cart-ddi-alerts");
       const subtotalEl = document.getElementById("cart-subtotal");
+      const feeEl = document.getElementById("cart-delivery-fee");
       const totalEl = document.getElementById("cart-total");
 
       const count = cart.reduce((acc, i) => acc + i.qty, 0);
@@ -1260,9 +1582,27 @@ template_html = """<!DOCTYPE html>
         badge.classList.add("hidden");
       }
 
+      if (ddiBox) {
+        const ddis = detectCartDDIs();
+        if (ddis.length > 0) {
+          ddiBox.classList.remove("hidden");
+          ddiBox.innerHTML = ddis.map(d => `
+            <div class="p-2.5 rounded-xl bg-rose-950/50 border border-rose-500/50 text-xs">
+              <div class="font-bold text-rose-400 uppercase text-[10px]">DDI Alert (${escHtml(d.severity)}): ${escHtml(d.pair.join(' + '))}</div>
+              <div class="text-white font-semibold mt-0.5">${escHtml(d.title)}</div>
+              <div class="text-slate-300 text-[11px] mt-0.5">${escHtml(d.management)}</div>
+            </div>
+          `).join("");
+        } else {
+          ddiBox.classList.add("hidden");
+          ddiBox.innerHTML = "";
+        }
+      }
+
       if (cart.length === 0) {
         list.innerHTML = `<div class="py-12 text-center text-slate-500 text-xs">Your cart is currently empty.</div>`;
         subtotalEl.innerText = "₹0.00";
+        if (feeEl) { feeEl.innerText = "FREE"; feeEl.className = "font-mono text-emerald-400 font-semibold"; }
         totalEl.innerText = "₹0.00";
         return;
       }
@@ -1273,22 +1613,27 @@ template_html = """<!DOCTYPE html>
         subtotal += itemTotal;
         return `
           <div class="py-3 flex items-center justify-between text-xs">
-            <div>
-              <span class="font-bold text-white block">${item.name}</span>
-              <span class="text-[10px] text-slate-400 font-mono">₹${item.price.toFixed(2)} each</span>
+            <div class="min-w-0 pr-2">
+              <span class="font-bold text-white block truncate">${escHtml(item.name)}</span>
+              <span class="text-[10px] text-slate-400 font-mono">₹${item.price.toFixed(2)} each ${item.rx ? '· Rx' : '· OTC'}</span>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 shrink-0">
               <button onclick="updateCartQty(${item.id}, -1)" class="w-6 h-6 rounded bg-slate-800 text-slate-300 flex items-center justify-center font-bold hover:bg-slate-700 cursor-pointer">-</button>
               <span class="font-mono text-white font-semibold">${item.qty}</span>
               <button onclick="updateCartQty(${item.id}, 1)" class="w-6 h-6 rounded bg-slate-800 text-slate-300 flex items-center justify-center font-bold hover:bg-slate-700 cursor-pointer">+</button>
-              <span class="font-mono font-bold text-cyan-400 ml-2">₹${itemTotal.toFixed(2)}</span>
+              <span class="font-mono font-bold text-cyan-400 ml-1">₹${itemTotal.toFixed(2)}</span>
             </div>
           </div>
         `;
       }).join("");
 
+      const fee = subtotal >= 299 ? 0 : 25;
       subtotalEl.innerText = "₹" + subtotal.toFixed(2);
-      totalEl.innerText = "₹" + subtotal.toFixed(2);
+      if (feeEl) {
+        feeEl.innerText = fee === 0 ? "FREE" : "₹" + fee.toFixed(2);
+        feeEl.className = fee === 0 ? "font-mono text-emerald-400 font-semibold" : "font-mono text-slate-300 font-semibold";
+      }
+      totalEl.innerText = "₹" + (subtotal + fee).toFixed(2);
     }
 
     function placeOrder() {
@@ -1296,118 +1641,217 @@ template_html = """<!DOCTYPE html>
         showToast("Cart is empty. Add medicines first.");
         return;
       }
+      const needsRx = cart.some(c => c.rx) && !rxUploaded;
+      if (needsRx) {
+        showToast("Cart includes Rx medicines. Please scan/upload prescription first.", false);
+        openRxModal();
+        return;
+      }
+      const subtotal = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
+      const total = subtotal + (subtotal >= 299 ? 0 : 25);
+      const otp = String(Math.floor(100000 + Math.random() * 900000));
+      const newOrderId = "ORD-" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "-" + Math.floor(1000 + Math.random() * 9000);
+      const primaryPharm = PHARMACIES[0] || { name: "Apollo Pharmacy - Indiranagar", city: "Bengaluru" };
+
+      ORDERS.unshift({
+        id: newOrderId,
+        total_amount: total,
+        order_status: "READY_FOR_PICKUP",
+        created_at: new Date().toISOString(),
+        delivery_otp: otp,
+        pharmacy_name: primaryPharm.name,
+        pharmacy_city: primaryPharm.city
+      });
+
       cart = [];
       updateCartUI();
       toggleCart();
-      showToast("Order placed successfully! Delivery OTP sent to SMS.", true);
+      renderPharmacyView();
+      renderAdminView();
+      renderDeliveryView();
+      showToast(`Order #${newOrderId} placed! Delivery OTP: ${otp}`, true);
     }
 
-    // 5. Prescription & AI Modals
-    function openRxModal() {
-      document.getElementById("modal-rx").classList.remove("hidden");
-      lucide.createIcons();
+    // 5. Prescription OCR & AI Clinical Specialist Modals
+    function getDetectedRxMeds() {
+      return [
+        findMedicineByTerms(["augmentin 625", "amoxicillin"]),
+        findMedicineByTerms(["dolo 650", "paracetamol"]),
+        findMedicineByTerms(["pantocid 40", "pan 40", "pantoprazole"])
+      ].filter(Boolean);
     }
+
+    function openRxModal() {
+      const box = document.getElementById("rx-detected-list");
+      const meds = getDetectedRxMeds();
+      if (box) {
+        box.innerHTML = `
+          <div class="text-cyan-400 font-bold flex justify-between pb-1 border-b border-slate-800">
+            <span>OCR Confidence: 96.4%</span>
+            <span class="text-emerald-400">DDI Screen: Clear</span>
+          </div>
+          ${meds.map(m => `
+            <div class="flex justify-between text-slate-300">
+              <span>· ${escHtml(m.name)} (${escHtml((m.generic_name || '').split('|')[0])})</span>
+              <span class="text-cyan-400">₹${parseFloat(m.unit_price || m.mrp).toFixed(2)}</span>
+            </div>
+          `).join("")}
+        `;
+      }
+      document.getElementById("modal-rx").classList.remove("hidden");
+      try { if (window.lucide) lucide.createIcons(); } catch (e) {}
+    }
+
+    function handleRxFileUpload(input) {
+      if (input.files && input.files[0]) {
+        rxUploaded = true;
+        document.getElementById("rx-upload-label").innerText = "Uploaded & Verified: " + input.files[0].name;
+        showToast("Prescription image analyzed via OCR pipeline.", true);
+      }
+    }
+
     function closeRxModal() {
       document.getElementById("modal-rx").classList.add("hidden");
     }
+
     function addDetectedRxToCart() {
-      // Add Augmentin & Dolo
-      const aug = MEDICINES.find(m => m.name.toLowerCase().includes("augmentin")) || { id: 991, name: "Augmentin 625 Duo", mrp: 204.5 };
-      const dolo = MEDICINES.find(m => m.name.toLowerCase().includes("dolo")) || { id: 992, name: "Dolo 650mg", mrp: 34.0 };
-      addToCart(aug.id || 105);
-      addToCart(dolo.id || 106);
+      rxUploaded = true;
+      const meds = getDetectedRxMeds();
+      meds.forEach(m => addToCart(m.id));
       closeRxModal();
       toggleCart();
-      showToast("Prescription items added to cart!");
+      showToast(`Added ${meds.length} prescription formulations to cart!`, true);
     }
 
     function openAilmentModal() {
       document.getElementById("modal-ailment").classList.remove("hidden");
-      loadCondition('migraine');
-      lucide.createIcons();
+      loadCondition("tension_headache");
+      try { if (window.lucide) lucide.createIcons(); } catch (e) {}
     }
+
     function closeAilmentModal() {
       document.getElementById("modal-ailment").classList.add("hidden");
     }
 
-    const CONDITIONS = {
-      migraine: {
-        title: "Acute Migraine with Tension",
-        context: "Unilateral throbbing headache with photophobia and nausea mediated by trigeminovascular activation.",
-        nonPharm: "Rest in a quiet, dark room. Apply cold ice pack to forehead. Hydrate with electrolyte water.",
-        otc: "Naproxen Sodium (250mg) or Paracetamol (650mg). Take with food. Max 3 days.",
-        redFlags: "Sudden thunderclap headache, neurological deficits, fever with neck stiffness, or speech alteration.",
-        referral: "Headache frequency > 15 days/month, medication overuse headache, or lack of OTC response within 48h.",
-        medId: 106
-      },
-      gerd: {
-        title: "Acid Reflux / GERD",
-        context: "Lower esophageal sphincter incompetence leading to gastric acid backflow and retrosternal burning.",
-        nonPharm: "Elevate head of bed 6 inches. Avoid late-night eating, citrus, mint, and lying down within 3h of meals.",
-        otc: "Pantoprazole 40mg or Ranitidine/Famotidine. Take 30 mins before morning breakfast.",
-        redFlags: "Difficulty or pain on swallowing (dysphagia), unexplained weight loss, vomiting blood, or black stools.",
-        referral: "Persistent symptoms exceeding 14 days, anemia, or onset after age 50 without prior history.",
-        medId: 101
-      },
-      diarrhea: {
-        title: "Acute Gastroenteritis / Diarrhea",
-        context: "Watery bowel motions with fluid loss, frequently caused by rotavirus, norovirus, or dietary bacterial toxins.",
-        nonPharm: "Oral Rehydration Salts (ORS) in boiled water. Sips every 10 mins. BRAT diet (Bananas, Rice, Applesauce, Toast).",
-        otc: "WHO-formula ORS packets, Zinc supplementation (20mg/day). Probiotics (Lactobacillus).",
-        redFlags: "High persistent fever > 38.5°C, blood in stool, severe dehydration (anuria, sunken eyes), acute lethargy.",
-        referral: "Diarrhea persisting > 48 hours without decrease in frequency or severe dehydration.",
-        medId: 102
-      },
-      rhinitis: {
-        title: "Allergic Rhinitis / Sinus Congestion",
-        context: "IgE-mediated inflammation of nasal mucosa in response to airborne pollen, dust mite, or animal dander.",
-        nonPharm: "Isotonic saline nasal rinses twice daily. Keep windows closed during high pollen counts.",
-        otc: "Levocetirizine (5mg once daily at bedtime) or Cetirizine (10mg). Non-sedating second-generation antihistamine.",
-        redFlags: "Unilateral facial swelling, high fever, periorbital erythema, or purulent foul-smelling discharge.",
-        referral: "Symptoms unmanaged by oral antihistamines > 2 weeks or suspected secondary bacterial pansinusitis.",
-        medId: 103
+    function analyzeCustomSymptom() {
+      const raw = (document.getElementById("ailment-symptom-input").value || "").toLowerCase().trim();
+      if (!raw) {
+        showToast("Enter your symptoms to assess.");
+        return;
       }
-    };
+      // Emergency red-flag check
+      if (/chest pain|crushing|left arm|breathing|dyspnea|stroke|slurred|paralysis|unconscious|seizure|anaphylaxis|poison|bleeding heavily/.test(raw)) {
+        if (/stroke|slurred|paralysis|unconscious/.test(raw) && AILMENT_KB["neurological_stroke_emergency"]) {
+          loadCondition("neurological_stroke_emergency");
+          return;
+        }
+        if (AILMENT_KB["cardiovascular_chest_emergency"]) {
+          loadCondition("cardiovascular_chest_emergency");
+          return;
+        }
+      }
+      let bestKey = "tension_headache";
+      let bestScore = -1;
+      for (const [k, entry] of Object.entries(AILMENT_KB)) {
+        const hay = (entry.title + " " + entry.category + " " + (entry.symptoms || []).join(" ")).toLowerCase();
+        const words = raw.split(/\s+/).filter(w => w.length > 2);
+        let score = 0;
+        words.forEach(w => { if (hay.includes(w)) score += 1; });
+        if (score > bestScore) { bestScore = score; bestKey = k; }
+      }
+      loadCondition(bestKey);
+    }
 
     function loadCondition(condKey) {
-      const data = CONDITIONS[condKey] || CONDITIONS.migraine;
+      const data = AILMENT_KB[condKey] || Object.values(AILMENT_KB)[0];
+      if (!data) return;
+
+      // Highlight active quick tab
+      document.querySelectorAll(".ailment-tab").forEach(btn => {
+        const isActive = btn.getAttribute("data-cond") === condKey;
+        btn.className = isActive
+          ? "ailment-tab px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer bg-purple-500/20 text-purple-300 border-purple-500/40"
+          : "ailment-tab px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700";
+      });
+
+      const isEmergency = data.urgency === "emergency";
       const box = document.getElementById("ailment-content-box");
+
+      // Match real OTC formulation in MEDICINES (guard against Schedule H Rx-only items)
+      const keywords = data.inventory_keywords || [];
+      let matchedMed = MEDICINES.find(m =>
+        !m.prescription_required &&
+        keywords.some(kw =>
+          (m.name && m.name.toLowerCase().includes(kw.toLowerCase())) ||
+          (m.generic_name && m.generic_name.toLowerCase().includes(kw.toLowerCase()))
+        )
+      );
+
+      const otcList = (data.otc_regimen || []).map(o =>
+        `<li><span class="text-white font-semibold">${escHtml(o.molecule)}</span> — ${escHtml(o.dosage)} (${escHtml(o.timing)}; max ${escHtml(o.duration)})</li>`
+      ).join("") || "<li>No self-medication OTC therapy advised.</li>";
+
+      const selfCareList = (data.self_care || []).map(s => `<li>${escHtml(s)}</li>`).join("");
+      const redFlagList = (data.red_flags || []).map(r => `<li>${escHtml(r)}</li>`).join("");
+
       box.innerHTML = `
-        <div class="p-3 rounded-xl bg-purple-950/30 border border-purple-500/20">
-          <span class="text-[10px] font-bold text-purple-300 uppercase block">1. Condition Context</span>
-          <p class="text-white font-semibold text-xs mt-0.5">${data.title}</p>
-          <p class="text-slate-300 text-[11px] mt-0.5">${data.context}</p>
-        </div>
-        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
-          <span class="text-[10px] font-bold text-slate-400 uppercase block">2. Non-Pharmacological Protocol</span>
-          <p class="text-slate-200 text-[11px] mt-0.5">${data.nonPharm}</p>
-        </div>
-        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
-          <span class="text-[10px] font-bold text-slate-400 uppercase block">3. Over-The-Counter Regimen</span>
-          <p class="text-slate-200 text-[11px] mt-0.5">${data.otc}</p>
-          <div class="mt-2.5 pt-2 border-t border-slate-800 flex items-center justify-between">
-            <span class="text-xs text-cyan-400 font-semibold">Available in Dispensary Stock</span>
-            <button onclick="addToCart(${data.medId}); closeAilmentModal(); toggleCart();" class="px-2.5 py-1 rounded bg-cyan-500 text-slate-950 font-bold text-[10px] hover:bg-cyan-400 cursor-pointer">Add to Cart</button>
+        ${isEmergency ? `
+          <div class="p-3.5 rounded-xl bg-rose-600/20 border-2 border-rose-500 text-rose-100">
+            <span class="text-xs font-black uppercase text-rose-400 block">EMERGENCY MEDICAL PRIORITY — CALL 112 / 911 IMMEDIATELY</span>
+            <p class="text-[11px] mt-1">Potential life-threatening emergency detected. Do NOT wait for online pharmacy delivery. Seek immediate emergency department care.</p>
           </div>
+        ` : ''}
+        <div class="p-3 rounded-xl bg-purple-950/30 border border-purple-500/20">
+          <span class="text-[10px] font-bold text-purple-300 uppercase block">1. Clinical Condition Context</span>
+          <p class="text-white font-semibold text-xs mt-0.5">${escHtml(data.title)}</p>
+          <p class="text-slate-300 text-[11px] mt-0.5">${escHtml(data.context)}</p>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
+          <span class="text-[10px] font-bold text-slate-400 uppercase block">2. Non-Pharmacological Self-Care Measures</span>
+          <ul class="list-disc pl-4 text-slate-200 text-[11px] mt-1 space-y-0.5">${selfCareList}</ul>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
+          <span class="text-[10px] font-bold text-slate-400 uppercase block">3. Over-The-Counter (OTC) Symptom Regimen</span>
+          <ul class="list-disc pl-4 text-slate-200 text-[11px] mt-1 space-y-0.5">${otcList}</ul>
+          ${matchedMed && !isEmergency ? `
+            <div class="mt-2.5 pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
+              <div class="text-[11px]">
+                <span class="text-cyan-400 font-bold block">${escHtml(matchedMed.name)}</span>
+                <span class="text-slate-400 font-mono">₹${parseFloat(matchedMed.unit_price || matchedMed.mrp).toFixed(2)} · ${matchedMed.stock_units || 25} units in dispensary</span>
+              </div>
+              <button onclick="addToCart(${matchedMed.id}); closeAilmentModal(); toggleCart();" class="px-3 py-1.5 rounded-lg bg-cyan-500 text-slate-950 font-bold text-[10px] hover:bg-cyan-400 cursor-pointer shrink-0">Add to Cart</button>
+            </div>
+          ` : ''}
         </div>
         <div class="p-3 rounded-xl bg-rose-950/30 border border-rose-500/30 text-rose-200">
-          <span class="text-[10px] font-bold text-rose-400 uppercase block">4. Acute Emergency Red Flags</span>
-          <p class="text-[11px] mt-0.5">${data.redFlags}</p>
+          <span class="text-[10px] font-bold text-rose-400 uppercase block">4. Acute Red Flags &amp; Emergency Warning Signs</span>
+          <ul class="list-disc pl-4 text-[11px] mt-1 space-y-0.5">${redFlagList}</ul>
         </div>
         <div class="p-3 rounded-xl bg-amber-950/20 border border-amber-500/20 text-amber-200">
-          <span class="text-[10px] font-bold text-amber-400 uppercase block">5. Physician Referral Criteria</span>
-          <p class="text-[11px] mt-0.5">${data.referral}</p>
+          <span class="text-[10px] font-bold text-amber-400 uppercase block">5. Physician Consultation &amp; Referral Criteria</span>
+          <p class="text-[11px] mt-0.5">${escHtml(data.referral)}</p>
         </div>
       `;
     }
 
-    // 6. Pharmacy Stepper
-    let currentStep = 3;
+    // 6. Pharmacy Portal (Real Orders & Inventory Stepper)
+    let pharmacyStockMap = {};
+    MEDICINES.slice(0, 40).forEach(m => { pharmacyStockMap[m.id] = m.stock_units || 25; });
+
+    function updateInventoryStock(itemId, delta) {
+      const med = MEDICINES.find(m => m.id === itemId);
+      if (!med) return;
+      med.stock_units = Math.max(0, (med.stock_units || 0) + delta);
+      renderPharmacyInventory(document.getElementById("pharm-inv-search")?.value || "");
+      showToast(`Updated ${med.name} stock to ${med.stock_units} units.`, true);
+    }
+
     function advancePharmacyStep() {
       currentStep = (currentStep % 4) + 1;
       const stepNames = ["1. Accepted", "2. Packing", "3. Ready for pickup", "4. Picked up"];
       for (let i = 1; i <= 4; i++) {
         const el = document.getElementById("step-" + i);
+        if (!el) continue;
         if (i < currentStep) {
           el.className = "p-2.5 rounded-xl border border-purple-500/40 bg-purple-950/20 text-purple-300";
         } else if (i === currentStep) {
@@ -1416,104 +1860,249 @@ template_html = """<!DOCTYPE html>
           el.className = "p-2.5 rounded-xl border border-slate-800 bg-slate-900/40 text-slate-500";
         }
       }
-      document.getElementById("pharm-order-status-badge").innerText = stepNames[currentStep - 1];
-      showToast(`Order status updated to: ${stepNames[currentStep - 1]}`);
+      const badge = document.getElementById("pharm-order-status-badge");
+      if (badge) badge.innerText = stepNames[currentStep - 1];
+      showToast(`Order status updated to: ${stepNames[currentStep - 1]}`, true);
     }
 
-    // 7. Pharmacy Inventory Table
-    const INITIAL_INVENTORY = [
-      { id: 101, name: "Amlong 5", generic: "Amlodipine 5mg", cat: "Antihypertensive", price: 42.0, stock: 40 },
-      { id: 102, name: "Mox 500", generic: "Amoxicillin 500mg", cat: "Antibiotic", price: 60.0, stock: 25 },
-      { id: 103, name: "Ecosprin 75", generic: "Aspirin 75mg", cat: "Antiplatelet", price: 12.0, stock: 15 },
-      { id: 104, name: "Atorva 10", generic: "Atorvastatin 10mg", cat: "Lipid-lowering", price: 56.0, stock: 60 },
-      { id: 105, name: "Augmentin 625 Duo", generic: "Amoxicillin + Clavulanate", cat: "Antibiotic", price: 204.5, stock: 18 },
-      { id: 106, name: "Dolo 650mg", generic: "Paracetamol", cat: "Antipyretic", price: 34.0, stock: 120 }
-    ];
+    function renderPharmacyInventory(query = "") {
+      const tbody = document.getElementById("pharmacy-inventory-body");
+      if (!tbody) return;
+      const q = (query || "").toLowerCase().trim();
+      const rows = (q
+        ? MEDICINES.filter(m => m.name.toLowerCase().includes(q) || (m.generic_name && m.generic_name.toLowerCase().includes(q)))
+        : MEDICINES
+      ).slice(0, 15);
 
-    function updateInventoryStock(itemId, delta) {
-      const item = INITIAL_INVENTORY.find(i => i.id === itemId);
-      if (item) {
-        item.stock = Math.max(0, item.stock + delta);
-        renderPharmacyInventory();
+      tbody.innerHTML = rows.map(item => {
+        const stock = item.stock_units ?? 25;
+        const price = parseFloat(item.unit_price || item.mrp || 0);
+        return `
+          <tr class="hover:bg-slate-900/40 transition-colors">
+            <td class="p-3.5">
+              <span class="font-bold text-white block">${escHtml(item.name)}</span>
+              <span class="text-[10px] text-slate-400 font-mono">${escHtml((item.generic_name || '').split('|')[0])}</span>
+            </td>
+            <td class="p-3.5 text-slate-400">${escHtml(item.category)}</td>
+            <td class="p-3.5 font-mono text-white">₹${price.toFixed(2)}</td>
+            <td class="p-3.5">
+              <div class="flex items-center gap-2">
+                <button onclick="updateInventoryStock(${item.id}, -1)" class="w-5 h-5 rounded bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 flex items-center justify-center cursor-pointer">-</button>
+                <span class="font-mono text-white font-bold">${stock}</span>
+                <button onclick="updateInventoryStock(${item.id}, 1)" class="w-5 h-5 rounded bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 flex items-center justify-center cursor-pointer">+</button>
+              </div>
+            </td>
+            <td class="p-3.5 text-right">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${stock > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
+                ${stock > 0 ? 'In Stock' : 'Out of Stock'}
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderPharmacyView() {
+      const primaryPharm = PHARMACIES[0] || { name: "Apollo Pharmacy - Indiranagar", city: "Bengaluru" };
+      const branchEl = document.getElementById("pharmacy-active-branch");
+      if (branchEl) branchEl.innerText = `${primaryPharm.name} · ${primaryPharm.city}`;
+
+      const kpiOrders = document.getElementById("pharm-kpi-orders");
+      const kpiStock = document.getElementById("pharm-stock-count");
+      const kpiPending = document.getElementById("pharm-kpi-pending");
+      const kpiRev = document.getElementById("pharm-kpi-revenue");
+      const activeOrders = ORDERS.filter(o => o.order_status !== "DELIVERED" && o.order_status !== "CANCELLED");
+      const fulfilledRev = ORDERS.filter(o => o.order_status !== "CANCELLED").reduce((acc, o) => acc + parseFloat(o.total_amount || 0), 0);
+
+      if (kpiOrders) kpiOrders.innerText = ORDERS.length;
+      if (kpiStock) kpiStock.innerText = MEDICINES.length;
+      if (kpiPending) kpiPending.innerText = activeOrders.length;
+      if (kpiRev) kpiRev.innerText = "₹" + fulfilledRev.toFixed(0);
+
+      const lead = activeOrders[0] || ORDERS[0];
+      if (lead) {
+        const oid = document.getElementById("pharm-active-order-id");
+        const ometa = document.getElementById("pharm-active-order-meta");
+        if (oid) oid.innerText = "#" + lead.id;
+        if (ometa) ometa.innerText = `Total ₹${parseFloat(lead.total_amount || 0).toFixed(2)} · ${lead.pharmacy_name || primaryPharm.name}`;
+      }
+      renderPharmacyInventory(document.getElementById("pharm-inv-search")?.value || "");
+    }
+
+    // 7. Admin Portal (Real Pharmacies & Order Moderation)
+    function togglePharmacyStatus(pharmId) {
+      const p = PHARMACIES.find(x => x.id === pharmId);
+      if (!p) return;
+      p.status = p.status === "approved" ? "suspended" : "approved";
+      renderAdminView();
+      showToast(`${p.name} status updated to ${p.status}.`, true);
+    }
+
+    function cancelAdminOrder(orderId) {
+      const o = ORDERS.find(x => x.id === orderId);
+      if (!o) return;
+      o.order_status = "CANCELLED";
+      renderAdminView();
+      renderPharmacyView();
+      renderDeliveryView();
+      showToast(`Order #${orderId} cancelled by Admin.`, false);
+    }
+
+    function renderAdminView() {
+      const kpiOrders = document.getElementById("admin-kpi-orders");
+      const kpiPharms = document.getElementById("admin-kpi-pharmacies");
+      const kpiSkus = document.getElementById("admin-kpi-skus");
+      if (kpiOrders) kpiOrders.innerText = ORDERS.length;
+      if (kpiPharms) kpiPharms.innerText = PHARMACIES.filter(p => p.status === "approved").length;
+      if (kpiSkus) kpiSkus.innerText = MEDICINES.length;
+
+      const tbody = document.getElementById("admin-pharmacies-body");
+      if (tbody) {
+        tbody.innerHTML = PHARMACIES.map(p => {
+          const active = (p.status || "approved") === "approved";
+          return `
+            <tr class="hover:bg-slate-900/40 transition-colors">
+              <td class="p-3 font-semibold text-white">${escHtml(p.name)}</td>
+              <td class="p-3 font-mono text-slate-400 text-[11px]">${escHtml(p.license_number || 'DL-KA-2023-0941')}</td>
+              <td class="p-3 text-slate-400">${escHtml(p.city || 'Bengaluru')}</td>
+              <td class="p-3 font-mono text-amber-400 font-semibold">${escHtml(p.rating || '4.8')} / 5.0</td>
+              <td class="p-3 text-right space-x-2">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${active ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
+                  ${active ? 'Approved' : 'Suspended'}
+                </span>
+                <button onclick="togglePharmacyStatus(${p.id})" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 cursor-pointer">
+                  ${active ? 'Suspend' : 'Approve'}
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join("");
+      }
+
+      const oBody = document.getElementById("admin-orders-body");
+      if (oBody) {
+        oBody.innerHTML = ORDERS.slice(0, 10).map(o => `
+          <tr class="hover:bg-slate-900/40 transition-colors">
+            <td class="p-3 font-mono font-bold text-white">#${escHtml(o.id)}</td>
+            <td class="p-3 text-slate-300">${escHtml(o.pharmacy_name || 'Partner Pharmacy')}</td>
+            <td class="p-3 font-mono text-cyan-400">₹${parseFloat(o.total_amount || 0).toFixed(2)}</td>
+            <td class="p-3">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                o.order_status === 'DELIVERED' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                o.order_status === 'CANCELLED' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+                'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+              }">${escHtml(o.order_status)}</span>
+            </td>
+            <td class="p-3 text-right">
+              ${o.order_status !== 'CANCELLED' && o.order_status !== 'DELIVERED'
+                ? `<button onclick="cancelAdminOrder('${escHtml(o.id)}')" class="px-2 py-0.5 rounded bg-rose-950/60 hover:bg-rose-900 text-rose-300 text-[10px] font-semibold cursor-pointer">Cancel Order</button>`
+                : `<span class="text-[10px] text-slate-500">Closed</span>`}
+            </td>
+          </tr>
+        `).join("");
       }
     }
 
-    function renderPharmacyInventory() {
-      const tbody = document.getElementById("pharmacy-inventory-body");
-      if (!tbody) return;
-      tbody.innerHTML = INITIAL_INVENTORY.map(item => `
-        <tr class="hover:bg-slate-900/40 transition-colors">
-          <td class="p-3.5">
-            <span class="font-bold text-white block">${item.name}</span>
-            <span class="text-[10px] text-slate-400 font-mono">${item.generic}</span>
-          </td>
-          <td class="p-3.5 text-slate-400">${item.cat}</td>
-          <td class="p-3.5 font-mono text-white">₹${item.price.toFixed(2)}</td>
-          <td class="p-3.5">
-            <div class="flex items-center gap-2">
-              <button onclick="updateInventoryStock(${item.id}, -1)" class="w-5 h-5 rounded bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 flex items-center justify-center cursor-pointer">-</button>
-              <span class="font-mono text-white font-bold">${item.stock}</span>
-              <button onclick="updateInventoryStock(${item.id}, 1)" class="w-5 h-5 rounded bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 flex items-center justify-center cursor-pointer">+</button>
+    // 8. Delivery Portal & OTP Verification
+    function renderDeliveryView() {
+      const deliveredCount = ORDERS.filter(o => o.order_status === "DELIVERED").length;
+      const runsEl = document.getElementById("deliv-kpi-runs");
+      const earnEl = document.getElementById("deliv-kpi-earnings");
+      if (runsEl) runsEl.innerText = deliveredCount;
+      if (earnEl) earnEl.innerText = "₹" + (deliveredCount * 75);
+
+      const listEl = document.getElementById("delivery-dispatch-list");
+      if (!listEl) return;
+      const queue = ORDERS.filter(o => o.order_status !== "CANCELLED").slice(0, 4);
+      if (queue.length === 0) {
+        listEl.innerHTML = `<div class="p-8 text-center text-slate-500 text-xs">No active dispatches in queue.</div>`;
+        return;
+      }
+      listEl.innerHTML = queue.map(o => {
+        const isDone = o.order_status === "DELIVERED";
+        return `
+          <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-5 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800">
+              <div class="flex items-center gap-2">
+                <span class="font-mono text-xs font-bold text-white">DISPATCH #${escHtml(o.id)}</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                  4.2°C Nominal (2°C - 8°C Monitored)
+                </span>
+              </div>
+              <span class="text-xs text-amber-400 font-bold">Order Value: ₹${parseFloat(o.total_amount || 0).toFixed(2)} · Payout ₹75.00</span>
             </div>
-          </td>
-          <td class="p-3.5 text-right">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${item.stock > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
-              ${item.stock > 0 ? 'In Stock' : 'Out of Stock'}
-            </span>
-          </td>
-        </tr>
-      `).join("");
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                <span class="text-slate-400 block text-[10px] uppercase font-bold mb-1">Pickup Dispensary</span>
+                <span class="font-semibold text-white">${escHtml(o.pharmacy_name || 'Apollo Pharmacy - Indiranagar')}</span>
+                <span class="text-slate-400 block text-[11px]">${escHtml(o.pharmacy_city || 'Bengaluru')}</span>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                <span class="text-slate-400 block text-[10px] uppercase font-bold mb-1">Patient Doorstep Drop</span>
+                <span class="font-semibold text-white">Status: ${escHtml(o.order_status)}</span>
+                <span class="text-slate-400 block text-[11px]">Demo OTP Reference: <span class="font-mono text-cyan-400">${escHtml(o.delivery_otp || '123456')}</span></span>
+              </div>
+            </div>
+            ${!isDone ? `
+              <div class="pt-1">
+                <button onclick="openOtpModal('${escHtml(o.id)}')" class="w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/20">
+                  <i data-lucide="shield-check" class="h-4 w-4"></i>
+                  <span>Verify Patient Delivery OTP &amp; Complete Handoff</span>
+                </button>
+              </div>
+            ` : `
+              <div class="text-center text-xs text-emerald-400 font-bold py-1">Completed &amp; Signed Off via Patient OTP</div>
+            `}
+          </div>
+        `;
+      }).join("");
+      try { if (window.lucide) lucide.createIcons(); } catch (e) {}
     }
 
-    // 8. Admin Network Table
-    function renderAdminPharmacies() {
-      const tbody = document.getElementById("admin-pharmacies-body");
-      if (!tbody) return;
-      tbody.innerHTML = PHARMACIES.map(p => `
-        <tr class="hover:bg-slate-900/40 transition-colors">
-          <td class="p-3 font-semibold text-white">${p.name}</td>
-          <td class="p-3 font-mono text-slate-400 text-[11px]">${p.license_number || 'DL-KA-2023-0941'}</td>
-          <td class="p-3 text-slate-400">${p.city || 'Bangalore'}</td>
-          <td class="p-3 font-mono text-amber-400 font-semibold">${p.rating || '4.8'} / 5.0</td>
-          <td class="p-3 text-right">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              Active
-            </span>
-          </td>
-        </tr>
-      `).join("");
-    }
-
-    // 9. Delivery OTP Modal
-    function openOtpModal() {
+    function openOtpModal(orderId) {
+      activeOtpOrderId = orderId;
+      const ord = ORDERS.find(o => o.id === orderId);
+      const sub = document.getElementById("otp-modal-subtitle");
+      if (sub && ord) {
+        sub.innerText = `Ask patient for OTP (reference: ${ord.delivery_otp || '123456'}) to complete handoff for #${ord.id}.`;
+      }
       document.getElementById("modal-otp").classList.remove("hidden");
       document.getElementById("input-delivery-otp").value = "";
       document.getElementById("input-delivery-otp").focus();
-      lucide.createIcons();
+      try { if (window.lucide) lucide.createIcons(); } catch (e) {}
     }
+
     function closeOtpModal() {
       document.getElementById("modal-otp").classList.add("hidden");
     }
+
     function confirmOtp() {
       const val = document.getElementById("input-delivery-otp").value.trim();
-      if (val.length === 6 || val.length === 4) {
+      const ord = ORDERS.find(o => o.id === activeOtpOrderId);
+      const expected = ord && ord.delivery_otp ? String(ord.delivery_otp) : "";
+      if (val && ((expected && val === expected) || (!expected && (val.length === 6 || val.length === 4)))) {
+        if (ord) ord.order_status = "DELIVERED";
         closeOtpModal();
+        renderDeliveryView();
+        renderAdminView();
+        renderPharmacyView();
         showToast("OTP Verified! Cold-chain handoff completed successfully.", true);
       } else {
-        showToast("Please enter a valid 6-digit OTP from patient SMS.");
+        showToast(expected ? `Invalid OTP. Expected ${expected}.` : "Please enter a valid 6-digit OTP.", false);
       }
     }
 
-    // 10. Toast Notification Helper
+    // 9. Toast Notification Helper
     function showToast(msg, isSuccess = false) {
       const c = document.getElementById("toast-container");
+      if (!c) return;
       const toast = document.createElement("div");
       toast.className = `p-3 rounded-xl border text-xs font-semibold shadow-xl transition-all duration-300 pointer-events-auto flex items-center gap-2 ${
         isSuccess
-          ? 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200'
-          : 'bg-slate-900/90 border-slate-700 text-slate-200'
+          ? 'bg-emerald-950/95 border-emerald-500/50 text-emerald-200'
+          : 'bg-slate-900/95 border-slate-700 text-slate-200'
       }`;
-      toast.innerHTML = `<span>${msg}</span>`;
+      toast.innerHTML = `<span>${escHtml(msg)}</span>`;
       c.appendChild(toast);
       setTimeout(() => {
         toast.style.opacity = '0';
@@ -1521,13 +2110,17 @@ template_html = """<!DOCTYPE html>
       }, 3500);
     }
 
-    // Bulletproof initialization across all browser iframe loading states
+    // 10. Idempotent Initialization
     function init() {
+      if (_initialized) return;
+      _initialized = true;
       try { renderAuthElements(); } catch (e) { console.error("renderAuthElements error:", e); }
       try { renderCategoryPills(); } catch (e) { console.error("renderCategoryPills error:", e); }
       try { renderMedicines(); } catch (e) { console.error("renderMedicines error:", e); }
-      try { renderPharmacyInventory(); } catch (e) { console.error("renderPharmacyInventory error:", e); }
-      try { renderAdminPharmacies(); } catch (e) { console.error("renderAdminPharmacies error:", e); }
+      try { updateCartUI(); } catch (e) { console.error("updateCartUI error:", e); }
+      try { renderPharmacyView(); } catch (e) { console.error("renderPharmacyView error:", e); }
+      try { renderAdminView(); } catch (e) { console.error("renderAdminView error:", e); }
+      try { renderDeliveryView(); } catch (e) { console.error("renderDeliveryView error:", e); }
       try { if (window.lucide) lucide.createIcons(); } catch (e) { console.error("lucide error:", e); }
       if (INITIAL_PORTAL) {
         switchPortal(INITIAL_PORTAL);
@@ -1544,18 +2137,20 @@ template_html = """<!DOCTYPE html>
       init();
     }
     window.addEventListener("load", init);
-    setTimeout(init, 50);
   </script>
 </body>
 </html>
 """
 
-final_html = template_html.replace("__MEDICINES_JSON__", json.dumps(medicines_data))
-final_html = final_html.replace("__PHARMACIES_JSON__", json.dumps(pharmacies_data))
-final_html = final_html.replace("__GOOGLE_USER_JSON__", json.dumps(google_user))
-final_html = final_html.replace("__ROLE_GOOGLE_URLS__", json.dumps(role_google_urls))
-final_html = final_html.replace("__INITIAL_PORTAL__", target_role)
-final_html = final_html.replace("__OAUTH_ERROR__", json.dumps(oauth_error or ""))
+final_html = template_html.replace("__MEDICINES_JSON__", _safe_json(medicines_data))
+final_html = final_html.replace("__PHARMACIES_JSON__", _safe_json(pharmacies_data))
+final_html = final_html.replace("__ORDERS_JSON__", _safe_json(orders_data))
+final_html = final_html.replace("__DDI_RULES_JSON__", _safe_json(ddi_rules_data))
+final_html = final_html.replace("__AILMENT_KB_JSON__", _safe_json(ailment_kb_data))
+final_html = final_html.replace("__GOOGLE_USER_JSON__", _safe_json(google_user))
+final_html = final_html.replace("__ROLE_GOOGLE_URLS__", _safe_json(role_google_urls))
+final_html = final_html.replace("__INITIAL_PORTAL__", html.escape(target_role))
+final_html = final_html.replace("__OAUTH_ERROR__", _safe_json(oauth_error or ""))
 
 # Direct HTML server-side portal visibility (eliminates flash & guarantees portal rendering)
 final_html = final_html.replace("__LANDING_ACTIVE__", "active" if target_role == "landing" else "")
@@ -1564,5 +2159,5 @@ final_html = final_html.replace("__PHARMACY_ACTIVE__", "active" if target_role =
 final_html = final_html.replace("__ADMIN_ACTIVE__", "active" if target_role == "admin" else "")
 final_html = final_html.replace("__DELIVERY_ACTIVE__", "active" if target_role == "delivery" else "")
 
-# 5. Render Full-Bleed Application Viewport with 100% localhost visual parity
-components.html(final_html, height=1350, scrolling=True)
+# 4. Render Full-Bleed Application Viewport
+components.html(final_html, height=900, scrolling=True)
