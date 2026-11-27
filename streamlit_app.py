@@ -965,19 +965,19 @@ template_html = r"""<!DOCTYPE html>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-          <div id="step-1" class="p-2.5 rounded-xl border border-purple-500/40 bg-purple-950/20 text-purple-300">
+          <div id="step-1" onclick="setPharmacyStep(1)" class="p-2.5 rounded-xl border border-purple-500/40 bg-purple-950/20 text-purple-300 cursor-pointer transition-all hover:border-purple-400">
             <span class="font-bold block">1. Accepted</span>
             <span class="text-[10px] text-slate-400">Rx Verified</span>
           </div>
-          <div id="step-2" class="p-2.5 rounded-xl border border-purple-500/40 bg-purple-950/20 text-purple-300">
+          <div id="step-2" onclick="setPharmacyStep(2)" class="p-2.5 rounded-xl border border-purple-500/40 bg-purple-950/20 text-purple-300 cursor-pointer transition-all hover:border-purple-400">
             <span class="font-bold block">2. Packing</span>
             <span class="text-[10px] text-slate-400">Cold-Pack Seal</span>
           </div>
-          <div id="step-3" class="p-2.5 rounded-xl border border-cyan-500 bg-cyan-950/30 text-cyan-300 font-bold ring-2 ring-cyan-500/20">
+          <div id="step-3" onclick="setPharmacyStep(3)" class="p-2.5 rounded-xl border border-cyan-500 bg-cyan-950/30 text-cyan-300 font-bold ring-2 ring-cyan-500/20 cursor-pointer transition-all hover:border-cyan-400">
             <span class="block">3. Ready for pickup</span>
             <span class="text-[10px] text-cyan-400">Current</span>
           </div>
-          <div id="step-4" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900/40 text-slate-500">
+          <div id="step-4" onclick="setPharmacyStep(4)" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900/40 text-slate-500 cursor-pointer transition-all hover:border-slate-700">
             <span class="block">4. Picked up</span>
             <span class="text-[10px] text-slate-600">Pending</span>
           </div>
@@ -1057,8 +1057,14 @@ template_html = r"""<!DOCTYPE html>
       <!-- Partner Pharmacies Table -->
       <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl overflow-hidden">
         <div class="p-4 border-b border-slate-800 flex items-center justify-between">
-          <h3 class="font-bold text-sm text-white">Network Partner Dispensaries</h3>
-          <span class="text-xs text-slate-400">Hospital Compliance Verified</span>
+          <div>
+            <h3 class="font-bold text-sm text-white">Network Partner Dispensaries</h3>
+            <span class="text-xs text-slate-400 font-mono">Hospital Compliance Verified</span>
+          </div>
+          <button onclick="openAddPharmacyModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs cursor-pointer shadow-md shadow-rose-600/20">
+            <i data-lucide="plus" class="h-3.5 w-3.5"></i>
+            <span>Add Pharmacy</span>
+          </button>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs">
@@ -1125,24 +1131,46 @@ template_html = r"""<!DOCTYPE html>
     <main class="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-4">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">COMPLETED RUNS</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">DELIVERIES</span>
           <span id="deliv-kpi-runs" class="text-2xl sm:text-3xl font-extrabold text-white">0</span>
         </div>
         <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-4">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">TRANSIT COMPLIANCE</span>
-          <span class="text-2xl sm:text-3xl font-extrabold text-emerald-400">100%</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">TODAY'S PAYOUT</span>
+          <span id="deliv-kpi-today" class="text-2xl sm:text-3xl font-extrabold text-emerald-400">₹0</span>
         </div>
         <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-4">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">EARNINGS</span>
-          <span id="deliv-kpi-earnings" class="text-2xl sm:text-3xl font-extrabold text-cyan-400">₹0</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">TOTAL EARNINGS</span>
+          <span id="deliv-kpi-earnings" class="text-2xl sm:text-3xl font-extrabold text-amber-500">₹0</span>
         </div>
         <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-4">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">AVG. TRANSIT TIME</span>
-          <span class="text-2xl sm:text-3xl font-extrabold text-white">18 min</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">RATING</span>
+          <div class="flex items-center gap-1 text-2xl sm:text-3xl font-extrabold text-amber-400">
+            <span>4.8</span>
+            <svg class="h-5 w-5 fill-amber-400 text-amber-400 inline" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
         </div>
       </div>
 
+      <!-- Weekly Earnings Activity Chart -->
+      <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-5 space-y-3">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+          <div>
+            <h3 class="font-bold text-sm text-white">Weekly Payout Activity</h3>
+            <span class="text-xs text-slate-400 font-mono">₹75 per completed cold-chain handoff</span>
+          </div>
+          <span class="text-xs font-bold text-amber-400 inline-flex items-center gap-1">
+            <span>Driver Rating: 4.8 / 5.0</span>
+            <svg class="h-3.5 w-3.5 fill-amber-400 text-amber-400" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </span>
+        </div>
+        <div id="delivery-weekly-bars" class="grid grid-cols-7 gap-2 pt-2 items-end h-28"></div>
+      </div>
+
       <!-- Active Dispatch Queue -->
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-sm text-white">Active Cold-Chain Dispatch Queue</h3>
+        <span class="text-xs text-slate-400 font-mono">Real-Time Patient Handoffs</span>
+      </div>
       <div id="delivery-dispatch-list" class="space-y-4"></div>
     </main>
   </div>
@@ -1167,8 +1195,29 @@ template_html = r"""<!DOCTYPE html>
       <div id="cart-items-list" class="divide-y divide-slate-800/60 my-4"></div>
     </div>
 
-    <div class="border-t border-slate-800 pt-4 space-y-3">
-      <div class="space-y-1.5 text-xs text-slate-300">
+    <div class="border-t border-slate-800 pt-3 space-y-3">
+      <!-- Delivery Address -->
+      <div class="space-y-1">
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Delivery Address</label>
+        <input
+          id="cart-delivery-address"
+          type="text"
+          value="Flat 402, Green Glen Layout, Bellandur, Bengaluru 560103"
+          class="w-full text-xs rounded-xl border border-slate-800 bg-slate-900/80 p-2 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-sans"
+        />
+      </div>
+
+      <!-- Payment Mode -->
+      <div class="space-y-1">
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Payment Mode</label>
+        <div class="grid grid-cols-3 gap-1.5 text-xs">
+          <button type="button" id="pay-mode-cod" onclick="selectPaymentMode('COD')" class="pay-mode-btn py-1.5 px-2 rounded-xl border border-cyan-500 bg-cyan-950/40 text-cyan-300 font-bold text-center cursor-pointer">COD</button>
+          <button type="button" id="pay-mode-upi" onclick="selectPaymentMode('UPI')" class="pay-mode-btn py-1.5 px-2 rounded-xl border border-slate-800 bg-slate-900/40 text-slate-400 font-semibold text-center hover:text-white cursor-pointer">UPI</button>
+          <button type="button" id="pay-mode-card" onclick="selectPaymentMode('CARD')" class="pay-mode-btn py-1.5 px-2 rounded-xl border border-slate-800 bg-slate-900/40 text-slate-400 font-semibold text-center hover:text-white cursor-pointer">Card</button>
+        </div>
+      </div>
+
+      <div class="space-y-1.5 text-xs text-slate-300 pt-1">
         <div class="flex justify-between">
           <span class="text-slate-400">Subtotal</span>
           <span id="cart-subtotal" class="font-mono font-semibold">₹0.00</span>
@@ -1186,6 +1235,39 @@ template_html = r"""<!DOCTYPE html>
         <i data-lucide="truck" class="h-4 w-4"></i>
         <span>Place Doorstep Delivery Order</span>
       </button>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: ADD PHARMACY (ADMIN CONSOLE)        -->
+  <!-- ========================================== -->
+  <div id="modal-add-pharmacy" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-[#0b1220] border border-rose-500/40 rounded-2xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <i data-lucide="store" class="h-5 w-5 text-rose-400"></i>
+          <h3 class="font-bold text-white font-heading text-base">Register Partner Dispensary</h3>
+        </div>
+        <button onclick="closeAddPharmacyModal()" class="text-slate-400 hover:text-white cursor-pointer"><i data-lucide="x" class="h-5 w-5"></i></button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 mb-1">Pharmacy / Store Name</label>
+          <input id="input-new-pharm-name" type="text" placeholder="e.g. MedPlus Pharmacy — Koramangala" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-rose-500" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 mb-1">Location / Address</label>
+          <input id="input-new-pharm-location" type="text" placeholder="e.g. 5th Block, Koramangala, Bengaluru" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-rose-500" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 mb-1">Drug License / GPS Coordinates</label>
+          <input id="input-new-pharm-license" type="text" placeholder="e.g. DL-KA-2024-8192 (12.935, 77.624)" class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-rose-500" />
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button onclick="closeAddPharmacyModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold cursor-pointer">Cancel</button>
+          <button onclick="submitNewPharmacy()" class="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold cursor-pointer">Register Pharmacy</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1441,7 +1523,7 @@ template_html = r"""<!DOCTYPE html>
       container.innerHTML = CATEGORY_GROUPS.map(grp => `
         <button
           onclick="filterCategory('${grp.label}')"
-          class="px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+          class="cat-pill px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
             activeCategory === grp.label ? 'bg-cyan-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
           }"
         >
@@ -1582,7 +1664,7 @@ template_html = r"""<!DOCTYPE html>
         const genericSavingsPct = hasGenericMatch ? Math.round(((price - genericPrice) / price) * 100) : 0;
 
         return `
-          <div class="bg-[#0e1626] border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-slate-700 transition-all shadow-md">
+          <div class="med-card bg-[#0e1626] border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-slate-700 transition-all shadow-md">
             <div class="space-y-1.5 min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-bold text-sm text-white">${escHtml(m.name)}</span>
@@ -1769,6 +1851,20 @@ template_html = r"""<!DOCTYPE html>
       totalEl.innerText = "₹" + (subtotal + fee).toFixed(2);
     }
 
+    let selectedPaymentMode = "COD";
+    function selectPaymentMode(mode) {
+      selectedPaymentMode = mode;
+      ["cod", "upi", "card"].forEach(m => {
+        const btn = document.getElementById("pay-mode-" + m);
+        if (!btn) return;
+        if (m.toUpperCase() === mode) {
+          btn.className = "pay-mode-btn py-1.5 px-2 rounded-xl border border-cyan-500 bg-cyan-950/40 text-cyan-300 font-bold text-center cursor-pointer";
+        } else {
+          btn.className = "pay-mode-btn py-1.5 px-2 rounded-xl border border-slate-800 bg-slate-900/40 text-slate-400 font-semibold text-center hover:text-white cursor-pointer";
+        }
+      });
+    }
+
     function placeOrder() {
       if (cart.length === 0) {
         showToast("Cart is empty. Add medicines first.");
@@ -1786,6 +1882,7 @@ template_html = r"""<!DOCTYPE html>
       const otp = String(Math.floor(100000 + Math.random() * 900000));
       const newOrderId = "ORD-" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "-" + Math.floor(1000 + Math.random() * 9000);
       const primaryPharm = PHARMACIES[0] || { name: "Apollo Pharmacy - Indiranagar", city: "Bengaluru" };
+      const addr = document.getElementById("cart-delivery-address")?.value || "Flat 402, Green Glen Layout, Bellandur, Bengaluru 560103";
 
       ORDERS.unshift({
         id: newOrderId,
@@ -1794,7 +1891,10 @@ template_html = r"""<!DOCTYPE html>
         created_at: new Date().toISOString(),
         delivery_otp: otp,
         pharmacy_name: primaryPharm.name,
-        pharmacy_city: primaryPharm.city
+        pharmacy_city: primaryPharm.city,
+        delivery_address: addr,
+        payment_method: selectedPaymentMode,
+        customer_name: (USER && USER.name) ? USER.name : "Patient (Customer)"
       });
 
       cart = [];
@@ -1803,7 +1903,7 @@ template_html = r"""<!DOCTYPE html>
       renderPharmacyView();
       renderAdminView();
       renderDeliveryView();
-      showToast(`Order #${newOrderId} placed! Delivery OTP: ${otp}`, true);
+      showToast(`Order #${newOrderId} placed (${selectedPaymentMode})! Delivery OTP: ${otp}`, true);
     }
 
     // 5. Prescription OCR Scanner matching localhost CustomerPortalView.tsx
@@ -2004,6 +2104,33 @@ template_html = r"""<!DOCTYPE html>
     }
 
     // 7. Pharmacy Portal (Real Orders & Inventory Stepper)
+    function setPharmacyStep(stepNum) {
+      currentStep = stepNum;
+      const stepNames = ["1. Accepted", "2. Packing", "3. Ready for pickup", "4. Picked up"];
+      for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById("step-" + i);
+        if (!el) continue;
+        if (i < currentStep) {
+          el.className = "p-2.5 rounded-xl border border-purple-500/40 bg-purple-950/20 text-purple-300 cursor-pointer transition-all hover:border-purple-400";
+        } else if (i === currentStep) {
+          el.className = "p-2.5 rounded-xl border border-cyan-500 bg-cyan-950/30 text-cyan-300 font-bold ring-2 ring-cyan-500/20 cursor-pointer transition-all hover:border-cyan-400";
+        } else {
+          el.className = "p-2.5 rounded-xl border border-slate-800 bg-slate-900/40 text-slate-500 cursor-pointer transition-all hover:border-slate-700";
+        }
+      }
+      const badge = document.getElementById("pharm-order-status-badge");
+      if (badge) badge.innerText = stepNames[currentStep - 1];
+      showToast(`Order status updated to: ${stepNames[currentStep - 1]}`, true);
+    }
+
+    function toggleStockAvailability(itemId) {
+      const med = MEDICINES.find(m => m.id === itemId);
+      if (!med) return;
+      med.stock_units = (med.stock_units && med.stock_units > 0) ? 0 : 30;
+      renderPharmacyInventory(document.getElementById("pharm-inv-search")?.value || "");
+      showToast(`${med.name} is now ${med.stock_units > 0 ? 'In Stock (30 units)' : 'Out of Stock'}.`, true);
+    }
+
     function updateInventoryStock(itemId, delta) {
       const med = MEDICINES.find(m => m.id === itemId);
       if (!med) return;
@@ -2014,21 +2141,7 @@ template_html = r"""<!DOCTYPE html>
 
     function advancePharmacyStep() {
       currentStep = (currentStep % 4) + 1;
-      const stepNames = ["1. Accepted", "2. Packing", "3. Ready for pickup", "4. Picked up"];
-      for (let i = 1; i <= 4; i++) {
-        const el = document.getElementById("step-" + i);
-        if (!el) continue;
-        if (i < currentStep) {
-          el.className = "p-2.5 rounded-xl border border-purple-500/40 bg-purple-950/20 text-purple-300";
-        } else if (i === currentStep) {
-          el.className = "p-2.5 rounded-xl border border-cyan-500 bg-cyan-950/30 text-cyan-300 font-bold ring-2 ring-cyan-500/20";
-        } else {
-          el.className = "p-2.5 rounded-xl border border-slate-800 bg-slate-900/40 text-slate-500";
-        }
-      }
-      const badge = document.getElementById("pharm-order-status-badge");
-      if (badge) badge.innerText = stepNames[currentStep - 1];
-      showToast(`Order status updated to: ${stepNames[currentStep - 1]}`, true);
+      setPharmacyStep(currentStep);
     }
 
     function renderPharmacyInventory(query = "") {
@@ -2059,9 +2172,9 @@ template_html = r"""<!DOCTYPE html>
               </div>
             </td>
             <td class="p-3.5 text-right">
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${stock > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
+              <button onclick="toggleStockAvailability(${item.id})" title="Click to toggle availability" class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase cursor-pointer transition-all ${stock > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20'}">
                 ${stock > 0 ? 'In Stock' : 'Out of Stock'}
-              </span>
+              </button>
             </td>
           </tr>
         `;
@@ -2096,6 +2209,47 @@ template_html = r"""<!DOCTYPE html>
     }
 
     // 8. Admin Portal (Real Pharmacies & Order Moderation)
+    function openAddPharmacyModal() {
+      document.getElementById("modal-add-pharmacy").classList.remove("hidden");
+      document.getElementById("input-new-pharm-name").value = "";
+      document.getElementById("input-new-pharm-location").value = "";
+      document.getElementById("input-new-pharm-license").value = "";
+      document.getElementById("input-new-pharm-name").focus();
+    }
+
+    function closeAddPharmacyModal() {
+      document.getElementById("modal-add-pharmacy").classList.add("hidden");
+    }
+
+    function submitNewPharmacy() {
+      const name = document.getElementById("input-new-pharm-name").value.trim();
+      const loc = document.getElementById("input-new-pharm-location").value.trim() || "Bengaluru";
+      const lic = document.getElementById("input-new-pharm-license").value.trim() || "DL-KA-2024-8192";
+      if (!name) {
+        showToast("Please enter a pharmacy name.", false);
+        return;
+      }
+      const newId = PHARMACIES.length + 1;
+      PHARMACIES.unshift({
+        id: newId,
+        name: name,
+        city: loc,
+        license_number: lic,
+        rating: "4.9",
+        status: "approved"
+      });
+      closeAddPharmacyModal();
+      renderAdminView();
+      renderPharmacyView();
+      showToast(`Registered ${name} to clinical network!`, true);
+    }
+
+    function removePharmacy(pharmId) {
+      PHARMACIES = PHARMACIES.filter(p => p.id !== pharmId);
+      renderAdminView();
+      showToast("Pharmacy removed from network.", true);
+    }
+
     function togglePharmacyStatus(pharmId) {
       const p = PHARMACIES.find(x => x.id === pharmId);
       if (!p) return;
@@ -2132,12 +2286,15 @@ template_html = r"""<!DOCTYPE html>
               <td class="p-3 font-mono text-slate-400 text-[11px]">${escHtml(p.license_number || 'DL-KA-2023-0941')}</td>
               <td class="p-3 text-slate-400">${escHtml(p.city || 'Bengaluru')}</td>
               <td class="p-3 font-mono text-amber-400 font-semibold">${escHtml(p.rating || '4.8')} / 5.0</td>
-              <td class="p-3 text-right space-x-2">
+              <td class="p-3 text-right space-x-1.5">
                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${active ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
                   ${active ? 'Approved' : 'Suspended'}
                 </span>
                 <button onclick="togglePharmacyStatus(${p.id})" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 cursor-pointer">
                   ${active ? 'Suspend' : 'Approve'}
+                </button>
+                <button onclick="removePharmacy(${p.id})" class="px-2 py-0.5 rounded bg-slate-900 hover:bg-rose-950 text-[10px] text-slate-400 hover:text-rose-400 cursor-pointer">
+                  Remove
                 </button>
               </td>
             </tr>
@@ -2170,12 +2327,49 @@ template_html = r"""<!DOCTYPE html>
     }
 
     // 9. Delivery Portal & OTP Verification
+    function acceptDeliveryRun(orderId) {
+      const o = ORDERS.find(x => x.id === orderId);
+      if (!o) return;
+      o.order_status = "IN_TRANSIT";
+      renderDeliveryView();
+      renderPharmacyView();
+      renderAdminView();
+      showToast(`Accepted Dispatch #${orderId}. Cold-chain transit active.`, true);
+    }
+
+    function renderDeliveryWeeklyBars() {
+      const container = document.getElementById("delivery-weekly-bars");
+      if (!container) return;
+      const days = [
+        { name: "Mon", amount: 150, height: "45%" },
+        { name: "Tue", amount: 225, height: "65%" },
+        { name: "Wed", amount: 75, height: "25%" },
+        { name: "Thu", amount: 300, height: "85%" },
+        { name: "Fri", amount: 225, height: "65%" },
+        { name: "Sat", amount: 375, height: "100%" },
+        { name: "Sun", amount: 150, height: "45%" }
+      ];
+      container.innerHTML = days.map(d => `
+        <div class="flex flex-col items-center justify-end h-full gap-1">
+          <span class="text-[9px] font-mono text-cyan-400 font-bold">₹${d.amount}</span>
+          <div class="w-full bg-slate-800 rounded-lg overflow-hidden flex items-end h-16">
+            <div class="w-full bg-gradient-to-t from-cyan-500 to-indigo-500 rounded-lg transition-all" style="height: ${d.height}"></div>
+          </div>
+          <span class="text-[10px] text-slate-400 font-semibold">${d.name}</span>
+        </div>
+      `).join("");
+    }
+
     function renderDeliveryView() {
       const deliveredCount = ORDERS.filter(o => o.order_status === "DELIVERED").length;
       const runsEl = document.getElementById("deliv-kpi-runs");
+      const todayEl = document.getElementById("deliv-kpi-today");
       const earnEl = document.getElementById("deliv-kpi-earnings");
       if (runsEl) runsEl.innerText = deliveredCount;
+      if (todayEl) todayEl.innerText = "₹" + (deliveredCount * 75);
       if (earnEl) earnEl.innerText = "₹" + (deliveredCount * 75);
+
+      renderDeliveryWeeklyBars();
 
       const listEl = document.getElementById("delivery-dispatch-list");
       if (!listEl) return;
@@ -2209,16 +2403,21 @@ template_html = r"""<!DOCTYPE html>
                 <span class="text-slate-400 block text-[11px]">Demo OTP Reference: <span class="font-mono text-cyan-400">${escHtml(o.delivery_otp || '123456')}</span></span>
               </div>
             </div>
-            ${!isDone ? `
-              <div class="pt-1">
-                <button onclick="openOtpModal('${escHtml(o.id)}')" class="w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/20">
+            <div class="flex flex-wrap items-center gap-2 pt-1">
+              ${o.order_status !== 'DELIVERED' && o.order_status !== 'IN_TRANSIT' ? `
+                <button onclick="acceptDeliveryRun('${escHtml(o.id)}')" class="py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs cursor-pointer shadow-md transition-all">
+                  Accept Run
+                </button>
+              ` : ''}
+              ${!isDone ? `
+                <button onclick="openOtpModal('${escHtml(o.id)}')" class="flex-1 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/20 transition-all">
                   <i data-lucide="shield-check" class="h-4 w-4"></i>
                   <span>Verify Patient Delivery OTP &amp; Complete Handoff</span>
                 </button>
-              </div>
-            ` : `
-              <div class="text-center text-xs text-emerald-400 font-bold py-1">Completed &amp; Signed Off via Patient OTP</div>
-            `}
+              ` : `
+                <div class="text-center text-xs text-emerald-400 font-bold py-1 w-full">Completed &amp; Signed Off via Patient OTP</div>
+              `}
+            </div>
           </div>
         `;
       }).join("");
