@@ -10,6 +10,8 @@ from pathlib import Path
 from typing import Mapping, Any
 from app.config import Config
 from app.database import query_db
+from app.services.clinical_fuzzy_matcher import ClinicalFuzzyMatcher
+from app.services.crnn_onnx_predictor import CRNNOnnxPredictor
 
 class OCRService:
     @staticmethod
@@ -44,7 +46,17 @@ class OCRService:
         except Exception:
             pass
 
-        # Tier 2: Tesseract if configured or available
+        # Tier 2: MediApp Custom Character-Level CRNN Neural OCR (ONNX Runtime)
+        try:
+            crnn_predictor = CRNNOnnxPredictor()
+            if crnn_predictor.is_available:
+                crnn_text, crnn_conf = crnn_predictor.predict(file_path)
+                if crnn_text and len(crnn_text) >= 2:
+                    return crnn_text, "crnn_onnx"
+        except Exception:
+            pass
+
+        # Tier 3: Tesseract if configured or available
         tesseract_cmd = Config.TESSERACT_CMD
         if tesseract_cmd:
             import pytesseract
@@ -102,8 +114,22 @@ class OCRService:
             prescription_date = date_match.group(1)
             confidence += 0.10
 
-        # Match against actual database catalogue medicines with strict proximity strength awareness
-        known_meds = query_db("SELECT name, generic_name, strength FROM medicines")
+        # 1. Match against genuine 1,250+ SKU dispensary catalogue via ClinicalFuzzyMatcher
+        # Handles noisy OCR ligatures (e.g. 'Dl 650' -> 'Dolo 650mg', 'Augmntn' -> 'Augmentin 625 Duo')
+        matched_formulations = []
+        try:
+            fuzzy_results = ClinicalFuzzyMatcher.match_prescription_lines(text, threshold=0.68)
+            for res in fuzzy_results:
+                clean_name = re.sub(r"\s*\(Strip of \d+ Tablets\)", "", res["name"]).strip()
+                if clean_name not in detected_medicines:
+                    detected_medicines.append(clean_name)
+                    confidence += 0.08
+                matched_formulations.append(res)
+        except Exception:
+            pass
+
+        # 2. Match against actual database catalogue medicines with strict proximity strength awareness
+        known_meds = query_db("SELECT id, name, generic_name, strength, category, mrp, prescription_required, requires_cold_chain FROM medicines")
         for med in known_meds:
             base_name = med["name"].split()[0].lower()
             if len(base_name) >= 4:
@@ -150,6 +176,7 @@ class OCRService:
             "patient_name": patient_name or "Not clearly detected",
             "prescription_date": prescription_date or "Not clearly detected",
             "extracted_medicines": detected_medicines,
+            "matched_formulations": matched_formulations,
             "confidence": confidence
         }
 
