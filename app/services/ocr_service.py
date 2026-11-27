@@ -50,7 +50,7 @@ class OCRService:
         try:
             crnn_predictor = CRNNOnnxPredictor()
             if crnn_predictor.is_available:
-                crnn_text, crnn_conf = crnn_predictor.predict(file_path)
+                crnn_text, crnn_conf = crnn_predictor.predict_document(file_path)
                 if crnn_text and len(crnn_text) >= 2:
                     return crnn_text, "crnn_onnx"
         except Exception:
@@ -129,13 +129,20 @@ class OCRService:
             pass
 
         # 2. Match against actual database catalogue medicines with strict proximity strength awareness
+        # Filter out header lines so clinician credentials and names never match medicines
+        body_lines = [
+            line for line in text.splitlines()
+            if not re.search(r"(?:\bDr\.?|\bDoctor|\bPatient|\bPt\.?|\bName|\bDate|\bHospital|\bClinic|\bMBBS|\bMD\b|\bMS\b|\bReg\.?)\b", line, re.IGNORECASE)
+        ]
+        body_text = "\n".join(body_lines)
+
         known_meds = query_db("SELECT id, name, generic_name, strength, category, mrp, prescription_required, requires_cold_chain FROM medicines")
         for med in known_meds:
             base_name = med["name"].split()[0].lower()
             if len(base_name) >= 4:
                 # Find occurrences of base_name and check proximate dosage/strength
                 pattern = rf"\b{re.escape(base_name)}\b[^\n\r,;]*?(\d+\s*(?:mg|ml|mcg|gm|iu|units?))\b"
-                proximate_match = re.search(pattern, text, re.IGNORECASE)
+                proximate_match = re.search(pattern, body_text, re.IGNORECASE)
                 med_strength = re.sub(r"\s+", "", (med.get("strength") or "").lower())
 
                 if proximate_match:
@@ -145,7 +152,7 @@ class OCRService:
                         continue
 
                 # If no proximate strength was found, check if base_name exists at all
-                if re.search(rf"\b{re.escape(base_name)}\b", text, re.IGNORECASE):
+                if re.search(rf"\b{re.escape(base_name)}\b", body_text, re.IGNORECASE):
                     clean_name = re.sub(r"\s*\(Strip of \d+ Tablets\)", "", med["name"]).strip()
                     if clean_name not in detected_medicines:
                         detected_medicines.append(clean_name)
@@ -153,9 +160,9 @@ class OCRService:
                     
             # Check generic molecule name with proximity strength check
             gen_base = med["generic_name"].split()[0].lower()
-            if len(gen_base) >= 5 and re.search(rf"\b{re.escape(gen_base)}\b", text, re.IGNORECASE):
+            if len(gen_base) >= 5 and re.search(rf"\b{re.escape(gen_base)}\b", body_text, re.IGNORECASE):
                 pattern = rf"\b{re.escape(gen_base)}\b[^\n\r,;]*?(\d+\s*(?:mg|ml|mcg|gm|iu|units?))\b"
-                proximate_match = re.search(pattern, text, re.IGNORECASE)
+                proximate_match = re.search(pattern, body_text, re.IGNORECASE)
                 med_strength = re.sub(r"\s+", "", (med.get("strength") or "").lower())
 
                 if proximate_match:

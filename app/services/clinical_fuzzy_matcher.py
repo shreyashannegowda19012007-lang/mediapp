@@ -59,6 +59,17 @@ def extract_dosage_strength(text: str) -> Optional[str]:
     return None
 
 
+MEDICAL_STOPWORDS = {
+    "mg", "ml", "mcg", "gm", "g", "iu", "units", "unit",
+    "tab", "tabs", "tablet", "tablets", "cap", "caps", "capsule", "capsules",
+    "syrup", "suspension", "drops", "inj", "injection", "ointment", "cream", "gel",
+    "od", "bd", "tds", "qid", "sos", "hs", "po", "prn", "stat",
+    "take", "after", "before", "food", "meals", "meal", "daily", "times",
+    "dr", "doctor", "patient", "pt", "name", "date", "age", "sex", "male", "female",
+    "clinic", "hospital", "dispensary", "rx", "mbbs", "md", "ms", "dnb", "reg", "no"
+}
+
+
 class ClinicalFuzzyMatcher:
     """High-performance clinical catalogue matcher with Levenshtein and dosage resolution."""
 
@@ -152,10 +163,12 @@ class ClinicalFuzzyMatcher:
         query_num_str = query_num.group(0) if query_num else None
 
         # Clean query alphabetic core
-        words = re.findall(r"[A-Za-z]+", term_lower)
+        words = [w for w in re.findall(r"[A-Za-z]+", term_lower) if w not in MEDICAL_STOPWORDS]
         if not words:
             return None
         core_query = words[0]
+        if core_query in MEDICAL_STOPWORDS or len(core_query) < 2:
+            return None
 
         best_match = None
         best_score = 0.0
@@ -246,8 +259,8 @@ class ClinicalFuzzyMatcher:
         lines = [line.strip() for line in re.split(r"[\r\n;,]+", text) if line.strip()]
 
         for line in lines:
-            # Skip lines that are purely doctor/patient headers or dates
-            if re.search(r"^(Dr\.|Doctor|Patient|Name|Date|Age|Sex|Hospital|Clinic)\b", line, re.IGNORECASE):
+            # Skip lines that are purely doctor/patient headers, dates, hospital names, or credentials
+            if re.search(r"(?:\bDr\.?|\bDoctor|\bPatient|\bPt\.?|\bName|\bDate|\bAge|\bSex|\bHospital|\bClinic|\bMBBS|\bMD\b|\bMS\b|\bReg\.?)\b", line, re.IGNORECASE):
                 continue
 
             match = cls.match_term(line, threshold=threshold)
@@ -260,8 +273,9 @@ class ClinicalFuzzyMatcher:
             words = line.split()
             if len(words) > 1:
                 for w in words:
-                    if len(w) >= 3 and not re.match(r"^\d+$", w):
-                        sub_match = cls.match_term(w, threshold=threshold)
+                    w_clean = re.sub(r"[^A-Za-z0-9]", "", w)
+                    if len(w_clean) >= 4 and not re.match(r"^\d+$", w_clean) and w_clean.lower() not in MEDICAL_STOPWORDS:
+                        sub_match = cls.match_term(w_clean, threshold=threshold)
                         if sub_match and sub_match["medicine_id"] not in seen_ids:
                             seen_ids.add(sub_match["medicine_id"])
                             results.append(sub_match)

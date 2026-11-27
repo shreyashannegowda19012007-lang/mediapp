@@ -221,16 +221,48 @@ if "oauth_error" not in st.session_state:
 if "target_role" not in st.session_state:
     st.session_state["target_role"] = "landing"
 
-# Handle OAuth redirects and portal navigation on top-level Streamlit URL
-_qp = st.query_params
-if "portal" in _qp:
-    _portal_val = _qp.get("portal", "")
-    if isinstance(_portal_val, list):
-        _portal_val = _portal_val[0] if _portal_val else ""
-    _portal_req = str(_portal_val).strip("[]'\" ").lower()
-    if _portal_req in ["customer", "pharmacy", "admin", "delivery", "landing"]:
-        st.session_state["target_role"] = _portal_req
+# Handle OAuth redirects and direct portal navigation on top-level Streamlit URL
+def _extract_requested_portal() -> str:
+    candidates = ["portal", "role", "view", "p"]
+    # 1. Check st.query_params with case-insensitive normalization and list unwrapping
+    try:
+        raw_dict = st.query_params.to_dict()
+        qp_norm = {str(k).lower().lstrip("?"): v for k, v in raw_dict.items()}
+        for c in candidates:
+            if c in qp_norm and qp_norm[c]:
+                val = qp_norm[c]
+                if isinstance(val, (list, tuple)):
+                    val = val[0] if val else ""
+                clean = str(val).strip("[]'\" ").lower()
+                if clean in ["customer", "pharmacy", "admin", "delivery", "landing"]:
+                    return clean
+    except Exception:
+        pass
 
+    try:
+        for c in candidates:
+            val = st.query_params.get(c, "")
+            if isinstance(val, (list, tuple)):
+                val = val[0] if val else ""
+            clean = str(val).strip("[]'\" ").lower()
+            if clean in ["customer", "pharmacy", "admin", "delivery", "landing"]:
+                return clean
+    except Exception:
+        pass
+
+    if "target_role" in st.session_state and st.session_state["target_role"] in [
+        "customer", "pharmacy", "admin", "delivery", "landing"
+    ]:
+        return st.session_state["target_role"]
+
+    return "landing"
+
+
+_requested_portal = _extract_requested_portal()
+st.session_state["target_role"] = _requested_portal
+target_role = _requested_portal
+
+_qp = st.query_params
 if "logout" in _qp:
     st.session_state["google_user"] = None
     st.session_state["oauth_error"] = None
@@ -386,6 +418,7 @@ template_html = r"""<!DOCTYPE html>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MediApp Clinical Network</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230284c7'><circle cx='12' cy='12' r='10'/></svg>">
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -665,29 +698,32 @@ template_html = r"""<!DOCTYPE html>
       <!-- Central Workspace Card with 3 Tabs -->
       <div class="w-full bg-[#0a101d] border border-slate-800/80 rounded-2xl p-4 sm:p-7 shadow-2xl shadow-black/60">
         <!-- Top 3 Segmented Tabs matching localhost -->
-        <div class="flex items-center justify-center gap-2 sm:gap-6 border-b border-slate-800 pb-4 mb-6">
+        <div class="flex items-center justify-center gap-2 sm:gap-6 border-b border-slate-800 pb-4 mb-6 select-none">
           <button
+            type="button"
             id="cust-tab-btn-search"
             onclick="switchCustomerTab('search')"
-            class="customer-tab-btn relative pb-2 px-3 sm:px-4 text-xs sm:text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer text-cyan-400 border-b-2 border-cyan-400"
+            class="customer-tab-btn relative pb-2 px-3 sm:px-4 text-xs sm:text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer select-none text-cyan-400 border-b-2 border-cyan-400"
           >
             <i data-lucide="search" class="h-4 w-4"></i>
             <span>A-Z Brand Search</span>
           </button>
 
           <button
+            type="button"
             id="cust-tab-btn-scanner"
             onclick="switchCustomerTab('scanner')"
-            class="customer-tab-btn relative pb-2 px-3 sm:px-4 text-xs sm:text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer text-slate-400 hover:text-slate-200 border-b-2 border-transparent"
+            class="customer-tab-btn relative pb-2 px-3 sm:px-4 text-xs sm:text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer select-none text-slate-400 hover:text-slate-200 border-b-2 border-transparent"
           >
             <i data-lucide="camera" class="h-4 w-4"></i>
             <span>AI Prescription Scanner</span>
           </button>
 
           <button
+            type="button"
             id="cust-tab-btn-ailment"
             onclick="switchCustomerTab('ailment')"
-            class="customer-tab-btn relative pb-2 px-3 sm:px-4 text-xs sm:text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer text-slate-400 hover:text-slate-200 border-b-2 border-transparent"
+            class="customer-tab-btn relative pb-2 px-3 sm:px-4 text-xs sm:text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer select-none text-slate-400 hover:text-slate-200 border-b-2 border-transparent"
           >
             <i data-lucide="sparkles" class="h-4 w-4"></i>
             <span>AI Ailment Specialist</span>
@@ -705,7 +741,11 @@ template_html = r"""<!DOCTYPE html>
               id="med-search-input"
               type="text"
               oninput="handleSearch(this.value)"
-              placeholder="[ Search 250,000+ brands (e.g. Augmentin, Dolo, Pan-D, Azee, Allegra)... ]"
+              placeholder="Search 1,250+ brands (e.g. Dolo, Augmentin, Pantocid) or active molecule..."
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
               class="w-full bg-[#070d18] border border-slate-700/80 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-xl pl-12 pr-4 py-3.5 text-xs sm:text-sm text-slate-100 placeholder-slate-500 transition-all outline-none"
             />
           </div>
@@ -1179,14 +1219,14 @@ template_html = r"""<!DOCTYPE html>
   <!-- MODAL: CART SLIDE-OVER DRAWER              -->
   <!-- ========================================== -->
   <div id="cart-drawer-backdrop" onclick="toggleCart()" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity hidden"></div>
-  <div id="cart-drawer" class="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-[#0b1220] border-l border-slate-800/90 shadow-2xl p-6 flex flex-col justify-between transform translate-x-full transition-transform duration-300 ease-in-out">
+  <div id="cart-drawer" aria-hidden="true" class="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-[#0b1220] border-l border-slate-800/90 shadow-2xl p-6 flex flex-col justify-between transform translate-x-full hidden pointer-events-none transition-transform duration-300 ease-in-out">
     <div class="flex-1 overflow-y-auto pr-1">
       <div class="flex items-center justify-between pb-4 border-b border-slate-800">
         <div class="flex items-center gap-2">
           <i data-lucide="shopping-bag" class="h-5 w-5 text-cyan-400"></i>
           <h3 class="font-bold text-base text-white font-heading">Your Medicine Cart</h3>
         </div>
-        <button onclick="toggleCart()" class="p-1 rounded-lg text-slate-400 hover:text-white cursor-pointer">
+        <button type="button" onclick="toggleCart()" aria-label="Close cart drawer" class="p-1 rounded-lg text-slate-400 hover:text-white cursor-pointer z-50">
           <i data-lucide="x" class="h-5 w-5"></i>
         </button>
       </div>
@@ -1380,6 +1420,16 @@ template_html = r"""<!DOCTYPE html>
       if (target) {
         target.classList.add("active");
         window.scrollTo(0, 0);
+      }
+      // Ensure cart drawer is completely closed and hidden when not in customer portal
+      if (portalName !== "customer") {
+        const drawer = document.getElementById("cart-drawer");
+        const backdrop = document.getElementById("cart-drawer-backdrop");
+        if (drawer) {
+          drawer.classList.add("translate-x-full", "hidden", "pointer-events-none");
+          drawer.setAttribute("aria-hidden", "true");
+        }
+        if (backdrop) backdrop.classList.add("hidden");
       }
       try {
         if (window.top && window.top !== window) {
@@ -1624,23 +1674,28 @@ template_html = r"""<!DOCTYPE html>
 
         if (globalMatches.length > 0 && activeCategory !== "All") {
           grid.innerHTML = `
-            <div class="col-span-full py-8 text-center text-slate-400 text-xs bg-[#0e1626]/60 border border-slate-800 rounded-2xl p-6 space-y-3">
+            <div class="col-span-full py-8 text-center text-slate-400 text-xs bg-[#0e1626]/80 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
               <div class="text-sm font-semibold text-white">
                 No formulations matching "<strong class="text-cyan-400">${escHtml(searchQuery)}</strong>" found in the <span class="text-amber-400 font-bold">${escHtml(activeCategory)}</span> category.
               </div>
               <p class="text-slate-400 text-xs">
                 Found <strong class="text-emerald-400 font-bold">${globalMatches.length}</strong> matching formulation${globalMatches.length === 1 ? '' : 's'} across other categories!
               </p>
-              <button onclick="filterCategory('All')" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs cursor-pointer shadow-lg shadow-cyan-500/20">
-                View All ${globalMatches.length} Results
-              </button>
+              <div class="flex flex-wrap items-center justify-center gap-3">
+                <button type="button" onclick="filterCategory('All')" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs cursor-pointer shadow-lg shadow-cyan-500/20 transition-all">
+                  View All ${globalMatches.length} Matches in Catalogue
+                </button>
+                <button type="button" onclick="setQuickSearch('')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs cursor-pointer border border-slate-700 transition-all">
+                  Clear Search &amp; Browse ${escHtml(activeCategory)}
+                </button>
+              </div>
             </div>
           `;
         } else {
           grid.innerHTML = `
             <div class="col-span-full py-12 text-center text-slate-500 text-xs space-y-2">
-              <p>No formulations match your search criteria.</p>
-              <p class="text-slate-600 text-[11px]">Try searching by active molecule (e.g. Paracetamol, Amoxicillin, Pantoprazole, Amlodipine).</p>
+              <p class="text-sm font-semibold text-slate-400">No formulations match your search criteria.</p>
+              <p class="text-slate-500 text-xs">Try searching by active molecule (e.g. Paracetamol, Amoxicillin, Pantoprazole, Amlodipine).</p>
             </div>
           `;
         }
@@ -1726,12 +1781,16 @@ template_html = r"""<!DOCTYPE html>
     function toggleCart() {
       const drawer = document.getElementById("cart-drawer");
       const backdrop = document.getElementById("cart-drawer-backdrop");
-      if (drawer.classList.contains("translate-x-full")) {
-        drawer.classList.remove("translate-x-full");
-        backdrop.classList.remove("hidden");
+      if (!drawer) return;
+      const isClosed = drawer.classList.contains("translate-x-full") || drawer.classList.contains("hidden");
+      if (isClosed) {
+        drawer.classList.remove("translate-x-full", "hidden", "pointer-events-none");
+        drawer.setAttribute("aria-hidden", "false");
+        if (backdrop) backdrop.classList.remove("hidden");
       } else {
-        drawer.classList.add("translate-x-full");
-        backdrop.classList.add("hidden");
+        drawer.classList.add("translate-x-full", "hidden", "pointer-events-none");
+        drawer.setAttribute("aria-hidden", "true");
+        if (backdrop) backdrop.classList.add("hidden");
       }
     }
 
@@ -2484,7 +2543,7 @@ template_html = r"""<!DOCTYPE html>
       let requestedPortal = INITIAL_PORTAL;
       try {
         const urlParams = new URLSearchParams(window.location.search);
-        const p = urlParams.get("portal");
+        const p = urlParams.get("portal") || urlParams.get("role") || urlParams.get("view");
         if (p && ["customer", "pharmacy", "admin", "delivery", "landing"].includes(p.toLowerCase())) {
           requestedPortal = p.toLowerCase();
         }
@@ -2492,9 +2551,18 @@ template_html = r"""<!DOCTYPE html>
       try {
         if (window.top && window.top !== window && window.top.location && window.top.location.search) {
           const topParams = new URLSearchParams(window.top.location.search);
-          const topP = topParams.get("portal");
+          const topP = topParams.get("portal") || topParams.get("role") || topParams.get("view");
           if (topP && ["customer", "pharmacy", "admin", "delivery", "landing"].includes(topP.toLowerCase())) {
             requestedPortal = topP.toLowerCase();
+          }
+        }
+      } catch (e) {}
+      try {
+        if (window.parent && window.parent !== window && window.parent.location && window.parent.location.search) {
+          const parentParams = new URLSearchParams(window.parent.location.search);
+          const parentP = parentParams.get("portal") || parentParams.get("role") || parentParams.get("view");
+          if (parentP && ["customer", "pharmacy", "admin", "delivery", "landing"].includes(parentP.toLowerCase())) {
+            requestedPortal = parentP.toLowerCase();
           }
         }
       } catch (e) {}
@@ -2508,16 +2576,26 @@ template_html = r"""<!DOCTYPE html>
       try { renderDeliveryView(); } catch (e) { console.error("renderDeliveryView error:", e); }
       try { if (window.lucide) lucide.createIcons(); } catch (e) {}
 
-      if (requestedPortal && requestedPortal !== "landing") {
-        switchPortal(requestedPortal);
-      } else if (INITIAL_PORTAL) {
-        switchPortal(INITIAL_PORTAL);
-      }
+      const effectivePortal = (requestedPortal && requestedPortal !== "landing")
+        ? requestedPortal
+        : ((INITIAL_PORTAL && INITIAL_PORTAL !== "landing") ? INITIAL_PORTAL : "landing");
+      switchPortal(effectivePortal);
       const oauthErr = __OAUTH_ERROR__;
       if (oauthErr) {
         showToast("Google Sign-In Alert: " + oauthErr, false);
       }
     }
+
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape") {
+        const drawer = document.getElementById("cart-drawer");
+        if (drawer && !drawer.classList.contains("hidden")) {
+          toggleCart();
+        }
+        try { closeAdminModal(); } catch (err) {}
+        try { closeOtpModal(); } catch (err) {}
+      }
+    });
 
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", init);

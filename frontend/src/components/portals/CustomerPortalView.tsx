@@ -338,6 +338,10 @@ export function CustomerPortalView({ onBackToPortals, onOpenCart }: CustomerPort
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="[ Search 250,000+ brands (e.g. Augmentin, Dolo, Pan-D, Azee, Allegra)... ]"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
                   className="w-full bg-[#070d18] border border-slate-700/80 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-xl pl-12 pr-4 py-3.5 text-xs sm:text-sm text-slate-100 placeholder-slate-500 transition-all outline-none"
                 />
                 {isSearching && (

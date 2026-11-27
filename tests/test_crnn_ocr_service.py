@@ -140,6 +140,37 @@ def test_crnn_onnx_real_image_inference():
 
 
 
+def test_crnn_blank_canvas_rejection():
+    """Verifies that blank white or solid black canvases are rejected without CTC hallucination."""
+    predictor = CRNNOnnxPredictor()
+    blank_white = Image.new("RGB", (200, 50), color=(255, 255, 255))
+    text_w, conf_w = predictor.predict(blank_white)
+    assert text_w == ""
+    assert conf_w == 0.0
+
+    solid_black = Image.new("RGB", (200, 50), color=(0, 0, 0))
+    text_b, conf_b = predictor.predict(solid_black)
+    assert text_b == ""
+    assert conf_b == 0.0
+
+
+def test_crnn_document_segmentation():
+    """Verifies that multi-line prescriptions are segmented into horizontal line crops."""
+    predictor = CRNNOnnxPredictor()
+    import cv2
+    canvas = np.ones((400, 300), dtype=np.uint8) * 255
+    cv2.putText(canvas, "Dolo 650mg", (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.8, 0, 2)
+    cv2.putText(canvas, "Augmentin 625", (30, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.8, 0, 2)
+    pil_canvas = Image.fromarray(canvas)
+
+    crops = predictor.segment_text_lines(pil_canvas)
+    assert len(crops) >= 2, "Should detect at least 2 distinct horizontal text lines."
+
+    full_text, avg_conf = predictor.predict_document(pil_canvas)
+    assert isinstance(full_text, str)
+    assert 0.0 <= avg_conf <= 1.0
+
+
 def test_ocr_service_parse_prescription_entities():
     """Verifies end-to-end OCR entity extraction with fuzzy catalogue linkage."""
     raw_ocr = """
