@@ -29,6 +29,11 @@ export default function Home() {
       const role = params.get("role");
       const authError = params.get("auth_error");
 
+      const portalParam = params.get("portal");
+      if (portalParam && ["customer", "pharmacy", "admin", "delivery"].includes(portalParam.toLowerCase())) {
+        setCurrentPortal(portalParam.toLowerCase() as PortalType);
+      }
+
       if (token) {
         localStorage.setItem("mediapp_token", token);
       }

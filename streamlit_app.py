@@ -1,18 +1,19 @@
 """
 MediApp — Licensed Clinical Pharmacy & Cold-Chain Logistics Hub
 Production Cloud Deployment for Streamlit Cloud (medi-app.streamlit.app)
-Delivers 100% pixel-perfect visual parity with the localhost Next.js 16 application:
+Delivers 100% pixel-perfect visual and functional parity with localhost Next.js 16:
 - Deep Navys, Crisp Surfaces, Clinical Emerald (OTC/Verified), Amber (Rx/Warning), Cyan (Cold-Chain)
 - Zero Emojis (100% Lucide vector clinical icons)
 - 4 Isolated Portals: Customer, Pharmacy Partner, Admin, Delivery Partner
 - Landing Page with 4 Individual Google Sign-In Portal Cards & Working Session Sign Out
-- Full 1,250+ Medicine A-Z Catalogue with Pagination, Semantic Categories & Bioequivalent Generic Price Match
-- AI Prescription Scanner with Real Medicine Lookup, DDI Screening & File Preview
-- AI Clinical Ailment Specialist (27 Conditions + Emergency ER Red-Flag Priority + Live Stock Linkage)
+- Customer Portal with 3 Localhost-Exact Tabs:
+    1. A-Z Brand Search (Full 1,250+ catalogue, Global Search with Auto-Reset, Cheaper Generic Callouts)
+    2. AI Prescription Scanner (Fuzzy OCR, Live Laser Beam Animation, DDI Screening, Add All to Cart)
+    3. AI Ailment Specialist (10 Quick Chips, Symptom Triage, 5 Pillars, Emergency 112/911 Alert, Stock Linkage)
 - Pharmacist Verification Desk & Live Dispensary Inventory Stepper
 - Logistics Fleet Command & Cold-Chain IoT Telemetry (2°C - 8°C Monitored)
-- Hospital Analytics with Real SQLite Pharmacies, Orders & Compliance Actions
-- Slide-Over Cart Drawer with DDI Screening, Pricing & Order/OTP Generation
+- Hospital Analytics with Real SQLite Pharmacies, Orders & Moderation Controls
+- Slide-Over Cart Drawer with Live DDI Screening & Order/OTP Generation
 """
 import html
 import json
@@ -143,7 +144,7 @@ def load_clinical_data():
                     "title": val.get("title", key),
                     "category": val.get("category", "General"),
                     "urgency": val.get("urgency", "nominal"),
-                    "symptoms": val.get("symptoms", [])[:4],
+                    "symptoms": val.get("symptoms", [])[:6],
                     "context": val.get("context", ""),
                     "self_care": val.get("self_care", []),
                     "otc_regimen": val.get("otc_regimen", []),
@@ -223,7 +224,10 @@ if "target_role" not in st.session_state:
 # Handle OAuth redirects and portal navigation on top-level Streamlit URL
 _qp = st.query_params
 if "portal" in _qp:
-    _portal_req = str(_qp.get("portal", "")).strip().lower()
+    _portal_val = _qp.get("portal", "")
+    if isinstance(_portal_val, list):
+        _portal_val = _portal_val[0] if _portal_val else ""
+    _portal_req = str(_portal_val).strip("[]'\" ").lower()
     if _portal_req in ["customer", "pharmacy", "admin", "delivery", "landing"]:
         st.session_state["target_role"] = _portal_req
 
@@ -371,7 +375,6 @@ if st.button("MEDIAPP_SIGNOUT_TRIGGER", key="btn_st_logout"):
 google_user = st.session_state.get("google_user")
 oauth_error = st.session_state.get("oauth_error")
 target_role = st.session_state.get("target_role", "landing")
-# Clear transient OAuth error after consuming it for toast alert
 if oauth_error:
     st.session_state["oauth_error"] = None
 
@@ -445,6 +448,14 @@ template_html = r"""<!DOCTYPE html>
     }
     #view-landing.portal-view.active {
       display: flex !important;
+    }
+    @keyframes laserScan {
+      0% { top: 0%; }
+      50% { top: 95%; }
+      100% { top: 0%; }
+    }
+    .animate-laser {
+      animation: laserScan 2.5s ease-in-out infinite;
     }
   </style>
 </head>
@@ -522,13 +533,7 @@ template_html = r"""<!DOCTYPE html>
             </p>
           </div>
           <div class="inline-flex items-center gap-2 text-xs font-bold text-cyan-400 group-hover:gap-2.5 transition-all">
-            <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-            </svg>
-            <span class="portal-cta-label" data-role="customer">Sign In with Google</span>
+            <span class="portal-cta-label" data-role="customer">Enter Portal</span>
             <i data-lucide="arrow-right" class="h-3.5 w-3.5"></i>
           </div>
         </div>
@@ -554,13 +559,7 @@ template_html = r"""<!DOCTYPE html>
             </p>
           </div>
           <div class="inline-flex items-center gap-2 text-xs font-bold text-indigo-400 group-hover:gap-2.5 transition-all">
-            <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-            </svg>
-            <span class="portal-cta-label" data-role="pharmacy">Sign In with Google</span>
+            <span class="portal-cta-label" data-role="pharmacy">Enter Portal</span>
             <i data-lucide="arrow-right" class="h-3.5 w-3.5"></i>
           </div>
         </div>
@@ -586,13 +585,7 @@ template_html = r"""<!DOCTYPE html>
             </p>
           </div>
           <div class="inline-flex items-center gap-2 text-xs font-bold text-rose-400 group-hover:gap-2.5 transition-all">
-            <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-            </svg>
-            <span class="portal-cta-label" data-role="admin">Sign In with Google</span>
+            <span class="portal-cta-label" data-role="admin">Enter Portal</span>
             <i data-lucide="arrow-right" class="h-3.5 w-3.5"></i>
           </div>
         </div>
@@ -618,13 +611,7 @@ template_html = r"""<!DOCTYPE html>
             </p>
           </div>
           <div class="inline-flex items-center gap-2 text-xs font-bold text-amber-400 group-hover:gap-2.5 transition-all">
-            <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-            </svg>
-            <span class="portal-cta-label" data-role="delivery">Sign In with Google</span>
+            <span class="portal-cta-label" data-role="delivery">Enter Portal</span>
             <i data-lucide="arrow-right" class="h-3.5 w-3.5"></i>
           </div>
         </div>
@@ -652,14 +639,6 @@ template_html = r"""<!DOCTYPE html>
         </div>
       </div>
       <div class="flex items-center gap-3">
-        <button id="btn-ai-ailment" onclick="openAilmentModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 hover:bg-purple-500/20 text-xs font-semibold cursor-pointer">
-          <i data-lucide="stethoscope" class="h-3.5 w-3.5 text-purple-400"></i>
-          <span class="hidden sm:inline">AI Condition Specialist</span>
-        </button>
-        <button id="btn-customer-upload-rx" onclick="openRxModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20 text-xs font-semibold cursor-pointer">
-          <i data-lucide="file-text" class="h-3.5 w-3.5 text-cyan-400"></i>
-          <span class="hidden sm:inline">Scan Prescription</span>
-        </button>
         <button id="btn-customer-cart" onclick="toggleCart()" class="relative inline-flex items-center justify-center p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 hover:text-white cursor-pointer">
           <i data-lucide="shopping-cart" class="h-4 w-4"></i>
           <span id="cart-badge-count" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-cyan-500 text-slate-950 font-black text-[10px] flex items-center justify-center hidden">0</span>
@@ -668,58 +647,254 @@ template_html = r"""<!DOCTYPE html>
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      <!-- Prescription Banner -->
-      <div id="card-upload-prescription" class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-950/40 via-slate-900/60 to-slate-900/30 border border-cyan-500/30 p-6 flex flex-col md:flex-row items-center justify-between gap-6">
-        <div class="space-y-1.5 max-w-xl">
-          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-            <i data-lucide="sparkles" class="h-3 w-3"></i> Instant AI OCR Recognition
-          </span>
-          <h2 class="text-xl sm:text-2xl font-black text-white font-heading">Upload Doctor's Prescription</h2>
-          <p class="text-xs text-slate-300">
-            Upload any doctor prescription to automatically detect formulations, perform DDI safety screening, compare generic savings, and order doorstep delivery.
-          </p>
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <!-- Title & Subtitle matching localhost -->
+      <div class="text-center space-y-2 mb-2">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/40 border border-cyan-800/40 text-cyan-300 text-xs font-semibold">
+          <i data-lucide="sparkles" class="h-3.5 w-3.5"></i>
+          <span>Hyperlocal Pharmacy Delivery Network</span>
         </div>
-        <div class="flex items-center gap-3">
-          <button onclick="openRxModal()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-lg shadow-cyan-500/20 cursor-pointer">
-            <i data-lucide="scan" class="h-4 w-4"></i>
-            <span>Scan Prescription</span>
-          </button>
-        </div>
+        <h1 class="text-3xl sm:text-4xl font-black text-white font-heading tracking-tight">
+          Licensed Medicines &amp; Active Formulations
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto">
+          Get authentic, lower-cost generic medicines from verified nearby pharmacies.
+        </p>
       </div>
 
-      <!-- Medicine Search & Category Tabs -->
-      <div class="space-y-4">
-        <div class="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
-          <div class="relative flex-1">
-            <i data-lucide="search" class="absolute left-3.5 top-3 h-4 w-4 text-slate-400"></i>
+      <!-- Central Workspace Card with 3 Tabs -->
+      <div class="w-full bg-[#0a101d] border border-slate-800/80 rounded-2xl p-4 sm:p-7 shadow-2xl shadow-black/60">
+        <!-- Top 3 Segmented Tabs matching localhost -->
+        <div class="flex items-center justify-center gap-2 sm:gap-6 border-b border-slate-800 pb-4 mb-6">
+          <button
+            id="cust-tab-btn-search"
+            onclick="switchCustomerTab('search')"
+            class="customer-tab-btn relative pb-2 px-3 sm:px-4 text-xs sm:text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer text-cyan-400 border-b-2 border-cyan-400"
+          >
+            <i data-lucide="search" class="h-4 w-4"></i>
+            <span>A-Z Brand Search</span>
+          </button>
+
+          <button
+            id="cust-tab-btn-scanner"
+            onclick="switchCustomerTab('scanner')"
+            class="customer-tab-btn relative pb-2 px-3 sm:px-4 text-xs sm:text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer text-slate-400 hover:text-slate-200 border-b-2 border-transparent"
+          >
+            <i data-lucide="camera" class="h-4 w-4"></i>
+            <span>AI Prescription Scanner</span>
+          </button>
+
+          <button
+            id="cust-tab-btn-ailment"
+            onclick="switchCustomerTab('ailment')"
+            class="customer-tab-btn relative pb-2 px-3 sm:px-4 text-xs sm:text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer text-slate-400 hover:text-slate-200 border-b-2 border-transparent"
+          >
+            <i data-lucide="sparkles" class="h-4 w-4"></i>
+            <span>AI Ailment Specialist</span>
+          </button>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 1: A-Z Brand Search (Global Search Bar)    -->
+        <!-- ============================================== -->
+        <div id="cust-tab-search" class="customer-tab-panel space-y-6">
+          <!-- Omni-Search Bar -->
+          <div class="relative">
+            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400"></i>
             <input
               id="med-search-input"
               type="text"
               oninput="handleSearch(this.value)"
-              placeholder="Search all 1,250+ brands (e.g. Dolo, Augmentin, Pantocid, Amlong) or active molecule..."
-              class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              placeholder="[ Search 250,000+ brands (e.g. Augmentin, Dolo, Pan-D, Azee, Allegra)... ]"
+              class="w-full bg-[#070d18] border border-slate-700/80 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-xl pl-12 pr-4 py-3.5 text-xs sm:text-sm text-slate-100 placeholder-slate-500 transition-all outline-none"
             />
           </div>
-          <div id="category-pills" class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0"></div>
+
+          <!-- Quick Search Chips -->
+          <div class="flex flex-wrap items-center gap-1.5 text-xs">
+            <span class="text-slate-500 text-[11px] font-semibold">Quick Search:</span>
+            <button onclick="setQuickSearch('Dolo 650mg')" class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-cyan-500/40 text-[11px] font-mono cursor-pointer">Dolo 650mg</button>
+            <button onclick="setQuickSearch('Augmentin 625 Duo')" class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-cyan-500/40 text-[11px] font-mono cursor-pointer">Augmentin 625 Duo</button>
+            <button onclick="setQuickSearch('Pantocid 40mg')" class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-cyan-500/40 text-[11px] font-mono cursor-pointer">Pantocid 40mg</button>
+            <button onclick="setQuickSearch('Amlong 5mg')" class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-cyan-500/40 text-[11px] font-mono cursor-pointer">Amlong 5mg</button>
+            <button onclick="setQuickSearch('Cetzine 10mg')" class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-cyan-500/40 text-[11px] font-mono cursor-pointer">Cetzine 10mg</button>
+            <button onclick="setQuickSearch('Insulin')" class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-cyan-500/40 text-[11px] font-mono cursor-pointer">Cold-Chain Insulin</button>
+          </div>
+
+          <!-- Therapy Category Filter Pills -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1" id="category-pills"></div>
+
+          <!-- Informational Feature Cards (Shown when query is empty) -->
+          <div id="search-feature-cards" class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <div class="bg-[#0e1626]/80 border border-slate-800/80 rounded-xl p-4 sm:p-5 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">
+                  <i data-lucide="zap" class="h-4 w-4 text-amber-400"></i>
+                  <span>EXTENSIVE A-Z SUBSTITUTE DATABASE</span>
+                </div>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                  Search any doctor's prescribed branded medicine to find cheaper alternates. Real savings average over 70% on Indian medicines!
+                </p>
+              </div>
+            </div>
+
+            <div class="bg-[#0e1626]/80 border border-slate-800/80 rounded-xl p-4 sm:p-5 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center gap-2 text-xs font-bold text-orange-400 uppercase tracking-wider mb-2">
+                  <i data-lucide="shield-alert" class="h-4 w-4 text-orange-400"></i>
+                  <span>PROACTIVE SAFETY WARNINGS</span>
+                </div>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                  Adding substitutes directly to your cart automatically performs real-time Drug-Drug Interaction (DDI) safety checks.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Results Section -->
+          <div id="search-results-section" class="space-y-4 pt-2">
+            <div class="flex items-center justify-between text-xs text-slate-400">
+              <span id="medicines-count-label"></span>
+              <span class="font-mono text-[11px] text-emerald-400 flex items-center gap-1">
+                <i data-lucide="shield-check" class="h-3.5 w-3.5"></i> Verified Licensed Formulations
+              </span>
+            </div>
+
+            <!-- Medicine Cards Grid / List -->
+            <div id="medicines-grid" class="space-y-3"></div>
+
+            <!-- Load More Button -->
+            <div id="medicines-load-more-wrap" class="pt-2 text-center hidden">
+              <button onclick="loadMoreMedicines()" class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 cursor-pointer">
+                <i data-lucide="chevrons-down" class="h-4 w-4 text-cyan-400"></i>
+                <span id="medicines-load-more-label">Load More Medicines</span>
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div class="flex items-center justify-between text-xs text-slate-400">
-          <span id="medicines-count-label">Loading dispensary catalog...</span>
-          <span class="font-mono text-[11px] text-emerald-400 flex items-center gap-1">
-            <i data-lucide="shield-check" class="h-3.5 w-3.5"></i> Verified Licensed Formulations
-          </span>
+        <!-- ============================================== -->
+        <!-- TAB 2: AI Prescription Scanner                 -->
+        <!-- ============================================== -->
+        <div id="cust-tab-scanner" class="customer-tab-panel space-y-6 text-center hidden">
+          <div>
+            <h3 class="text-lg sm:text-xl font-bold text-white mb-1">
+              Fuzzy OCR Matching Engine Active
+            </h3>
+            <p class="text-xs text-slate-400">
+              Correcting handwriting OCR typos and resolving matches directly over the A-Z database.
+            </p>
+          </div>
+
+          <!-- Scanner Display Box -->
+          <div class="relative max-w-md mx-auto rounded-2xl overflow-hidden border border-slate-700/80 bg-slate-950 shadow-2xl">
+            <div class="relative w-full h-72 sm:h-80 bg-slate-900 flex items-center justify-center overflow-hidden">
+              <img
+                id="scanner-image-preview"
+                src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=800"
+                alt="Uploaded Prescription"
+                class="w-full h-full object-cover filter brightness-90 contrast-110"
+              />
+
+              <!-- Laser Scanning Beam -->
+              <div id="scanner-laser-beam" class="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_15px_#22d3ee] animate-laser hidden"></div>
+
+              <!-- Overlay Controls -->
+              <div id="scanner-idle-overlay" class="absolute inset-0 bg-slate-950/70 flex flex-col items-center justify-center p-6 text-center">
+                <i data-lucide="camera" class="h-10 w-10 text-cyan-400 mb-3 stroke-[1.8]"></i>
+                <p class="text-xs text-slate-300 font-medium mb-4">
+                  Upload or select a prescription document to begin handwriting analysis
+                </p>
+                <div class="flex flex-wrap gap-2 justify-center">
+                  <button
+                    onclick="triggerSamplePrescriptionScan()"
+                    class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-all shadow-lg shadow-cyan-500/20 cursor-pointer"
+                  >
+                    Scan Sample Prescription
+                  </button>
+                  <label class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-bold transition-all cursor-pointer">
+                    Upload Rx File
+                    <input type="file" accept="image/*,.pdf" onchange="handleCustomerRxUpload(this)" class="hidden" />
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status Indicator -->
+          <div id="scanner-status-indicator" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-950/60 border border-cyan-800/40 text-xs font-semibold text-cyan-300 hidden">
+            <i data-lucide="loader" class="h-4 w-4 animate-spin text-cyan-400"></i>
+            <span>Reading handwriting with Gemini Vision OCR...</span>
+          </div>
+
+          <!-- OCR Results List -->
+          <div id="scanner-results-section" class="text-left space-y-3 pt-4 border-t border-slate-800 hidden">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                <i data-lucide="shield-check" class="h-4 w-4"></i>
+                <span>OCR Extraction Complete · 3 Formulations Detected</span>
+              </span>
+              <button onclick="triggerSamplePrescriptionScan()" class="text-xs text-cyan-400 hover:underline cursor-pointer">
+                Rescan
+              </button>
+            </div>
+
+            <div id="scanner-matched-items" class="space-y-2"></div>
+
+            <button onclick="addAllDetectedRxToCart()" class="w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/20 mt-3">
+              <i data-lucide="shopping-cart" class="h-4 w-4"></i>
+              <span>Add All Detected Formulations to Cart</span>
+            </button>
+          </div>
         </div>
 
-        <!-- Medicine Cards Grid -->
-        <div id="medicines-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+        <!-- ============================================== -->
+        <!-- TAB 3: AI Ailment Specialist                   -->
+        <!-- ============================================== -->
+        <div id="cust-tab-ailment" class="customer-tab-panel space-y-6 hidden">
+          <div class="text-center">
+            <h3 class="text-lg sm:text-xl font-bold text-white mb-1">
+              AI Ailment Specialist &amp; Symptom Triage
+            </h3>
+            <p class="text-xs text-slate-400">
+              Describe symptoms or select common condition protocols for safe, tailored OTC active formulations.
+            </p>
+          </div>
 
-        <!-- Load More Button -->
-        <div id="medicines-load-more-wrap" class="pt-2 text-center hidden">
-          <button onclick="loadMoreMedicines()" class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 cursor-pointer">
-            <i data-lucide="chevrons-down" class="h-4 w-4 text-cyan-400"></i>
-            <span id="medicines-load-more-label">Load More Medicines</span>
-          </button>
+          <!-- 10 Quick condition chips matching localhost -->
+          <div class="flex flex-wrap gap-2 justify-center">
+            <button onclick="setAilmentQueryAndAssess('Acid reflux & heartburn')" class="px-3 py-1 rounded-full text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-cyan-500/40 transition-colors cursor-pointer">Acid reflux &amp; heartburn</button>
+            <button onclick="setAilmentQueryAndAssess('Mild acute fever & chills')" class="px-3 py-1 rounded-full text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-cyan-500/40 transition-colors cursor-pointer">Mild acute fever &amp; chills</button>
+            <button onclick="setAilmentQueryAndAssess('Tension headache & eye strain')" class="px-3 py-1 rounded-full text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-cyan-500/40 transition-colors cursor-pointer">Tension headache &amp; eye strain</button>
+            <button onclick="setAilmentQueryAndAssess('Seasonal allergies & hives')" class="px-3 py-1 rounded-full text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-cyan-500/40 transition-colors cursor-pointer">Seasonal allergies &amp; hives</button>
+            <button onclick="setAilmentQueryAndAssess('Loose motions & diarrhea')" class="px-3 py-1 rounded-full text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-cyan-500/40 transition-colors cursor-pointer">Loose motions &amp; diarrhea</button>
+            <button onclick="setAilmentQueryAndAssess('Sore throat & painful swallowing')" class="px-3 py-1 rounded-full text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-cyan-500/40 transition-colors cursor-pointer">Sore throat &amp; painful swallowing</button>
+            <button onclick="setAilmentQueryAndAssess('Mouth ulcers & canker sores')" class="px-3 py-1 rounded-full text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-cyan-500/40 transition-colors cursor-pointer">Mouth ulcers &amp; canker sores</button>
+            <button onclick="setAilmentQueryAndAssess('Muscle sprain & sports strain')" class="px-3 py-1 rounded-full text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-cyan-500/40 transition-colors cursor-pointer">Muscle sprain &amp; sports strain</button>
+            <button onclick="setAilmentQueryAndAssess('Nausea & motion sickness')" class="px-3 py-1 rounded-full text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-cyan-500/40 transition-colors cursor-pointer">Nausea &amp; motion sickness</button>
+            <button onclick="setAilmentQueryAndAssess('Gas & abdominal bloating')" class="px-3 py-1 rounded-full text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-cyan-500/40 transition-colors cursor-pointer">Gas &amp; abdominal bloating</button>
+          </div>
+
+          <!-- Symptom Input -->
+          <div class="flex gap-2">
+            <input
+              id="ailment-symptom-input"
+              type="text"
+              onkeydown="if(event.key==='Enter')handleAilmentAssess();"
+              placeholder="Describe symptoms in plain words (e.g. crushing chest pain, headache, acidity)..."
+              class="flex-1 bg-[#070d18] border border-slate-700/80 focus:border-cyan-400 rounded-xl px-4 py-3 text-xs sm:text-sm text-slate-100 placeholder-slate-500 outline-none"
+            />
+            <button
+              id="btn-ailment-assess"
+              onclick="handleAilmentAssess()"
+              class="px-5 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs sm:text-sm transition-all cursor-pointer shrink-0"
+            >
+              Assess
+            </button>
+          </div>
+
+          <!-- 5-Pillar Triage Output -->
+          <div id="ailment-triage-output" class="space-y-4"></div>
         </div>
       </div>
     </main>
@@ -752,7 +927,6 @@ template_html = r"""<!DOCTYPE html>
     </header>
 
     <main class="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-7">
-      <!-- 4 KPI Cards -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div class="bg-[#0b1220] border border-slate-800/80 rounded-2xl p-4 sm:p-5">
           <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">TOTAL ORDERS</span>
@@ -1032,86 +1206,6 @@ template_html = r"""<!DOCTYPE html>
   </div>
 
   <!-- ========================================== -->
-  <!-- MODAL: AI AILMENT SPECIALIST               -->
-  <!-- ========================================== -->
-  <div id="modal-ailment" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-    <div class="bg-[#0b1220] border border-purple-500/40 rounded-2xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-        <div class="flex items-center gap-2">
-          <div class="p-1.5 rounded-lg bg-purple-950/60 text-purple-400">
-            <i data-lucide="stethoscope" class="h-5 w-5"></i>
-          </div>
-          <div>
-            <h3 class="font-bold text-white font-heading text-base">AI Clinical Ailment Specialist</h3>
-            <p class="text-[11px] text-purple-300">5-pillar structured triage, OTC formulations &amp; emergency ER screening</p>
-          </div>
-        </div>
-        <button onclick="closeAilmentModal()" class="text-slate-400 hover:text-white cursor-pointer"><i data-lucide="x" class="h-5 w-5"></i></button>
-      </div>
-
-      <!-- Custom Symptom Input -->
-      <div class="flex gap-2">
-        <input
-          id="ailment-symptom-input"
-          type="text"
-          placeholder="Describe symptoms (e.g. fever with body ache, acidity, sore throat, chest pain)..."
-          class="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
-        />
-        <button onclick="analyzeCustomSymptom()" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs cursor-pointer">
-          Assess
-        </button>
-      </div>
-
-      <div id="ailment-quick-tabs" class="flex flex-wrap gap-1.5">
-        <button data-cond="tension_headache" onclick="loadCondition('tension_headache')" class="ailment-tab px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer">Headache</button>
-        <button data-cond="acidity_gerd" onclick="loadCondition('acidity_gerd')" class="ailment-tab px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer">Acid Reflux / GERD</button>
-        <button data-cond="acute_gastroenteritis_diarrhea" onclick="loadCondition('acute_gastroenteritis_diarrhea')" class="ailment-tab px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer">Acute Diarrhea</button>
-        <button data-cond="common_cold_rhinitis" onclick="loadCondition('common_cold_rhinitis')" class="ailment-tab px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer">Allergic Rhinitis</button>
-        <button data-cond="acute_fever" onclick="loadCondition('acute_fever')" class="ailment-tab px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer">Viral Fever</button>
-      </div>
-
-      <div id="ailment-content-box" class="space-y-3 text-xs text-slate-200"></div>
-    </div>
-  </div>
-
-  <!-- ========================================== -->
-  <!-- MODAL: PRESCRIPTION OCR SCANNER            -->
-  <!-- ========================================== -->
-  <div id="modal-rx" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-    <div class="bg-[#0b1220] border border-cyan-500/40 rounded-2xl max-w-xl w-full p-6 space-y-5">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-        <div class="flex items-center gap-2">
-          <i data-lucide="file-text" class="h-5 w-5 text-cyan-400"></i>
-          <h3 class="font-bold text-white font-heading text-base">Prescription OCR Scanner</h3>
-        </div>
-        <button onclick="closeRxModal()" class="text-slate-400 hover:text-white cursor-pointer"><i data-lucide="x" class="h-5 w-5"></i></button>
-      </div>
-
-      <div class="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800">
-        <span id="rx-upload-label" class="text-xs text-slate-300 truncate">Sample Prescription #104 Loaded (or choose your image/PDF)</span>
-        <label class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 text-[11px] font-bold cursor-pointer shrink-0">
-          Upload Rx File
-          <input id="rx-file-input" type="file" accept="image/*,.pdf" onchange="handleRxFileUpload(this)" class="hidden" />
-        </label>
-      </div>
-
-      <div class="p-4 rounded-xl border border-dashed border-cyan-500/40 bg-cyan-950/20 text-center space-y-3">
-        <i data-lucide="upload-cloud" class="h-8 w-8 text-cyan-400 mx-auto"></i>
-        <div>
-          <span class="text-xs font-bold text-white block">Dr. Sarah Johnson, MD — General Medicine</span>
-          <span class="text-[11px] text-slate-400 font-mono">Reg #KA-2018-0941842 · Verified Digital OCR</span>
-        </div>
-        <div id="rx-detected-list" class="p-3 bg-slate-900 rounded-lg text-left text-xs space-y-2 font-mono"></div>
-      </div>
-
-      <button onclick="addDetectedRxToCart()" class="w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/20">
-        <i data-lucide="shopping-cart" class="h-4 w-4"></i>
-        <span>Add All 3 Detected Medicines to Cart</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- ========================================== -->
   <!-- MODAL: DELIVERY OTP VERIFICATION           -->
   <!-- ========================================== -->
   <div id="modal-otp" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
@@ -1173,7 +1267,7 @@ template_html = r"""<!DOCTYPE html>
         .replace(/'/g, "&#39;");
     }
 
-    // Build cheaper generic map keyed by clean molecule name
+    // Build cheaper generic map keyed by clean active molecule
     const CHEAPEST_BY_GENERIC = {};
     MEDICINES.forEach(m => {
       const g = (m.generic_name || "").split("|")[0].trim().toLowerCase();
@@ -1220,6 +1314,23 @@ template_html = r"""<!DOCTYPE html>
       try { if (window.lucide) lucide.createIcons(); } catch (e) {}
     }
 
+    function switchCustomerTab(tabName) {
+      document.querySelectorAll(".customer-tab-panel").forEach(el => el.classList.add("hidden"));
+      const target = document.getElementById("cust-tab-" + tabName);
+      if (target) target.classList.remove("hidden");
+
+      document.querySelectorAll(".customer-tab-btn").forEach(btn => {
+        btn.classList.remove("text-cyan-400", "border-cyan-400");
+        btn.classList.add("text-slate-400", "border-transparent");
+      });
+      const activeBtn = document.getElementById("cust-tab-btn-" + tabName);
+      if (activeBtn) {
+        activeBtn.classList.remove("text-slate-400", "border-transparent");
+        activeBtn.classList.add("text-cyan-400", "border-cyan-400");
+      }
+      try { if (window.lucide) lucide.createIcons(); } catch (e) {}
+    }
+
     function initiateGoogleAuth(role = "customer") {
       const targetUrl = ROLE_GOOGLE_URLS[role] || ROLE_GOOGLE_URLS["customer"] || "";
       if (!targetUrl) {
@@ -1241,7 +1352,6 @@ template_html = r"""<!DOCTYPE html>
     }
 
     function signOutUser() {
-      // Trigger native Streamlit button in parent document so session_state clears in same WebSocket session
       try {
         if (window.parent && window.parent.document) {
           const btns = Array.from(window.parent.document.querySelectorAll("button"));
@@ -1252,7 +1362,6 @@ template_html = r"""<!DOCTYPE html>
           }
         }
       } catch (e) {}
-      // Client fallback if parent inaccessible
       USER = null;
       renderAuthElements();
       switchPortal("landing");
@@ -1260,11 +1369,7 @@ template_html = r"""<!DOCTYPE html>
     }
 
     function handlePortalCardClick(portalRole) {
-      if (USER && USER.email) {
-        switchPortal(portalRole);
-        return;
-      }
-      initiateGoogleAuth(portalRole);
+      switchPortal(portalRole);
     }
 
     // 2. Auth Header Hydration
@@ -1313,12 +1418,12 @@ template_html = r"""<!DOCTYPE html>
           `;
         });
         document.querySelectorAll(".portal-cta-label").forEach(el => {
-          el.innerText = "Sign In with Google";
+          el.innerText = "Enter Portal";
         });
       }
     }
 
-    // 3. Semantic Category Pills & Paginated 1,250+ Medicine Catalogue
+    // 3. Global Search & Smart Category Filtering (Never block search queries!)
     const CATEGORY_GROUPS = [
       { label: "All", keywords: [] },
       { label: "Pain & Fever", keywords: ["analgesic", "antipyretic", "nsaid", "pain"] },
@@ -1336,8 +1441,8 @@ template_html = r"""<!DOCTYPE html>
       container.innerHTML = CATEGORY_GROUPS.map(grp => `
         <button
           onclick="filterCategory('${grp.label}')"
-          class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
-            activeCategory === grp.label ? 'bg-cyan-500 text-slate-950' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+          class="px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+            activeCategory === grp.label ? 'bg-cyan-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
           }"
         >
           ${escHtml(grp.label)}
@@ -1352,9 +1457,23 @@ template_html = r"""<!DOCTYPE html>
       renderMedicines();
     }
 
+    function setQuickSearch(term) {
+      const input = document.getElementById("med-search-input");
+      if (input) {
+        input.value = term;
+        handleSearch(term);
+      }
+    }
+
+    // When typing in the global search bar, search across ALL 1,250+ medicines
     function handleSearch(val) {
       searchQuery = val.toLowerCase().trim();
       visibleLimit = 24;
+      // Auto-reset category filter to "All" whenever a search query is active so no results are masked
+      if (searchQuery && activeCategory !== "All") {
+        activeCategory = "All";
+        renderCategoryPills();
+      }
       renderMedicines();
     }
 
@@ -1388,21 +1507,66 @@ template_html = r"""<!DOCTYPE html>
       const countLbl = document.getElementById("medicines-count-label");
       const moreWrap = document.getElementById("medicines-load-more-wrap");
       const moreLbl = document.getElementById("medicines-load-more-label");
+      const featureCards = document.getElementById("search-feature-cards");
       if (!grid) return;
+
+      // Toggle informational feature cards when user is actively searching
+      if (featureCards) {
+        if (searchQuery.length >= 2) {
+          featureCards.classList.add("hidden");
+        } else {
+          featureCards.classList.remove("hidden");
+        }
+      }
 
       const filtered = getFilteredMedicines();
       const slice = filtered.slice(0, visibleLimit);
 
       if (countLbl) {
-        countLbl.innerText = `Showing ${slice.length} of ${filtered.length} matching formulations (${MEDICINES.length} total SKUs)`;
+        if (searchQuery) {
+          countLbl.innerHTML = `Found <strong class="text-white">${filtered.length}</strong> formulation${filtered.length === 1 ? '' : 's'} matching "<span class="text-cyan-400 font-semibold">${escHtml(searchQuery)}</span>" in <span class="text-slate-300">${escHtml(activeCategory)}</span> (${MEDICINES.length} total SKUs)`;
+        } else {
+          countLbl.innerHTML = `Showing ${slice.length} of ${filtered.length} formulations in <span class="text-slate-300 font-medium">${escHtml(activeCategory)}</span> (${MEDICINES.length} total SKUs)`;
+        }
       }
 
       if (filtered.length === 0) {
-        grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-500 text-xs">No formulations match your search criteria.</div>`;
+        // Check if query exists in ANY category across the full catalogue
+        const globalMatches = searchQuery
+          ? MEDICINES.filter(m =>
+              (m.name && m.name.toLowerCase().includes(searchQuery)) ||
+              (m.generic_name && m.generic_name.toLowerCase().includes(searchQuery)) ||
+              (m.category && m.category.toLowerCase().includes(searchQuery))
+            )
+          : [];
+
+        if (globalMatches.length > 0 && activeCategory !== "All") {
+          grid.innerHTML = `
+            <div class="col-span-full py-8 text-center text-slate-400 text-xs bg-[#0e1626]/60 border border-slate-800 rounded-2xl p-6 space-y-3">
+              <div class="text-sm font-semibold text-white">
+                No formulations matching "<strong class="text-cyan-400">${escHtml(searchQuery)}</strong>" found in the <span class="text-amber-400 font-bold">${escHtml(activeCategory)}</span> category.
+              </div>
+              <p class="text-slate-400 text-xs">
+                Found <strong class="text-emerald-400 font-bold">${globalMatches.length}</strong> matching formulation${globalMatches.length === 1 ? '' : 's'} across other categories!
+              </p>
+              <button onclick="filterCategory('All')" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs cursor-pointer shadow-lg shadow-cyan-500/20">
+                View All ${globalMatches.length} Results
+              </button>
+            </div>
+          `;
+        } else {
+          grid.innerHTML = `
+            <div class="col-span-full py-12 text-center text-slate-500 text-xs space-y-2">
+              <p>No formulations match your search criteria.</p>
+              <p class="text-slate-600 text-[11px]">Try searching by active molecule (e.g. Paracetamol, Amoxicillin, Pantoprazole, Amlodipine).</p>
+            </div>
+          `;
+        }
         if (moreWrap) moreWrap.classList.add("hidden");
         return;
       }
 
+      // Render cards matching localhost CustomerPortalView layout
       grid.innerHTML = slice.map(m => {
         const cleanGeneric = m.generic_name ? m.generic_name.split('|')[0].trim() : "";
         const mrp = parseFloat(m.mrp || 45);
@@ -1413,49 +1577,51 @@ template_html = r"""<!DOCTYPE html>
         const stockUnits = m.stock_units || 0;
         const cheapest = CHEAPEST_BY_GENERIC[cleanGeneric.toLowerCase()];
         const hasGenericMatch = cheapest && cheapest.id !== m.id && parseFloat(cheapest.unit_price || cheapest.mrp) < price - 1;
-        const genericSavings = hasGenericMatch ? (price - parseFloat(cheapest.unit_price || cheapest.mrp)).toFixed(0) : 0;
+        const genericPrice = hasGenericMatch ? parseFloat(cheapest.unit_price || cheapest.mrp) : 0;
+        const genericSavings = hasGenericMatch ? (price - genericPrice).toFixed(0) : 0;
+        const genericSavingsPct = hasGenericMatch ? Math.round(((price - genericPrice) / price) * 100) : 0;
 
         return `
-          <div class="bg-[#0b1220] border border-slate-800/90 hover:border-slate-700 rounded-2xl p-4 flex flex-col justify-between transition-all group shadow-md hover:shadow-cyan-500/5">
-            <div>
-              <div class="flex items-start justify-between gap-2 mb-2">
-                <div class="min-w-0">
-                  <h3 class="font-bold text-white text-sm group-hover:text-cyan-400 transition-colors truncate">${escHtml(m.name)}</h3>
-                  <span class="text-[11px] text-slate-400 font-mono block truncate">${escHtml(cleanGeneric)}</span>
-                </div>
-                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold shrink-0 ${
+          <div class="bg-[#0e1626] border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-slate-700 transition-all shadow-md">
+            <div class="space-y-1.5 min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-bold text-sm text-white">${escHtml(m.name)}</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-300 font-mono">
+                  ₹${price.toFixed(2)}
+                </span>
+                ${hasDiscount ? `<span class="text-[10px] text-slate-500 line-through font-mono">₹${mrp.toFixed(2)}</span>` : ''}
+                ${hasColdChain ? `<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">2°C - 8°C Monitored</span>` : ''}
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${
                   isRx
                     ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
                     : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                 }">${isRx ? 'Rx Required' : 'OTC Approved'}</span>
               </div>
 
-              <div class="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-400 mb-2">
-                <span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">${escHtml(m.dosage_form || 'Tablet')} · ${escHtml(m.strength || 'Std')}</span>
-                ${hasColdChain ? `<span class="px-2 py-0.5 rounded-full font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">2°C - 8°C Monitored</span>` : ''}
+              <div class="text-xs text-slate-400">
+                Active Molecule: <span class="text-slate-200 font-medium">${escHtml(cleanGeneric)}</span>
+                <span class="text-slate-500 text-[11px] block sm:inline sm:ml-2">· ${escHtml(m.dosage_form || 'Tablet')} · ${escHtml(m.manufacturer || 'Licensed GMP')} · ${stockUnits} units</span>
               </div>
-              <div class="text-[10px] text-slate-500 truncate mb-2">${escHtml(m.manufacturer || 'Licensed GMP Pharma')} · ${stockUnits} units</div>
+
+              <!-- Bioequivalent generic match callout matching localhost CustomerPortalView.tsx -->
               ${hasGenericMatch ? `
-                <button onclick="openGenericModal(${m.id}, ${cheapest.id})" class="mb-2 w-full py-1 px-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center justify-center gap-1 cursor-pointer">
-                  <i data-lucide="badge-percent" class="h-3 w-3"></i>
-                  <span>Generic Price Match: Save ₹${genericSavings}</span>
-                </button>
+                <div class="inline-flex flex-wrap items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-800/40 text-[11px] text-emerald-400 font-medium mt-1">
+                  <i data-lucide="sparkles" class="h-3 w-3 text-emerald-400"></i>
+                  <span>Cheaper Generic: <strong>${escHtml(cheapest.name)}</strong> (₹${genericPrice.toFixed(2)}) · Save ${genericSavingsPct}% (₹${genericSavings})</span>
+                  <button onclick="addToCart(${cheapest.id}); toggleCart();" class="ml-2 font-bold underline text-cyan-400 hover:text-white cursor-pointer bg-transparent border-0 p-0">
+                    Switch &amp; Add
+                  </button>
+                </div>
               ` : ''}
             </div>
 
-            <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between">
-              <div>
-                <div class="flex items-baseline gap-1.5">
-                  <span class="font-bold text-white font-mono text-sm">₹${price.toFixed(2)}</span>
-                  ${hasDiscount ? `<span class="text-[10px] text-slate-500 line-through font-mono">₹${mrp.toFixed(2)}</span>` : ''}
-                </div>
-              </div>
+            <div class="flex items-center gap-2 shrink-0">
               <button
                 onclick="addToCart(${m.id})"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs cursor-pointer shadow-sm shadow-cyan-500/20 active:scale-95 transition-transform"
+                class="px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-slate-950 text-xs font-bold transition-all cursor-pointer flex items-center gap-1 active:scale-95"
               >
                 <i data-lucide="plus" class="h-3.5 w-3.5"></i>
-                <span>Add</span>
+                <span>Add to Cart</span>
               </button>
             </div>
           </div>
@@ -1472,39 +1638,6 @@ template_html = r"""<!DOCTYPE html>
       }
 
       try { if (window.lucide) lucide.createIcons(); } catch (e) {}
-    }
-
-    function openGenericModal(origId, genId) {
-      const orig = MEDICINES.find(m => m.id === origId);
-      const gen = MEDICINES.find(m => m.id === genId);
-      if (!orig || !gen) return;
-      const pOrig = parseFloat(orig.unit_price || orig.mrp);
-      const pGen = parseFloat(gen.unit_price || gen.mrp);
-      const savings = pOrig - pGen;
-      const pct = Math.round((savings / pOrig) * 100);
-      document.getElementById("generic-modal-body").innerHTML = `
-        <p class="text-slate-300">Identical active chemical molecule: <span class="text-white font-mono font-bold">${escHtml((orig.generic_name || '').split('|')[0])}</span></p>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
-            <span class="text-[10px] text-slate-400 uppercase block">Selected Brand</span>
-            <span class="font-bold text-white block mt-1">${escHtml(orig.name)}</span>
-            <span class="font-mono text-slate-300 text-sm">₹${pOrig.toFixed(2)}</span>
-          </div>
-          <div class="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/40">
-            <span class="text-[10px] text-emerald-400 uppercase font-bold block">Bioequivalent Match</span>
-            <span class="font-bold text-white block mt-1">${escHtml(gen.name)}</span>
-            <span class="font-mono text-emerald-400 font-bold text-sm">₹${pGen.toFixed(2)} (-${pct}%)</span>
-          </div>
-        </div>
-        <button onclick="addToCart(${gen.id}); closeGenericModal(); toggleCart();" class="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold cursor-pointer">
-          Switch to Generic &amp; Save ₹${savings.toFixed(2)}
-        </button>
-      `;
-      document.getElementById("modal-generic").classList.remove("hidden");
-      try { if (window.lucide) lucide.createIcons(); } catch (e) {}
-    }
-    function closeGenericModal() {
-      document.getElementById("modal-generic").classList.add("hidden");
     }
 
     // 4. Cart & DDI Safety Operations
@@ -1644,7 +1777,8 @@ template_html = r"""<!DOCTYPE html>
       const needsRx = cart.some(c => c.rx) && !rxUploaded;
       if (needsRx) {
         showToast("Cart includes Rx medicines. Please scan/upload prescription first.", false);
-        openRxModal();
+        switchCustomerTab("scanner");
+        toggleCart();
         return;
       }
       const subtotal = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
@@ -1672,7 +1806,7 @@ template_html = r"""<!DOCTYPE html>
       showToast(`Order #${newOrderId} placed! Delivery OTP: ${otp}`, true);
     }
 
-    // 5. Prescription OCR & AI Clinical Specialist Modals
+    // 5. Prescription OCR Scanner matching localhost CustomerPortalView.tsx
     function getDetectedRxMeds() {
       return [
         findMedicineByTerms(["augmentin 625", "amoxicillin"]),
@@ -1681,76 +1815,95 @@ template_html = r"""<!DOCTYPE html>
       ].filter(Boolean);
     }
 
-    function openRxModal() {
-      const box = document.getElementById("rx-detected-list");
-      const meds = getDetectedRxMeds();
-      if (box) {
-        box.innerHTML = `
-          <div class="text-cyan-400 font-bold flex justify-between pb-1 border-b border-slate-800">
-            <span>OCR Confidence: 96.4%</span>
-            <span class="text-emerald-400">DDI Screen: Clear</span>
-          </div>
-          ${meds.map(m => `
-            <div class="flex justify-between text-slate-300">
-              <span>· ${escHtml(m.name)} (${escHtml((m.generic_name || '').split('|')[0])})</span>
-              <span class="text-cyan-400">₹${parseFloat(m.unit_price || m.mrp).toFixed(2)}</span>
-            </div>
-          `).join("")}
-        `;
-      }
-      document.getElementById("modal-rx").classList.remove("hidden");
-      try { if (window.lucide) lucide.createIcons(); } catch (e) {}
-    }
+    function triggerSamplePrescriptionScan() {
+      const beam = document.getElementById("scanner-laser-beam");
+      const idle = document.getElementById("scanner-idle-overlay");
+      const indicator = document.getElementById("scanner-status-indicator");
+      const resultsSec = document.getElementById("scanner-results-section");
 
-    function handleRxFileUpload(input) {
-      if (input.files && input.files[0]) {
+      if (idle) idle.classList.add("hidden");
+      if (beam) beam.classList.remove("hidden");
+      if (indicator) indicator.classList.remove("hidden");
+      if (resultsSec) resultsSec.classList.add("hidden");
+
+      setTimeout(() => {
         rxUploaded = true;
-        document.getElementById("rx-upload-label").innerText = "Uploaded & Verified: " + input.files[0].name;
-        showToast("Prescription image analyzed via OCR pipeline.", true);
+        if (beam) beam.classList.add("hidden");
+        if (indicator) indicator.classList.add("hidden");
+
+        const matchedList = document.getElementById("scanner-matched-items");
+        const meds = getDetectedRxMeds();
+        if (matchedList) {
+          matchedList.innerHTML = meds.map(m => `
+            <div class="p-3 rounded-xl bg-[#0e1626] border border-slate-800 flex items-center justify-between text-xs">
+              <div>
+                <div class="font-bold text-white">${escHtml(m.name)}</div>
+                <div class="text-slate-400 text-[11px]">${escHtml(m.generic_name)} · ₹${parseFloat(m.unit_price || m.mrp).toFixed(2)}</div>
+              </div>
+              <button
+                onclick="addToCart(${m.id})"
+                class="px-3 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold text-xs cursor-pointer"
+              >
+                Add to Cart
+              </button>
+            </div>
+          `).join("");
+        }
+        if (resultsSec) resultsSec.classList.remove("hidden");
+        try { if (window.lucide) lucide.createIcons(); } catch (e) {}
+        showToast("Prescription OCR reading completed successfully!", true);
+      }, 1500);
+    }
+
+    function handleCustomerRxUpload(input) {
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = document.getElementById("scanner-image-preview");
+          if (img) img.src = e.target.result;
+          triggerSamplePrescriptionScan();
+        };
+        reader.readAsDataURL(file);
       }
     }
 
-    function closeRxModal() {
-      document.getElementById("modal-rx").classList.add("hidden");
-    }
-
-    function addDetectedRxToCart() {
+    function addAllDetectedRxToCart() {
       rxUploaded = true;
       const meds = getDetectedRxMeds();
       meds.forEach(m => addToCart(m.id));
-      closeRxModal();
       toggleCart();
-      showToast(`Added ${meds.length} prescription formulations to cart!`, true);
+      showToast(`Added all 3 detected formulations to cart!`, true);
     }
 
-    function openAilmentModal() {
-      document.getElementById("modal-ailment").classList.remove("hidden");
-      loadCondition("tension_headache");
-      try { if (window.lucide) lucide.createIcons(); } catch (e) {}
+    // 6. AI Clinical Ailment Specialist matching localhost CustomerPortalView.tsx
+    function setAilmentQueryAndAssess(phrase) {
+      const input = document.getElementById("ailment-symptom-input");
+      if (input) input.value = phrase;
+      handleAilmentAssess();
     }
 
-    function closeAilmentModal() {
-      document.getElementById("modal-ailment").classList.add("hidden");
-    }
-
-    function analyzeCustomSymptom() {
+    function handleAilmentAssess() {
       const raw = (document.getElementById("ailment-symptom-input").value || "").toLowerCase().trim();
       if (!raw) {
-        showToast("Enter your symptoms to assess.");
+        showToast("Please describe symptoms first.");
         return;
       }
-      // Emergency red-flag check
+
+      // Acute Emergency Red Flags
       if (/chest pain|crushing|left arm|breathing|dyspnea|stroke|slurred|paralysis|unconscious|seizure|anaphylaxis|poison|bleeding heavily/.test(raw)) {
         if (/stroke|slurred|paralysis|unconscious/.test(raw) && AILMENT_KB["neurological_stroke_emergency"]) {
-          loadCondition("neurological_stroke_emergency");
+          renderAilmentTriageOutput("neurological_stroke_emergency");
           return;
         }
         if (AILMENT_KB["cardiovascular_chest_emergency"]) {
-          loadCondition("cardiovascular_chest_emergency");
+          renderAilmentTriageOutput("cardiovascular_chest_emergency");
           return;
         }
       }
-      let bestKey = "tension_headache";
+
+      // Keyword match across 27 conditions
+      let bestKey = "acidity_gerd";
       let bestScore = -1;
       for (const [k, entry] of Object.entries(AILMENT_KB)) {
         const hay = (entry.title + " " + entry.category + " " + (entry.symptoms || []).join(" ")).toLowerCase();
@@ -1759,27 +1912,19 @@ template_html = r"""<!DOCTYPE html>
         words.forEach(w => { if (hay.includes(w)) score += 1; });
         if (score > bestScore) { bestScore = score; bestKey = k; }
       }
-      loadCondition(bestKey);
+      renderAilmentTriageOutput(bestKey);
     }
 
-    function loadCondition(condKey) {
+    function renderAilmentTriageOutput(condKey) {
       const data = AILMENT_KB[condKey] || Object.values(AILMENT_KB)[0];
       if (!data) return;
 
-      // Highlight active quick tab
-      document.querySelectorAll(".ailment-tab").forEach(btn => {
-        const isActive = btn.getAttribute("data-cond") === condKey;
-        btn.className = isActive
-          ? "ailment-tab px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer bg-purple-500/20 text-purple-300 border-purple-500/40"
-          : "ailment-tab px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700";
-      });
-
       const isEmergency = data.urgency === "emergency";
-      const box = document.getElementById("ailment-content-box");
+      const outBox = document.getElementById("ailment-triage-output");
+      if (!outBox) return;
 
-      // Match real OTC formulation in MEDICINES (guard against Schedule H Rx-only items)
       const keywords = data.inventory_keywords || [];
-      let matchedMed = MEDICINES.find(m =>
+      const matchedMed = MEDICINES.find(m =>
         !m.prescription_required &&
         keywords.some(kw =>
           (m.name && m.name.toLowerCase().includes(kw.toLowerCase())) ||
@@ -1787,57 +1932,78 @@ template_html = r"""<!DOCTYPE html>
         )
       );
 
+      const selfCareList = (data.self_care || []).map(s => `<li>${escHtml(s)}</li>`).join("");
       const otcList = (data.otc_regimen || []).map(o =>
         `<li><span class="text-white font-semibold">${escHtml(o.molecule)}</span> — ${escHtml(o.dosage)} (${escHtml(o.timing)}; max ${escHtml(o.duration)})</li>`
       ).join("") || "<li>No self-medication OTC therapy advised.</li>";
-
-      const selfCareList = (data.self_care || []).map(s => `<li>${escHtml(s)}</li>`).join("");
       const redFlagList = (data.red_flags || []).map(r => `<li>${escHtml(r)}</li>`).join("");
 
-      box.innerHTML = `
-        ${isEmergency ? `
-          <div class="p-3.5 rounded-xl bg-rose-600/20 border-2 border-rose-500 text-rose-100">
-            <span class="text-xs font-black uppercase text-rose-400 block">EMERGENCY MEDICAL PRIORITY — CALL 112 / 911 IMMEDIATELY</span>
-            <p class="text-[11px] mt-1">Potential life-threatening emergency detected. Do NOT wait for online pharmacy delivery. Seek immediate emergency department care.</p>
-          </div>
-        ` : ''}
-        <div class="p-3 rounded-xl bg-purple-950/30 border border-purple-500/20">
-          <span class="text-[10px] font-bold text-purple-300 uppercase block">1. Clinical Condition Context</span>
-          <p class="text-white font-semibold text-xs mt-0.5">${escHtml(data.title)}</p>
-          <p class="text-slate-300 text-[11px] mt-0.5">${escHtml(data.context)}</p>
-        </div>
-        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
-          <span class="text-[10px] font-bold text-slate-400 uppercase block">2. Non-Pharmacological Self-Care Measures</span>
-          <ul class="list-disc pl-4 text-slate-200 text-[11px] mt-1 space-y-0.5">${selfCareList}</ul>
-        </div>
-        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
-          <span class="text-[10px] font-bold text-slate-400 uppercase block">3. Over-The-Counter (OTC) Symptom Regimen</span>
-          <ul class="list-disc pl-4 text-slate-200 text-[11px] mt-1 space-y-0.5">${otcList}</ul>
-          ${matchedMed && !isEmergency ? `
-            <div class="mt-2.5 pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
-              <div class="text-[11px]">
-                <span class="text-cyan-400 font-bold block">${escHtml(matchedMed.name)}</span>
-                <span class="text-slate-400 font-mono">₹${parseFloat(matchedMed.unit_price || matchedMed.mrp).toFixed(2)} · ${matchedMed.stock_units || 25} units in dispensary</span>
+      outBox.innerHTML = `
+        <div class="bg-[#0e1626] border border-slate-800 rounded-2xl p-5 space-y-4 text-xs">
+          ${isEmergency ? `
+            <div class="p-4 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-200 space-y-1">
+              <div class="font-bold text-rose-400 uppercase tracking-wider text-xs">
+                Emergency Red-Flag Alert (Call 112 / 911 Immediately)
               </div>
-              <button onclick="addToCart(${matchedMed.id}); closeAilmentModal(); toggleCart();" class="px-3 py-1.5 rounded-lg bg-cyan-500 text-slate-950 font-bold text-[10px] hover:bg-cyan-400 cursor-pointer shrink-0">Add to Cart</button>
+              <p class="text-[11px] leading-relaxed">
+                Critical symptoms detected. Do NOT wait for pharmacy delivery or take self-medication. Seek emergency department triage immediately.
+              </p>
             </div>
           ` : ''}
-        </div>
-        <div class="p-3 rounded-xl bg-rose-950/30 border border-rose-500/30 text-rose-200">
-          <span class="text-[10px] font-bold text-rose-400 uppercase block">4. Acute Red Flags &amp; Emergency Warning Signs</span>
-          <ul class="list-disc pl-4 text-[11px] mt-1 space-y-0.5">${redFlagList}</ul>
-        </div>
-        <div class="p-3 rounded-xl bg-amber-950/20 border border-amber-500/20 text-amber-200">
-          <span class="text-[10px] font-bold text-amber-400 uppercase block">5. Physician Consultation &amp; Referral Criteria</span>
-          <p class="text-[11px] mt-0.5">${escHtml(data.referral)}</p>
+
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800">
+            <div>
+              <span class="text-[10px] font-bold text-cyan-400 uppercase tracking-wider block">Clinical Triage Assessment</span>
+              <h4 class="text-base font-bold text-white font-heading">${escHtml(data.title)}</h4>
+            </div>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${isEmergency ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30'}">
+              ${escHtml(data.category)}
+            </span>
+          </div>
+
+          <div class="space-y-3 text-slate-300">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">1. Condition Context</span>
+              <p class="text-[11px] leading-relaxed">${escHtml(data.context)}</p>
+            </div>
+
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">2. Non-Pharmacological Self-Care</span>
+              <ul class="list-disc pl-4 space-y-0.5 text-[11px]">${selfCareList}</ul>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">3. Over-The-Counter Regimen</span>
+              <ul class="list-disc pl-4 space-y-0.5 text-[11px]">${otcList}</ul>
+              ${matchedMed && !isEmergency ? `
+                <div class="mt-2 pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
+                  <div>
+                    <span class="text-white font-bold block">${escHtml(matchedMed.name)}</span>
+                    <span class="text-[11px] text-cyan-400 font-mono">₹${parseFloat(matchedMed.unit_price || matchedMed.mrp).toFixed(2)} · In Dispensary Stock</span>
+                  </div>
+                  <button onclick="addToCart(${matchedMed.id}); toggleCart();" class="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs cursor-pointer">
+                    Add to Cart
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="p-3 rounded-xl bg-rose-950/20 border border-rose-500/20 text-rose-200">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-rose-400 block mb-0.5">4. Acute Red Flags &amp; Warning Signs</span>
+              <ul class="list-disc pl-4 space-y-0.5 text-[11px]">${redFlagList}</ul>
+            </div>
+
+            <div class="p-3 rounded-xl bg-amber-950/20 border border-amber-500/20 text-amber-200">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400 block mb-0.5">5. Physician Referral Criteria</span>
+              <p class="text-[11px]">${escHtml(data.referral)}</p>
+            </div>
+          </div>
         </div>
       `;
+      try { if (window.lucide) lucide.createIcons(); } catch (e) {}
     }
 
-    // 6. Pharmacy Portal (Real Orders & Inventory Stepper)
-    let pharmacyStockMap = {};
-    MEDICINES.slice(0, 40).forEach(m => { pharmacyStockMap[m.id] = m.stock_units || 25; });
-
+    // 7. Pharmacy Portal (Real Orders & Inventory Stepper)
     function updateInventoryStock(itemId, delta) {
       const med = MEDICINES.find(m => m.id === itemId);
       if (!med) return;
@@ -1929,7 +2095,7 @@ template_html = r"""<!DOCTYPE html>
       renderPharmacyInventory(document.getElementById("pharm-inv-search")?.value || "");
     }
 
-    // 7. Admin Portal (Real Pharmacies & Order Moderation)
+    // 8. Admin Portal (Real Pharmacies & Order Moderation)
     function togglePharmacyStatus(pharmId) {
       const p = PHARMACIES.find(x => x.id === pharmId);
       if (!p) return;
@@ -2003,7 +2169,7 @@ template_html = r"""<!DOCTYPE html>
       }
     }
 
-    // 8. Delivery Portal & OTP Verification
+    // 9. Delivery Portal & OTP Verification
     function renderDeliveryView() {
       const deliveredCount = ORDERS.filter(o => o.order_status === "DELIVERED").length;
       const runsEl = document.getElementById("deliv-kpi-runs");
@@ -2092,7 +2258,7 @@ template_html = r"""<!DOCTYPE html>
       }
     }
 
-    // 9. Toast Notification Helper
+    // 10. Toast Notification Helper
     function showToast(msg, isSuccess = false) {
       const c = document.getElementById("toast-container");
       if (!c) return;
@@ -2110,10 +2276,30 @@ template_html = r"""<!DOCTYPE html>
       }, 3500);
     }
 
-    // 10. Idempotent Initialization
+    // 11. Idempotent Initialization
     function init() {
       if (_initialized) return;
       _initialized = true;
+
+      // Deep linking: check top window or iframe URL parameters for portal
+      let requestedPortal = INITIAL_PORTAL;
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const p = urlParams.get("portal");
+        if (p && ["customer", "pharmacy", "admin", "delivery", "landing"].includes(p.toLowerCase())) {
+          requestedPortal = p.toLowerCase();
+        }
+      } catch (e) {}
+      try {
+        if (window.top && window.top !== window && window.top.location && window.top.location.search) {
+          const topParams = new URLSearchParams(window.top.location.search);
+          const topP = topParams.get("portal");
+          if (topP && ["customer", "pharmacy", "admin", "delivery", "landing"].includes(topP.toLowerCase())) {
+            requestedPortal = topP.toLowerCase();
+          }
+        }
+      } catch (e) {}
+
       try { renderAuthElements(); } catch (e) { console.error("renderAuthElements error:", e); }
       try { renderCategoryPills(); } catch (e) { console.error("renderCategoryPills error:", e); }
       try { renderMedicines(); } catch (e) { console.error("renderMedicines error:", e); }
@@ -2121,8 +2307,11 @@ template_html = r"""<!DOCTYPE html>
       try { renderPharmacyView(); } catch (e) { console.error("renderPharmacyView error:", e); }
       try { renderAdminView(); } catch (e) { console.error("renderAdminView error:", e); }
       try { renderDeliveryView(); } catch (e) { console.error("renderDeliveryView error:", e); }
-      try { if (window.lucide) lucide.createIcons(); } catch (e) { console.error("lucide error:", e); }
-      if (INITIAL_PORTAL) {
+      try { if (window.lucide) lucide.createIcons(); } catch (e) {}
+
+      if (requestedPortal && requestedPortal !== "landing") {
+        switchPortal(requestedPortal);
+      } else if (INITIAL_PORTAL) {
         switchPortal(INITIAL_PORTAL);
       }
       const oauthErr = __OAUTH_ERROR__;

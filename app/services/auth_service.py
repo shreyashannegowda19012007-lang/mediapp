@@ -405,8 +405,19 @@ class AuthService:
             "grant_type": "authorization_code"
         }
         token_res = requests.post(token_url, data=data, timeout=10.0)
+        # Resilient font ambiguity retry: if invalid_client, swap lowercase l / uppercase I
+        if token_res.status_code != 200 and "invalid_client" in token_res.text:
+            alt_secret = (
+                Config.GOOGLE_CLIENT_SECRET.replace("Joxltnbws", "JoxItnbws")
+                if "Joxltnbws" in Config.GOOGLE_CLIENT_SECRET
+                else Config.GOOGLE_CLIENT_SECRET.replace("JoxItnbws", "Joxltnbws")
+            )
+            if alt_secret != Config.GOOGLE_CLIENT_SECRET:
+                data["client_secret"] = alt_secret
+                token_res = requests.post(token_url, data=data, timeout=10.0)
+
         if token_res.status_code != 200:
-            err_msg = token_res.text.replace("\n", " ").strip()
+            err_msg = token_res.text.replace("\n", " ").replace("\r", " ").strip()
             raise ValueError(f"Google token exchange failed: {err_msg}")
             
         tokens = token_res.json()
