@@ -1024,7 +1024,19 @@ template_html = """<!DOCTYPE html>
         target.classList.add("active");
         window.scrollTo(0, 0);
       }
-      lucide.createIcons();
+      try {
+        if (window.top && window.top !== window) {
+          const url = new URL(window.top.location.href);
+          url.searchParams.set("portal", portalName);
+          window.top.history.replaceState({}, "", url.toString());
+        }
+      } catch (e) {}
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set("portal", portalName);
+        window.history.replaceState({}, "", url.toString());
+      } catch (e) {}
+      try { if (window.lucide) lucide.createIcons(); } catch (e) {}
     }
 
     function initiateGoogleAuth(role = "customer") {
@@ -1418,6 +1430,14 @@ template_html = """<!DOCTYPE html>
       { id: 106, name: "Dolo 650mg", generic: "Paracetamol", cat: "Antipyretic", price: 34.0, stock: 120 }
     ];
 
+    function updateInventoryStock(itemId, delta) {
+      const item = INITIAL_INVENTORY.find(i => i.id === itemId);
+      if (item) {
+        item.stock = Math.max(0, item.stock + delta);
+        renderPharmacyInventory();
+      }
+    }
+
     function renderPharmacyInventory() {
       const tbody = document.getElementById("pharmacy-inventory-body");
       if (!tbody) return;
@@ -1431,9 +1451,9 @@ template_html = """<!DOCTYPE html>
           <td class="p-3.5 font-mono text-white">₹${item.price.toFixed(2)}</td>
           <td class="p-3.5">
             <div class="flex items-center gap-2">
-              <button onclick="item.stock=Math.max(0, item.stock-1); renderPharmacyInventory();" class="w-5 h-5 rounded bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 flex items-center justify-center cursor-pointer">-</button>
+              <button onclick="updateInventoryStock(${item.id}, -1)" class="w-5 h-5 rounded bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 flex items-center justify-center cursor-pointer">-</button>
               <span class="font-mono text-white font-bold">${item.stock}</span>
-              <button onclick="item.stock+=1; renderPharmacyInventory();" class="w-5 h-5 rounded bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 flex items-center justify-center cursor-pointer">+</button>
+              <button onclick="updateInventoryStock(${item.id}, 1)" class="w-5 h-5 rounded bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 flex items-center justify-center cursor-pointer">+</button>
             </div>
           </td>
           <td class="p-3.5 text-right">
